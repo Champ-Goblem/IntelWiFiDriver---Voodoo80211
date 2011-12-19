@@ -1,0 +1,287 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1F0A493F149FF9E200CDC173 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1F0A493D149FF9E200CDC173 /* InfoPlist.strings */; };
+		1F0A4942149FF9E200CDC173 /* net80211.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1F0A4941149FF9E200CDC173 /* net80211.cpp */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		1F0A4935149FF9E200CDC173 /* net80211.kext */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = net80211.kext; sourceTree = BUILT_PRODUCTS_DIR; };
+		1F0A4939149FF9E200CDC173 /* Kernel.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Kernel.framework; path = System/Library/Frameworks/Kernel.framework; sourceTree = SDKROOT; };
+		1F0A493C149FF9E200CDC173 /* net80211-Info.plist */ = {isa = PBXFileReference; path = "net80211-Info.plist"; sourceTree = "<group>"; };
+		1F0A493E149FF9E200CDC173 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		1F0A4940149FF9E200CDC173 /* net80211.h */ = {isa = PBXFileReference; path = net80211.h; sourceTree = "<group>"; };
+		1F0A4941149FF9E200CDC173 /* net80211.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = net80211.cpp; sourceTree = "<group>"; };
+		1F0A4943149FF9E200CDC173 /* net80211-Prefix.pch */ = {isa = PBXFileReference; path = "net80211-Prefix.pch"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		1F0A4930149FF9E200CDC173 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		1F0A4928149FF9E200CDC173 = {
+			isa = PBXGroup;
+			children = (
+				1F0A493A149FF9E200CDC173 /* net80211 */,
+				1F0A4937149FF9E200CDC173 /* Frameworks */,
+				1F0A4936149FF9E200CDC173 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		1F0A4936149FF9E200CDC173 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1F0A4935149FF9E200CDC173 /* net80211.kext */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		1F0A4937149FF9E200CDC173 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				1F0A4938149FF9E200CDC173 /* Other Frameworks */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		1F0A4938149FF9E200CDC173 /* Other Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				1F0A4939149FF9E200CDC173 /* Kernel.framework */,
+			);
+			name = "Other Frameworks";
+			sourceTree = "<group>";
+		};
+		1F0A493A149FF9E200CDC173 /* net80211 */ = {
+			isa = PBXGroup;
+			children = (
+				1F0A4940149FF9E200CDC173 /* net80211.h */,
+				1F0A4941149FF9E200CDC173 /* net80211.cpp */,
+				1F0A493B149FF9E200CDC173 /* Supporting Files */,
+			);
+			path = net80211;
+			sourceTree = "<group>";
+		};
+		1F0A493B149FF9E200CDC173 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				1F0A493C149FF9E200CDC173 /* net80211-Info.plist */,
+				1F0A493D149FF9E200CDC173 /* InfoPlist.strings */,
+				1F0A4943149FF9E200CDC173 /* net80211-Prefix.pch */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		1F0A4931149FF9E200CDC173 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		1F0A4934149FF9E200CDC173 /* net80211 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1F0A4946149FF9E200CDC173 /* Build configuration list for PBXNativeTarget "net80211" */;
+			buildPhases = (
+				1F0A492F149FF9E200CDC173 /* Sources */,
+				1F0A4930149FF9E200CDC173 /* Frameworks */,
+				1F0A4931149FF9E200CDC173 /* Headers */,
+				1F0A4932149FF9E200CDC173 /* Resources */,
+				1F0A4933149FF9E200CDC173 /* Rez */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = net80211;
+			productName = net80211;
+			productReference = 1F0A4935149FF9E200CDC173 /* net80211.kext */;
+			productType = "com.apple.product-type.kernel-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		1F0A492A149FF9E200CDC173 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0420;
+			};
+			buildConfigurationList = 1F0A492D149FF9E200CDC173 /* Build configuration list for PBXProject "net80211" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 1F0A4928149FF9E200CDC173;
+			productRefGroup = 1F0A4936149FF9E200CDC173 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				1F0A4934149FF9E200CDC173 /* net80211 */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		1F0A4932149FF9E200CDC173 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1F0A493F149FF9E200CDC173 /* InfoPlist.strings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXRezBuildPhase section */
+		1F0A4933149FF9E200CDC173 /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXRezBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		1F0A492F149FF9E200CDC173 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1F0A4942149FF9E200CDC173 /* net80211.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		1F0A493D149FF9E200CDC173 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				1F0A493E149FF9E200CDC173 /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		1F0A4944149FF9E200CDC173 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		1F0A4945149FF9E200CDC173 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		1F0A4947149FF9E200CDC173 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CURRENT_PROJECT_VERSION = 1.0.0d1;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "net80211/net80211-Prefix.pch";
+				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				INFOPLIST_FILE = "net80211/net80211-Info.plist";
+				MODULE_NAME = org.projectcamphor.net80211;
+				MODULE_VERSION = 1.0.0d1;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = kext;
+			};
+			name = Debug;
+		};
+		1F0A4948149FF9E200CDC173 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CURRENT_PROJECT_VERSION = 1.0.0d1;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "net80211/net80211-Prefix.pch";
+				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				INFOPLIST_FILE = "net80211/net80211-Info.plist";
+				MODULE_NAME = org.projectcamphor.net80211;
+				MODULE_VERSION = 1.0.0d1;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = kext;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1F0A492D149FF9E200CDC173 /* Build configuration list for PBXProject "net80211" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1F0A4944149FF9E200CDC173 /* Debug */,
+				1F0A4945149FF9E200CDC173 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		1F0A4946149FF9E200CDC173 /* Build configuration list for PBXNativeTarget "net80211" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1F0A4947149FF9E200CDC173 /* Debug */,
+				1F0A4948149FF9E200CDC173 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 1F0A492A149FF9E200CDC173 /* Project object */;
+}
