@@ -8,17 +8,28 @@
 
 /* Begin PBXBuildFile section */
 		1F0A493F149FF9E200CDC173 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1F0A493D149FF9E200CDC173 /* InfoPlist.strings */; };
-		1F0A4942149FF9E200CDC173 /* net80211.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1F0A4941149FF9E200CDC173 /* net80211.cpp */; };
+		1F0A494D149FFCB900CDC173 /* Voodoo80211Device.h in Headers */ = {isa = PBXBuildFile; fileRef = 1F0A494C149FFCB900CDC173 /* Voodoo80211Device.h */; };
+		1F0A494F149FFD5800CDC173 /* Voodoo80211Device.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1F0A494E149FFD5800CDC173 /* Voodoo80211Device.cpp */; };
+		1F0A495114A0020200CDC173 /* ieee80211_input.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1F0A495014A0020100CDC173 /* ieee80211_input.cpp */; };
+		1F0A495C14A02B4100CDC173 /* ieee80211_priv.h in Headers */ = {isa = PBXBuildFile; fileRef = 1F0A495A14A02B4100CDC173 /* ieee80211_priv.h */; };
+		1F0A495D14A02B4100CDC173 /* ieee80211_var.h in Headers */ = {isa = PBXBuildFile; fileRef = 1F0A495B14A02B4100CDC173 /* ieee80211_var.h */; };
+		1F0A495F14A0C22D00CDC173 /* ieee80211.h in Headers */ = {isa = PBXBuildFile; fileRef = 1F0A495E14A0C22D00CDC173 /* ieee80211.h */; };
+		1FDB50D614C9007F00C16F95 /* ieee80211_crypto.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDB50D514C9007F00C16F95 /* ieee80211_crypto.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		1F0A4935149FF9E200CDC173 /* net80211.kext */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = net80211.kext; sourceTree = BUILT_PRODUCTS_DIR; };
 		1F0A4939149FF9E200CDC173 /* Kernel.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Kernel.framework; path = System/Library/Frameworks/Kernel.framework; sourceTree = SDKROOT; };
-		1F0A493C149FF9E200CDC173 /* net80211-Info.plist */ = {isa = PBXFileReference; path = "net80211-Info.plist"; sourceTree = "<group>"; };
+		1F0A493C149FF9E200CDC173 /* net80211-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "net80211-Info.plist"; sourceTree = "<group>"; };
 		1F0A493E149FF9E200CDC173 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		1F0A4940149FF9E200CDC173 /* net80211.h */ = {isa = PBXFileReference; path = net80211.h; sourceTree = "<group>"; };
-		1F0A4941149FF9E200CDC173 /* net80211.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = net80211.cpp; sourceTree = "<group>"; };
-		1F0A4943149FF9E200CDC173 /* net80211-Prefix.pch */ = {isa = PBXFileReference; path = "net80211-Prefix.pch"; sourceTree = "<group>"; };
+		1F0A4943149FF9E200CDC173 /* net80211-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "net80211-Prefix.pch"; sourceTree = "<group>"; };
+		1F0A494C149FFCB900CDC173 /* Voodoo80211Device.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Voodoo80211Device.h; sourceTree = "<group>"; };
+		1F0A494E149FFD5800CDC173 /* Voodoo80211Device.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Voodoo80211Device.cpp; sourceTree = "<group>"; };
+		1F0A495014A0020100CDC173 /* ieee80211_input.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ieee80211_input.cpp; sourceTree = "<group>"; };
+		1F0A495A14A02B4100CDC173 /* ieee80211_priv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ieee80211_priv.h; sourceTree = "<group>"; };
+		1F0A495B14A02B4100CDC173 /* ieee80211_var.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ieee80211_var.h; sourceTree = "<group>"; };
+		1F0A495E14A0C22D00CDC173 /* ieee80211.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ieee80211.h; sourceTree = "<group>"; };
+		1FDB50D514C9007F00C16F95 /* ieee80211_crypto.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ieee80211_crypto.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -68,9 +79,14 @@
 		1F0A493A149FF9E200CDC173 /* net80211 */ = {
 			isa = PBXGroup;
 			children = (
-				1F0A4940149FF9E200CDC173 /* net80211.h */,
-				1F0A4941149FF9E200CDC173 /* net80211.cpp */,
 				1F0A493B149FF9E200CDC173 /* Supporting Files */,
+				1F0A494C149FFCB900CDC173 /* Voodoo80211Device.h */,
+				1F0A494E149FFD5800CDC173 /* Voodoo80211Device.cpp */,
+				1F0A495E14A0C22D00CDC173 /* ieee80211.h */,
+				1F0A495014A0020100CDC173 /* ieee80211_input.cpp */,
+				1F0A495A14A02B4100CDC173 /* ieee80211_priv.h */,
+				1F0A495B14A02B4100CDC173 /* ieee80211_var.h */,
+				1FDB50D514C9007F00C16F95 /* ieee80211_crypto.h */,
 			);
 			path = net80211;
 			sourceTree = "<group>";
@@ -92,6 +108,11 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1F0A494D149FFCB900CDC173 /* Voodoo80211Device.h in Headers */,
+				1F0A495C14A02B4100CDC173 /* ieee80211_priv.h in Headers */,
+				1F0A495D14A02B4100CDC173 /* ieee80211_var.h in Headers */,
+				1F0A495F14A0C22D00CDC173 /* ieee80211.h in Headers */,
+				1FDB50D614C9007F00C16F95 /* ieee80211_crypto.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -168,7 +189,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1F0A4942149FF9E200CDC173 /* net80211.cpp in Sources */,
+				1F0A494F149FFD5800CDC173 /* Voodoo80211Device.cpp in Sources */,
+				1F0A495114A0020200CDC173 /* ieee80211_input.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -280,6 +302,7 @@
 				1F0A4948149FF9E200CDC173 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
