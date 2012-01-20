@@ -218,7 +218,7 @@ ieee80211_encrypt(struct ieee80211com *ic, mbuf_t m0,
             break;
         default:
             /* should not get there */
-            m_freem(m0);
+            mbuf_free(m0);
             m0 = NULL;
 	}
 	return m0;
@@ -247,8 +247,8 @@ ieee80211_decrypt(struct ieee80211com *ic, mbuf_t m0,
 		/* retrieve group data key id from IV field */
 		hdrlen = ieee80211_get_hdrlen(wh);
 		/* check that IV field is present */
-		if (m0->m_len < hdrlen + 4) {
-			m_freem(m0);
+		if (mbuf_len(m0) < hdrlen + 4) {
+			mbuf_free(m0);
 			return NULL;
 		}
 		ivp = (u_int8_t *)wh + hdrlen;
@@ -256,20 +256,20 @@ ieee80211_decrypt(struct ieee80211com *ic, mbuf_t m0,
 		k = &ic->ic_nw_keys[kid];
 	} else {
 		/* retrieve integrity group key id from MMIE */
-		if (m0->m_len < sizeof(*wh) + IEEE80211_MMIE_LEN) {
-			m_freem(m0);
+		if (mbuf_len(m0) < sizeof(*wh) + IEEE80211_MMIE_LEN) {
+			mbuf_free(m0);
 			return NULL;
 		}
 		/* it is assumed management frames are contiguous */
-		mmie = (u_int8_t *)wh + m0->m_len - IEEE80211_MMIE_LEN;
+		mmie = (u_int8_t *)wh + mbuf_len(m0) - IEEE80211_MMIE_LEN;
 		/* check that MMIE is valid */
 		if (mmie[0] != IEEE80211_ELEMID_MMIE || mmie[1] != 16) {
-			m_freem(m0);
+			mbuf_free(m0);
 			return NULL;
 		}
 		kid = LE_READ_2(&mmie[2]);
 		if (kid != 4 && kid != 5) {
-			m_freem(m0);
+			mbuf_free(m0);
 			return NULL;
 		}
 		k = &ic->ic_nw_keys[kid];
@@ -290,7 +290,7 @@ ieee80211_decrypt(struct ieee80211com *ic, mbuf_t m0,
             break;
         default:
             /* key not defined */
-            m_freem(m0);
+            mbuf_free(m0);
             m0 = NULL;
 	}
 	return m0;
@@ -489,66 +489,6 @@ ieee80211_eapol_key_check_mic(struct ieee80211_eapol_key *key,
 	return timingsafe_bcmp(key->mic, mic, EAPOL_KEY_MIC_LEN) != 0;
 }
 
-#ifndef IEEE80211_STA_ONLY
-/*
- * Encrypt the Key Data field of an EAPOL-Key frame using the specified Key
- * Encryption Key (KEK).  The encryption algorithm can be either ARC4 or
- * AES Key Wrap depending on the EAPOL-Key Key Descriptor Version.
- */
-void
-ieee80211_eapol_key_encrypt(struct ieee80211com *ic,
-                            struct ieee80211_eapol_key *key, const u_int8_t *kek)
-{
-	union {
-		struct rc4_ctx rc4;
-		aes_key_wrap_ctx aes;
-	} ctx;	/* XXX off stack? */
-	u_int8_t keybuf[EAPOL_KEY_IV_LEN + 16];
-	u_int16_t len, info;
-	u_int8_t *data;
-	int n;
-    
-	len  = BE_READ_2(key->paylen);
-	info = BE_READ_2(key->info);
-	data = (u_int8_t *)(key + 1);
-    
-	switch (info & EAPOL_KEY_VERSION_MASK) {
-        case EAPOL_KEY_DESC_V1:
-            /* set IV to the lower 16 octets of our global key counter */
-            memcpy(key->iv, ic->ic_globalcnt + 16, 16);
-            /* increment our global key counter (256-bit, big-endian) */
-            for (n = 31; n >= 0 && ++ic->ic_globalcnt[n] == 0; n--);
-            
-            /* concatenate the EAPOL-Key IV field and the KEK */
-            memcpy(keybuf, key->iv, EAPOL_KEY_IV_LEN);
-            memcpy(keybuf + EAPOL_KEY_IV_LEN, kek, 16);
-            
-            rc4_keysetup(&ctx.rc4, keybuf, sizeof keybuf);
-            /* discard the first 256 octets of the ARC4 key stream */
-            rc4_skip(&ctx.rc4, RC4STATE);
-            rc4_crypt(&ctx.rc4, data, data, len);
-            break;
-        case EAPOL_KEY_DESC_V2:
-        case EAPOL_KEY_DESC_V3:
-            if (len < 16 || (len & 7) != 0) {
-                /* insert padding */
-                n = (len < 16) ? 16 - len : 8 - (len & 7);
-                data[len++] = IEEE80211_ELEMID_VENDOR;
-                memset(&data[len], 0, n - 1);
-                len += n - 1;
-            }
-            aes_key_wrap_set_key_wrap_only(&ctx.aes, kek, 16);
-            aes_key_wrap(&ctx.aes, data, len / 8, data);
-            len += 8;	/* AES Key Wrap adds 8 bytes */
-            /* update key data length */
-            BE_WRITE_2(key->paylen, len);
-            /* update packet body length */
-            BE_WRITE_2(key->len, sizeof(*key) + len - 4);
-            break;
-	}
-}
-#endif	/* IEEE80211_STA_ONLY */
-
 /*
  * Decrypt the Key Data field of an EAPOL-Key frame using the specified Key
  * Encryption Key (KEK).  The encryption algorithm can be either ARC4 or
@@ -619,12 +559,6 @@ ieee80211_pmksa_add(struct ieee80211com *ic, enum ieee80211_akm akm,
 	}
 	memcpy(pmk->pmk_key, key, IEEE80211_PMK_LEN);
 	pmk->pmk_lifetime = lifetime;	/* XXX not used yet */
-#ifndef IEEE80211_STA_ONLY
-	if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
-		ieee80211_derive_pmkid(pmk->pmk_akm, pmk->pmk_key,
-                               ic->ic_myaddr, macaddr, pmk->pmk_pmkid);
-	} else
-#endif
 	{
 		ieee80211_derive_pmkid(pmk->pmk_akm, pmk->pmk_key,
                                macaddr, ic->ic_myaddr, pmk->pmk_pmkid);

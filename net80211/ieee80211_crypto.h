@@ -127,10 +127,6 @@ void	ieee80211_eapol_key_mic(struct ieee80211_eapol_key *,
                                 const u_int8_t *);
 int	ieee80211_eapol_key_check_mic(struct ieee80211_eapol_key *,
                                   const u_int8_t *);
-#ifndef IEEE80211_STA_ONLY
-void	ieee80211_eapol_key_encrypt(struct ieee80211com *,
-                                    struct ieee80211_eapol_key *, const u_int8_t *);
-#endif
 int	ieee80211_eapol_key_decrypt(struct ieee80211_eapol_key *,
                                 const u_int8_t *);
 

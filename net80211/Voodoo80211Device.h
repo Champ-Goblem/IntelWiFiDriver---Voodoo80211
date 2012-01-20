@@ -11,7 +11,6 @@
 
 #include <sys/types.h>
 #include <sys/kpi_mbuf.h>
-#define mtod(m, t) (t) mbuf_data(m)
 #include <kern/assert.h>
 #define KASSERT(x) assert(x)
 
