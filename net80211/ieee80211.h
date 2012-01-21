@@ -32,6 +32,7 @@
 /*
  * 802.11 protocol definitions.
  */
+#include "sys/endian.h"
 
 #define IEEE80211_ADDR_LEN	6	/* size of 802.11 address */
 /* is 802.11 address multicast/broadcast? */
@@ -237,7 +238,6 @@ struct ieee80211_frame_cfend {		/* NB: also CF-End+CF-Ack */
 	/* FCS */
 } __packed;
 
-#ifdef _KERNEL
 static __inline int
 ieee80211_has_seq(const struct ieee80211_frame *wh)
 {
@@ -281,7 +281,6 @@ ieee80211_get_qos(const struct ieee80211_frame *wh)
 
 	return letoh16(*(const u_int16_t *)frm);
 }
-#endif	/* _KERNEL */
 
 /*
  * Capability Information field (see 7.3.1.4).

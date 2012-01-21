@@ -9,7 +9,7 @@
 #include "Voodoo80211Device.h"
 #include <IOKit/IOLib.h>
 
-OSDefineMetaClassAndStructors(Voodoo80211Device, IOService)
+OSDefineMetaClassAndStructors(Voodoo80211Device, IOEthernetController)
 
 bool MyClass::start(IOService* provider) {
 	if (!super::start(provider))
@@ -23,3 +23,9 @@ void MyClass::stop(IOService* provider) {
     IOLog("Stopping\n");
     super::stop(provider);
 }
+
+IOReturn MyClass::getHardwareAddress(IOEthernetAddress * addrP) {
+	return kIOReturnSuccess;
+}
+
+#pragma mark Compatibility functions

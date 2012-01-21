@@ -114,7 +114,7 @@ struct ieee80211_rxinfo {
 /* Block Acknowledgement Record */
 struct ieee80211_tx_ba {
 	struct ieee80211_node	*ba_ni;	/* backpointer for callbacks */
-	struct timeout		ba_to;
+	IOTimerEventSource*	ba_to;
 	int			ba_timeout_val;
 #define IEEE80211_BA_MIN_TIMEOUT	(10 * 1000)		/* 10msec */
 #define IEEE80211_BA_MAX_TIMEOUT	(10 * 1000 * 1000)	/* 10sec */
@@ -138,7 +138,7 @@ struct ieee80211_rx_ba {
 		mbuf_t m;
 		struct ieee80211_rxinfo	rxi;
 	}			*ba_buf;
-	struct timeout		ba_to;
+	IOTimerEventSource*	ba_to;
 	int			ba_timeout_val;
 	int			ba_state;
 	u_int16_t		ba_winstart;
@@ -195,7 +195,7 @@ struct ieee80211_node {
 	IOPacketQueue*	ni_savedq;	/* packets queued for pspoll */
     
 	/* RSN */
-	struct timeout	ni_eapol_to;
+	IOTimerEventSource*	ni_eapol_to;
 	u_int			ni_rsn_state;
 	u_int			ni_rsn_gstate;
 	u_int			ni_rsn_retries;
@@ -221,7 +221,7 @@ struct ieee80211_node {
     
 	/* SA Query */
 	u_int16_t		ni_sa_query_trid;
-	struct timeout		ni_sa_query_to;
+	IOTimerEventSource*	ni_sa_query_to;
 	int			ni_sa_query_count;
     
 	/* Block Ack records */
@@ -265,7 +265,7 @@ RB_HEAD(ieee80211_tree, ieee80211_node);
 static __inline int
 ieee80211_node_decref(struct ieee80211_node *ni)
 {
-    OSDecrementAtomic(&ni->ni_refcnt);
+        OSDecrementAtomic(&ni->ni_refcnt);
 	return ni->ni_refcnt;
 }
 

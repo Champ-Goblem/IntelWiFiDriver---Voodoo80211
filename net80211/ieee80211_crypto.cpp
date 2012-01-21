@@ -42,7 +42,7 @@
 
 #include "Voodoo80211Device.h"
 
-#include <dev/rndvar.h>
+//#include <dev/rndvar.h>
 #include "crypto/arc4.h"
 #include "crypto/md5.h"
 #include "crypto/sha1.h"
@@ -64,13 +64,12 @@ ieee80211_crypto_attach(struct ifnet *ifp)
 	if (ic->ic_caps & IEEE80211_C_RSN) {
 		ic->ic_rsnprotos = IEEE80211_PROTO_WPA | IEEE80211_PROTO_RSN;
 		ic->ic_rsnakms = IEEE80211_AKM_PSK;
-		ic->ic_rsnciphers = IEEE80211_CIPHER_TKIP |
-        IEEE80211_CIPHER_CCMP;
+		ic->ic_rsnciphers = IEEE80211_CIPHER_TKIP | IEEE80211_CIPHER_CCMP;
 		ic->ic_rsngroupcipher = IEEE80211_CIPHER_TKIP;
 		ic->ic_rsngroupmgmtcipher = IEEE80211_CIPHER_BIP;
 	}
-	ic->ic_set_key = ieee80211_set_key;
-	ic->ic_delete_key = ieee80211_delete_key;
+	VoodooSetFunction(ic->ic_set_key, ieee80211_set_key);
+    VoodooSetFunction(ic->ic_delete_key, ieee80211_delete_key);
 }
 
 void MyClass::
@@ -361,8 +360,6 @@ ieee80211_derive_ptk(enum ieee80211_akm akm, const u_int8_t *pmk,
                      const u_int8_t *aa, const u_int8_t *spa, const u_int8_t *anonce,
                      const u_int8_t *snonce, struct ieee80211_ptk *ptk)
 {
-	void (*kdf)(const u_int8_t *, size_t, const u_int8_t *, size_t,
-                const u_int8_t *, size_t, u_int8_t *, size_t);
 	u_int8_t buf[2 * IEEE80211_ADDR_LEN + 2 * EAPOL_KEY_NONCE_LEN];
 	int ret;
     
@@ -376,12 +373,13 @@ ieee80211_derive_ptk(enum ieee80211_akm akm, const u_int8_t *pmk,
 	memcpy(&buf[12], ret ? anonce : snonce, EAPOL_KEY_NONCE_LEN);
 	memcpy(&buf[44], ret ? snonce : anonce, EAPOL_KEY_NONCE_LEN);
     
-	kdf = ieee80211_is_sha256_akm(akm) ? ieee80211_kdf : ieee80211_prf;
-	(*kdf)(pmk, IEEE80211_PMK_LEN, (const u_int8_t *)"Pairwise key expansion", 23,
-           buf, sizeof buf, (u_int8_t *)ptk, sizeof(*ptk));
+	if (ieee80211_is_sha256_akm(akm))
+        ieee80211_kdf(pmk, IEEE80211_PMK_LEN, (const u_int8_t *)"Pairwise key expansion", 23, buf, sizeof buf, (u_int8_t *)ptk, sizeof(*ptk));
+    else
+        ieee80211_prf(pmk, IEEE80211_PMK_LEN, (const u_int8_t *)"Pairwise key expansion", 23, buf, sizeof buf, (u_int8_t *)ptk, sizeof(*ptk));
 }
 
-static void MyClass::
+static void
 ieee80211_pmkid_sha1(const u_int8_t *pmk, const u_int8_t *aa,
                      const u_int8_t *spa, u_int8_t *pmkid)
 {
@@ -397,7 +395,7 @@ ieee80211_pmkid_sha1(const u_int8_t *pmk, const u_int8_t *aa,
 	memcpy(pmkid, digest, IEEE80211_PMKID_LEN);
 }
 
-static void MyClass::
+static void
 ieee80211_pmkid_sha256(const u_int8_t *pmk, const u_int8_t *aa,
                        const u_int8_t *spa, u_int8_t *pmkid)
 {
@@ -482,7 +480,7 @@ ieee80211_eapol_key_check_mic(struct ieee80211_eapol_key *key,
 	memset(key->mic, 0, EAPOL_KEY_MIC_LEN);
 	ieee80211_eapol_key_mic(key, kck);
     
-	return timingsafe_bcmp(key->mic, mic, EAPOL_KEY_MIC_LEN) != 0;
+	return memcmp(key->mic, mic, EAPOL_KEY_MIC_LEN) != 0;
 }
 
 /*

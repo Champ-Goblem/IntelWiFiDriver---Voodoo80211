@@ -44,6 +44,8 @@
 
 #include "crypto/rijndael.h"
 
+static const int MBUF_CLSIZE = 4096;
+
 /* CCMP software crypto context */
 struct ieee80211_ccmp_ctx {
 	rijndael_ctx	rijndael;
@@ -71,7 +73,7 @@ void MyClass::
 ieee80211_ccmp_delete_key(struct ieee80211com *ic, struct ieee80211_key *k)
 {
 	if (k->k_priv != NULL)
-		free(k->k_priv, M_DEVBUF);
+		compat_free(k->k_priv, M_DEVBUF);
 	k->k_priv = NULL;
 }
 
@@ -159,34 +161,29 @@ ieee80211_ccmp_phase1(rijndael_ctx *ctx, const struct ieee80211_frame *wh,
 	rijndael_encrypt(ctx, a, s0);
 }
 
-struct mbuf * MyClass::
-ieee80211_ccmp_encrypt(struct ieee80211com *ic, struct mbuf *m0,
+mbuf_t MyClass::
+ieee80211_ccmp_encrypt(struct ieee80211com *ic, mbuf_t m0,
                        struct ieee80211_key *k)
 {
-	struct ieee80211_ccmp_ctx *ctx = k->k_priv;
+	struct ieee80211_ccmp_ctx *ctx = (struct ieee80211_ccmp_ctx *)k->k_priv;
 	const struct ieee80211_frame *wh;
 	const u_int8_t *src;
 	u_int8_t *ivp, *mic, *dst;
 	u_int8_t a[16], b[16], s0[16], s[16];
-	struct mbuf *n0, *m, *n;
+	mbuf_t n0, m, n, n2;
 	int hdrlen, left, moff, noff, len;
 	u_int16_t ctr;
 	int i, j;
-    
-	MGET(n0, M_DONTWAIT, m0->m_type);
+	
+	mbuf_get(MBUF_DONTWAIT, mbuf_type(m0), &n0);
 	if (n0 == NULL)
 		goto nospace;
-	if (m_dup_pkthdr(n0, m0, M_DONTWAIT))
+	if (mbuf_dup(m0, MBUF_DONTWAIT, &n0))
 		goto nospace;
-	n0->m_pkthdr.len += IEEE80211_CCMP_HDRLEN;
-	n0->m_len = MHLEN;
-	if (n0->m_pkthdr.len >= MINCLSIZE - IEEE80211_CCMP_MICLEN) {
-		MCLGET(n0, M_DONTWAIT);
-		if (n0->m_flags & M_EXT)
-			n0->m_len = n0->m_ext.ext_size;
-	}
-	if (n0->m_len > n0->m_pkthdr.len)
-		n0->m_len = n0->m_pkthdr.len;
+	mbuf_pkthdr_adjustlen(n0, IEEE80211_CCMP_HDRLEN);
+	mbuf_setlen(n0, mbuf_get_mhlen());
+	if (mbuf_len(n0) > mbuf_pkthdr_len(n0))
+		mbuf_setlen(n0, mbuf_pkthdr_len(n0));
     
 	/* copy 802.11 header */
 	wh = mtod(m0, struct ieee80211_frame *);
@@ -208,7 +205,7 @@ ieee80211_ccmp_encrypt(struct ieee80211com *ic, struct mbuf *m0,
     
 	/* construct initial B, A and S_0 blocks */
 	ieee80211_ccmp_phase1(&ctx->rijndael, wh, k->k_tsc,
-                          m0->m_pkthdr.len - hdrlen, b, a, s0);
+                          mbuf_pkthdr_len(m0) - hdrlen, b, a, s0);
     
 	/* construct S_1 */
 	ctr = 1;
@@ -222,30 +219,30 @@ ieee80211_ccmp_encrypt(struct ieee80211com *ic, struct mbuf *m0,
 	n = n0;
 	moff = hdrlen;
 	noff = hdrlen + IEEE80211_CCMP_HDRLEN;
-	left = m0->m_pkthdr.len - moff;
+	left = mbuf_pkthdr_len(m0) - moff;
 	while (left > 0) {
-		if (moff == m->m_len) {
+		if (moff == mbuf_len(m)) {
 			/* nothing left to copy from m */
-			m = m->m_next;
+			m = mbuf_next(m);
 			moff = 0;
 		}
-		if (noff == n->m_len) {
+		if (noff == mbuf_len(n)) {
 			/* n is full and there's more data to copy */
-			MGET(n->m_next, M_DONTWAIT, n->m_type);
-			if (n->m_next == NULL)
+			mbuf_get(MBUF_DONTWAIT, mbuf_type(n), &n2);
+			if (n2 == NULL)
 				goto nospace;
-			n = n->m_next;
-			n->m_len = MLEN;
-			if (left >= MINCLSIZE - IEEE80211_CCMP_MICLEN) {
-				MCLGET(n, M_DONTWAIT);
-				if (n->m_flags & M_EXT)
-					n->m_len = n->m_ext.ext_size;
+			mbuf_setnext(n, n2);
+			n = n2;
+			mbuf_setlen(n, mbuf_get_mlen());
+			if (left >= mbuf_get_minclsize() - IEEE80211_CCMP_MICLEN) {
+				mbuf_getcluster(MBUF_DONTWAIT, mbuf_type(n), MBUF_CLSIZE, &n);
+				mbuf_setlen(n, MBUF_CLSIZE);
 			}
-			if (n->m_len > left)
-				n->m_len = left;
+			if (mbuf_len(n) > left)
+				mbuf_setlen(n, left);
 			noff = 0;
 		}
-		len = min(m->m_len - moff, n->m_len - noff);
+		len = min(mbuf_len(m) - moff, mbuf_len(n) - noff);
         
 		src = mtod(m, u_int8_t *) + moff;
 		dst = mtod(n, u_int8_t *) + noff;
@@ -274,42 +271,42 @@ ieee80211_ccmp_encrypt(struct ieee80211com *ic, struct mbuf *m0,
 		rijndael_encrypt(&ctx->rijndael, b, b);
     
 	/* reserve trailing space for MIC */
-	if (M_TRAILINGSPACE(n) < IEEE80211_CCMP_MICLEN) {
-		MGET(n->m_next, M_DONTWAIT, n->m_type);
-		if (n->m_next == NULL)
+	if (mbuf_trailingspace(m) < IEEE80211_CCMP_MICLEN) {
+		mbuf_get(MBUF_DONTWAIT, mbuf_type(n), &n);
+		if (mbuf_next(n) == NULL)
 			goto nospace;
-		n = n->m_next;
-		n->m_len = 0;
+		n = mbuf_next(n);
+		mbuf_setlen(n, 0);
 	}
 	/* finalize MIC, U := T XOR first-M-bytes( S_0 ) */
-	mic = mtod(n, u_int8_t *) + n->m_len;
+	mic = mtod(n, u_int8_t *) + mbuf_len(n);
 	for (i = 0; i < IEEE80211_CCMP_MICLEN; i++)
 		mic[i] = b[i] ^ s0[i];
-	n->m_len += IEEE80211_CCMP_MICLEN;
-	n0->m_pkthdr.len += IEEE80211_CCMP_MICLEN;
+	mbuf_adjustlen(n, IEEE80211_CCMP_MICLEN);
+	mbuf_pkthdr_adjustlen(n0, IEEE80211_CCMP_MICLEN);
     
-	m_freem(m0);
+	mbuf_freem(m0);
 	return n0;
 nospace:
 	ic->ic_stats.is_tx_nombuf++;
-	m_freem(m0);
+	mbuf_freem(m0);
 	if (n0 != NULL)
-		m_freem(n0);
+		mbuf_freem(n0);
 	return NULL;
 }
 
-struct mbuf * MyClass::
-ieee80211_ccmp_decrypt(struct ieee80211com *ic, struct mbuf *m0,
+mbuf_t MyClass::
+ieee80211_ccmp_decrypt(struct ieee80211com *ic, mbuf_t m0,
                        struct ieee80211_key *k)
 {
-	struct ieee80211_ccmp_ctx *ctx = k->k_priv;
+	struct ieee80211_ccmp_ctx *ctx = (struct ieee80211_ccmp_ctx *)k->k_priv;
 	struct ieee80211_frame *wh;
 	u_int64_t pn, *prsc;
 	const u_int8_t *ivp, *src;
 	u_int8_t *dst;
 	u_int8_t mic0[IEEE80211_CCMP_MICLEN];
 	u_int8_t a[16], b[16], s0[16], s[16];
-	struct mbuf *n0, *m, *n;
+	mbuf_t n0, m, n, n2;
 	int hdrlen, left, moff, noff, len;
 	u_int16_t ctr;
 	int i, j;
@@ -318,14 +315,14 @@ ieee80211_ccmp_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	hdrlen = ieee80211_get_hdrlen(wh);
 	ivp = (u_int8_t *)wh + hdrlen;
     
-	if (m0->m_pkthdr.len < hdrlen + IEEE80211_CCMP_HDRLEN +
+	if (mbuf_pkthdr_len(m0) < hdrlen + IEEE80211_CCMP_HDRLEN +
 	    IEEE80211_CCMP_MICLEN) {
-		m_freem(m0);
+		mbuf_freem(m0);
 		return NULL;
 	}
 	/* check that ExtIV bit is set */
 	if (!(ivp[3] & IEEE80211_WEP_EXTIV)) {
-		m_freem(m0);
+		mbuf_freem(m0);
 		return NULL;
 	}
     
@@ -348,28 +345,27 @@ ieee80211_ccmp_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	if (pn <= *prsc) {
 		/* replayed frame, discard */
 		ic->ic_stats.is_ccmp_replays++;
-		m_freem(m0);
+		mbuf_freem(m0);
 		return NULL;
 	}
     
-	MGET(n0, M_DONTWAIT, m0->m_type);
+	mbuf_get(MBUF_DONTWAIT, mbuf_type(m0), &n0);
 	if (n0 == NULL)
 		goto nospace;
-	if (m_dup_pkthdr(n0, m0, M_DONTWAIT))
+	if (mbuf_dup(m0, MBUF_DONTWAIT, &n0))
 		goto nospace;
-	n0->m_pkthdr.len -= IEEE80211_CCMP_HDRLEN + IEEE80211_CCMP_MICLEN;
-	n0->m_len = MHLEN;
-	if (n0->m_pkthdr.len >= MINCLSIZE) {
-		MCLGET(n0, M_DONTWAIT);
-		if (n0->m_flags & M_EXT)
-			n0->m_len = n0->m_ext.ext_size;
+	mbuf_pkthdr_adjustlen(n0, -(IEEE80211_CCMP_HDRLEN + IEEE80211_CCMP_MICLEN));
+	mbuf_setlen(n0, mbuf_get_mhlen());
+	if (mbuf_pkthdr_len(n0) >= mbuf_get_minclsize()) {
+		mbuf_getcluster(MBUF_DONTWAIT, mbuf_type(n0), MBUF_CLSIZE, &n0);
+		mbuf_setlen(n, MBUF_CLSIZE);
 	}
-	if (n0->m_len > n0->m_pkthdr.len)
-		n0->m_len = n0->m_pkthdr.len;
+	if (mbuf_len(n0) > mbuf_pkthdr_len(n0))
+		mbuf_setlen(n0, mbuf_pkthdr_len(n0));
     
 	/* construct initial B, A and S_0 blocks */
 	ieee80211_ccmp_phase1(&ctx->rijndael, wh, pn,
-                          n0->m_pkthdr.len - hdrlen, b, a, s0);
+                          mbuf_pkthdr_len(n0) - hdrlen, b, a, s0);
     
 	/* copy 802.11 header and clear protected bit */
 	memcpy(mtod(n0, caddr_t), wh, hdrlen);
@@ -388,30 +384,29 @@ ieee80211_ccmp_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	n = n0;
 	moff = hdrlen + IEEE80211_CCMP_HDRLEN;
 	noff = hdrlen;
-	left = n0->m_pkthdr.len - noff;
+	left = mbuf_pkthdr_len(n0) - noff;
 	while (left > 0) {
-		if (moff == m->m_len) {
+		if (moff == mbuf_len(m)) {
 			/* nothing left to copy from m */
-			m = m->m_next;
+			m = mbuf_next(m);
 			moff = 0;
 		}
-		if (noff == n->m_len) {
+		if (noff == mbuf_len(n)) {
 			/* n is full and there's more data to copy */
-			MGET(n->m_next, M_DONTWAIT, n->m_type);
-			if (n->m_next == NULL)
+			mbuf_get(MBUF_DONTWAIT, mbuf_type(n), &n2);
+			if (n2 == NULL)
 				goto nospace;
-			n = n->m_next;
-			n->m_len = MLEN;
-			if (left >= MINCLSIZE) {
-				MCLGET(n, M_DONTWAIT);
-				if (n->m_flags & M_EXT)
-					n->m_len = n->m_ext.ext_size;
+			n = n2;
+			mbuf_setlen(n, mbuf_get_mlen());
+			if (left >= mbuf_get_minclsize()) {
+				mbuf_getcluster(MBUF_DONTWAIT, mbuf_type(n), MBUF_CLSIZE, &n);
+				mbuf_setlen(n, MBUF_CLSIZE);
 			}
-			if (n->m_len > left)
-				n->m_len = left;
+			if (mbuf_len(n) > left)
+				mbuf_setlen(n, left);
 			noff = 0;
 		}
-		len = min(m->m_len - moff, n->m_len - noff);
+		len = min(mbuf_len(m) - moff, mbuf_len(n) - noff);
         
 		src = mtod(m, u_int8_t *) + moff;
 		dst = mtod(n, u_int8_t *) + noff;
@@ -444,23 +439,23 @@ ieee80211_ccmp_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 		b[i] ^= s0[i];
     
 	/* check that it matches the MIC in received frame */
-	m_copydata(m, moff, IEEE80211_CCMP_MICLEN, mic0);
-	if (timingsafe_bcmp(mic0, b, IEEE80211_CCMP_MICLEN) != 0) {
+	mbuf_copydata(m, moff, IEEE80211_CCMP_MICLEN, mic0);
+	if (bcmp(mic0, b, IEEE80211_CCMP_MICLEN) != 0) {
 		ic->ic_stats.is_ccmp_dec_errs++;
-		m_freem(m0);
-		m_freem(n0);
+		mbuf_freem(m0);
+		mbuf_freem(n0);
 		return NULL;
 	}
     
 	/* update last seen packet number (MIC is validated) */
 	*prsc = pn;
     
-	m_freem(m0);
+	mbuf_freem(m0);
 	return n0;
 nospace:
 	ic->ic_stats.is_rx_nombuf++;
-	m_freem(m0);
+	mbuf_freem(m0);
 	if (n0 != NULL)
-		m_freem(n0);
+		mbuf_freem(n0);
 	return NULL;
 }

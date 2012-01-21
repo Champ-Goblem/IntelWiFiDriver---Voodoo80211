@@ -14,25 +14,34 @@
 #include <kern/assert.h>
 
 // pvaibhav: common definitions
-#define MyClass Voodoo80211Device
-#define super   IOService
-#define __packed __attribute__((__packed__))
-#define mtod(m, t)  (t) mbuf_data(m)
-#define M_DEVBUF    2
-#define malloc      _MALLOC
-#define free        _FREE
+#define MyClass         Voodoo80211Device
+#define super           IOEthernetController
+#define __packed        __attribute__((__packed__))
+#define mtod(m, t)      (t) mbuf_data(m)
+#define M_DEVBUF        2
+#define malloc          _MALLOC
+#define compat_free     _FREE
+#define VoodooSetFunction(fptr, fn) fptr = OSMemberFunctionCast(typeof(fptr), this, &MyClass::fn)
 
 #include <IOKit/IOService.h>
+#include <IOKit/network/IOEthernetInterface.h>
+#include <IOKit/IOWorkloop.h>
+#include <IOKit/IOTimerEventSource.h>
 
 #include "ieee80211.h"
 #include "ieee80211_priv.h"
 #include "ieee80211_var.h"
 
-class Voodoo80211Device : public IOService
+class Voodoo80211Device : public IOEthernetController
 {
 	OSDeclareDefaultStructors(Voodoo80211Device)
     
 private:
+#pragma mark Private data
+    IOEthernetInterface*    fInterface;
+    IOWorkLoop*             fWorkloop;
+    IOTimerEventSource*     fTimer;
+    
 #pragma mark Compatibility functions
     int     splnet();
     void    splx(int);
@@ -200,6 +209,7 @@ public:
 #pragma mark I/O Kit specific
 	virtual bool start(IOService* provider);
 	virtual void stop(IOService* provider);
+	IOReturn getHardwareAddress(IOEthernetAddress * addrP);
 };
 
 #endif

@@ -13,7 +13,6 @@
 struct timeout {
     void (*fn)(void *);
     void* arg;
-    
 };
 
 #endif

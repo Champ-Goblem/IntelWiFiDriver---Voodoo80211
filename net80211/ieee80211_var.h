@@ -48,7 +48,8 @@
 #include <net80211/ieee80211_ioctl.h>		/* for ieee80211_stats */
 #include <net80211/ieee80211_node.h>
 #include <net80211/ieee80211_proto.h>
-#include <iokit/network/IOPacketQueue.h>
+#include <IOKit/network/IOPacketQueue.h>
+#include <IOKit/network/IONetworkMedium.h>
 
 #define	IEEE80211_CHAN_MAX	255
 #define	IEEE80211_CHAN_ANY	0xffff		/* token for ``any channel'' */
@@ -168,8 +169,8 @@ struct ieee80211_edca_ac_params {
  * Entry in the fragment cache.
  */
 struct ieee80211_defrag {
-	//struct timeout	df_to; // TODO: replace with iokit equiv
-	mbuf_t      df_m;
+	IOTimerEventSource*	df_to; // TODO: replace with iokit equiv
+	mbuf_t		df_m;
 	u_int16_t	df_seq;
 	u_int8_t	df_frag;
 };
@@ -187,13 +188,13 @@ struct ieee80211_defrag {
 
 struct ieee80211com {
 	//TODO struct arpcom		ic_ac;
-    LIST_ENTRY(ieee80211com) ic_list;	/* chain of all ieee80211com */
+	LIST_ENTRY(ieee80211com) ic_list;	/* chain of all ieee80211com */
 	void			(*ic_recv_mgmt)(struct ieee80211com *,
 				    struct mbuf *, struct ieee80211_node *,
 				    struct ieee80211_rxinfo *, int);
-	int             (*ic_send_mgmt)(struct ieee80211com *,
+	int			(*ic_send_mgmt)(struct ieee80211com *,
 				    struct ieee80211_node *, int, int, int);
-	int             (*ic_newstate)(struct ieee80211com *,
+	int			(*ic_newstate)(struct ieee80211com *,
 				    enum ieee80211_state, int);
 	void			(*ic_newassoc)(struct ieee80211com *,
 				    struct ieee80211_node *, int);
@@ -202,17 +203,17 @@ struct ieee80211com {
 	void			(*ic_updateslot)(struct ieee80211com *);
 	void			(*ic_updateedca)(struct ieee80211com *);
 	void			(*ic_set_tim)(struct ieee80211com *, int, int);
-	int             (*ic_set_key)(struct ieee80211com *,
+	int			(*ic_set_key)(struct ieee80211com *,
 				    struct ieee80211_node *,
 				    struct ieee80211_key *);
 	void			(*ic_delete_key)(struct ieee80211com *,
 				    struct ieee80211_node *,
 				    struct ieee80211_key *);
-	int             (*ic_ampdu_tx_start)(struct ieee80211com *,
+	int			(*ic_ampdu_tx_start)(struct ieee80211com *,
 				    struct ieee80211_node *, u_int8_t);
 	void			(*ic_ampdu_tx_stop)(struct ieee80211com *,
 				    struct ieee80211_node *, u_int8_t);
-	int             (*ic_ampdu_rx_start)(struct ieee80211com *,
+	int			(*ic_ampdu_rx_start)(struct ieee80211com *,
 				    struct ieee80211_node *, u_int8_t);
 	void			(*ic_ampdu_rx_stop)(struct ieee80211com *,
 				    struct ieee80211_node *, u_int8_t);
@@ -222,8 +223,8 @@ struct ieee80211com {
 	u_char			ic_chan_avail[howmany(IEEE80211_CHAN_MAX,NBBY)];
 	u_char			ic_chan_active[howmany(IEEE80211_CHAN_MAX, NBBY)];
 	u_char			ic_chan_scan[howmany(IEEE80211_CHAN_MAX,NBBY)];
-	IOPacketQueue*	ic_mgtq;
-	IOPacketQueue*	ic_pwrsaveq;
+	IOPacketQueue*		ic_mgtq;
+	IOPacketQueue*		ic_pwrsaveq;
 	u_int			ic_scan_lock;	/* user-initiated scan */
 	u_int8_t		ic_scan_count;	/* count scans */
 	u_int32_t		ic_flags;	/* state flags */
@@ -236,11 +237,11 @@ struct ieee80211com {
 	u_int32_t		*ic_aid_bitmap;
 	u_int16_t		ic_max_aid;
 	enum ieee80211_protmode	ic_protmode;	/* 802.11g protection mode */
-	//TODO struct ifmedia	ic_media;	/* interface media config */
+	IONetworkMedium*	ic_media;
 	caddr_t			ic_rawbpf;	/* packet filter structure */
 	struct ieee80211_node	*ic_bss;	/* information for this node */
 	struct ieee80211_channel *ic_ibss_chan;
-	int             ic_fixed_rate;	/* index to ic_sup_rates[] */
+	int			ic_fixed_rate;	/* index to ic_sup_rates[] */
 	u_int16_t		ic_rtsthreshold;
 	u_int16_t		ic_fragthreshold;
 	u_int			ic_scangen;	/* gen# for timeout scan */
@@ -254,8 +255,8 @@ struct ieee80211com {
 					const struct ieee80211_node *);
 	u_int8_t		ic_max_rssi;
 	struct ieee80211_tree	ic_tree;
-	int             ic_nnodes;	/* length of ic_nnodes */
-	int             ic_max_nnodes;	/* max length of ic_nnodes */
+	int			ic_nnodes;	/* length of ic_nnodes */
+	int			ic_max_nnodes;	/* max length of ic_nnodes */
 	u_int16_t		ic_lintval;	/* listen interval */
 	int16_t			ic_txpower;	/* tx power setting (dBm) */
 	u_int16_t		ic_bmisstimeout;/* beacon miss threshold (ms) */
@@ -263,9 +264,9 @@ struct ieee80211com {
 	u_int16_t		ic_longslotsta;	/* # long slot time stations */
 	u_int16_t		ic_rsnsta;	/* # RSN stations */
 	u_int16_t		ic_pssta;	/* # ps mode stations */
-	int             ic_mgt_timer;	/* mgmt timeout */
-	int             ic_inact_timer;	/* inactivity timer wait */
-	int             ic_des_esslen;
+	int			ic_mgt_timer;	/* mgmt timeout */
+	int			ic_inact_timer;	/* inactivity timer wait */
+	int			ic_des_esslen;
 	u_int8_t		ic_des_essid[IEEE80211_NWID_LEN];
 	struct ieee80211_channel *ic_des_chan;	/* desired channel */
 	u_int8_t		ic_des_bssid[IEEE80211_ADDR_LEN];
@@ -284,7 +285,7 @@ struct ieee80211com {
 	u_int8_t		ic_globalcnt[EAPOL_KEY_NONCE_LEN];
 	u_int8_t		ic_nonce[EAPOL_KEY_NONCE_LEN];
 	u_int8_t		ic_psk[IEEE80211_PMK_LEN];
-	//TODO struct timeout		ic_rsn_timeout;
+	IOTimerEventSource*	ic_rsn_timeout;
 	u_int16_t		ic_rsn_keydonesta;
 	int			ic_tkip_micfail;
 	u_int64_t		ic_tkip_micfail_last_tsc;

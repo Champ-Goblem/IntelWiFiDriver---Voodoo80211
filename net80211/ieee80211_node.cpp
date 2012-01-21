@@ -64,20 +64,20 @@
 
 #include "Voodoo80211Device.h"
 
-#include <dev/rndvar.h>
+//#include <dev/rndvar.h>
 
 #define M_80211_NODE	M_DEVBUF
 
 void MyClass::
 ieee80211_node_attach(struct ifnet *ifp)
 {
-	struct ieee80211com *ic = (void *)ifp;
+	struct ieee80211com *ic = (struct ieee80211com *)ifp;
     
 	RB_INIT(&ic->ic_tree);
-	ic->ic_node_alloc = ieee80211_node_alloc;
-	ic->ic_node_free = ieee80211_node_free;
-	ic->ic_node_copy = ieee80211_node_copy;
-	ic->ic_node_getrssi = ieee80211_node_getrssi;
+	VoodooSetFunction(ic->ic_node_alloc, ieee80211_node_alloc);
+	VoodooSetFunction(ic->ic_node_free, ieee80211_node_free);
+	VoodooSetFunction(ic->ic_node_copy, ieee80211_node_copy);
+	VoodooSetFunction(ic->ic_node_getrssi, ieee80211_node_getrssi);
 	ic->ic_scangen = 1;
 	ic->ic_max_nnodes = ieee80211_cache_size;
     
@@ -104,7 +104,7 @@ ieee80211_alloc_node_helper(struct ieee80211com *ic)
 void MyClass::
 ieee80211_node_lateattach(struct ifnet *ifp)
 {
-	struct ieee80211com *ic = (void *)ifp;
+	struct ieee80211com *ic = (struct ieee80211com *)ifp;
 	struct ieee80211_node *ni;
     
 	ni = ieee80211_alloc_node_helper(ic);
@@ -118,14 +118,14 @@ ieee80211_node_lateattach(struct ifnet *ifp)
 void MyClass::
 ieee80211_node_detach(struct ifnet *ifp)
 {
-	struct ieee80211com *ic = (void *)ifp;
+	struct ieee80211com *ic = (struct ieee80211com *)ifp;
     
 	if (ic->ic_bss != NULL) {
 		(*ic->ic_node_free)(ic, ic->ic_bss);
 		ic->ic_bss = NULL;
 	}
 	ieee80211_free_allnodes(ic);
-	timeout_del(&ic->ic_rsn_timeout);
+	ic->ic_rsn_timeout->cancelTimeout();
 }
 
 /*
@@ -139,7 +139,7 @@ ieee80211_node_detach(struct ifnet *ifp)
 void MyClass::
 ieee80211_reset_scan(struct ifnet *ifp)
 {
-	struct ieee80211com *ic = (void *)ifp;
+	struct ieee80211com *ic = (struct ieee80211com *)ifp;
     
 	memcpy(ic->ic_chan_scan, ic->ic_chan_active,
            sizeof(ic->ic_chan_active));
@@ -154,7 +154,7 @@ ieee80211_reset_scan(struct ifnet *ifp)
 void MyClass::
 ieee80211_begin_scan(struct ifnet *ifp)
 {
-	struct ieee80211com *ic = (void *)ifp;
+	struct ieee80211com *ic = (struct ieee80211com *)ifp;
     
 	if (ic->ic_scan_lock & IEEE80211_SCAN_LOCKED)
 		return;
@@ -168,8 +168,8 @@ ieee80211_begin_scan(struct ifnet *ifp)
 		ic->ic_flags |= IEEE80211_F_ASCAN;
 		ic->ic_stats.is_scan_active++;
 	}
-	if (ifp->if_flags & IFF_DEBUG)
-		printf("%s: begin %s scan\n", ifp->if_xname,
+	if (false /* ifp->debugOn */)
+		printf("%s: begin %s scan\n", fInterface->getName(),
                (ic->ic_flags & IEEE80211_F_ASCAN) ?
                "active" : "passive");
     
@@ -185,9 +185,9 @@ ieee80211_begin_scan(struct ifnet *ifp)
 	 * Reset the current mode. Setting the current mode will also
 	 * reset scan state.
 	 */
-	if (IFM_MODE(ic->ic_media.ifm_cur->ifm_media) == IFM_AUTO)
+    if (ic->ic_media->getType() & IFM_AUTO)
 		ic->ic_curmode = IEEE80211_MODE_AUTO;
-	ieee80211_setmode(ic, ic->ic_curmode);
+	ieee80211_setmode(ic, (enum ieee80211_phymode) ic->ic_curmode);
     
 	ic->ic_scan_count = 0;
     
@@ -201,7 +201,7 @@ ieee80211_begin_scan(struct ifnet *ifp)
 void MyClass::
 ieee80211_next_scan(struct ifnet *ifp)
 {
-	struct ieee80211com *ic = (void *)ifp;
+	struct ieee80211com *ic = (struct ieee80211com *)ifp;
 	struct ieee80211_channel *chan;
     
 	chan = ic->ic_bss->ni_chan;
@@ -343,13 +343,15 @@ ieee80211_match_bss(struct ieee80211com *ic, struct ieee80211_node *ni)
 void MyClass::
 ieee80211_end_scan(struct ifnet *ifp)
 {
-	struct ieee80211com *ic = (void *)ifp;
+	struct ieee80211com *ic = (struct ieee80211com *)ifp;
 	struct ieee80211_node *ni, *nextbs, *selbs;
     
+    /* TODO
 	if (ifp->if_flags & IFF_DEBUG)
 		printf("%s: end %s scan\n", ifp->if_xname,
                (ic->ic_flags & IEEE80211_F_ASCAN) ?
                "active" : "passive");
+     */
     
 	if (ic->ic_scan_count)
 		ic->ic_flags &= ~IEEE80211_F_ASCAN;
@@ -484,7 +486,7 @@ ieee80211_choose_rsnparams(struct ieee80211com *ic)
 		ni->ni_rsnciphers = IEEE80211_CIPHER_CCMP;
 	else
 		ni->ni_rsnciphers = IEEE80211_CIPHER_TKIP;
-	ni->ni_rsncipher = ni->ni_rsnciphers;
+	ni->ni_rsncipher = (enum ieee80211_cipher) ni->ni_rsnciphers;
     
 	/* use MFP if we both support it */
 	if ((ic->ic_caps & IEEE80211_C_MFP) &&
@@ -513,15 +515,15 @@ ieee80211_get_rate(struct ieee80211com *ic)
 struct ieee80211_node * MyClass::
 ieee80211_node_alloc(struct ieee80211com *ic)
 {
-	return malloc(sizeof(struct ieee80211_node), M_80211_NODE,
-                  M_NOWAIT | M_ZERO);
+	return (struct ieee80211_node *)
+        malloc(sizeof(struct ieee80211_node), M_80211_NODE, M_NOWAIT | M_ZERO);
 }
 
 void MyClass::
 ieee80211_node_cleanup(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	if (ni->ni_rsnie != NULL) {
-		free(ni->ni_rsnie, M_DEVBUF);
+		compat_free(ni->ni_rsnie, M_DEVBUF);
 		ni->ni_rsnie = NULL;
 	}
 }
@@ -530,7 +532,7 @@ void MyClass::
 ieee80211_node_free(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	ieee80211_node_cleanup(ic, ni);
-	free(ni, M_80211_NODE);
+	compat_free(ni, M_80211_NODE);
 }
 
 void MyClass::
@@ -642,7 +644,9 @@ ieee80211_find_txnode(struct ieee80211com *ic, const u_int8_t *macaddr)
 	 * unless we are operating in station mode or this is a
 	 * multicast/broadcast frame.
 	 */
+	/* pvaibhav: opmode is always gonna be STA
 	if (ic->ic_opmode == IEEE80211_M_STA || IEEE80211_IS_MULTICAST(macaddr))
+	 */
 		return ieee80211_ref_node(ic->ic_bss);
 }
 
@@ -671,7 +675,7 @@ ieee80211_find_txnode(struct ieee80211com *ic, const u_int8_t *macaddr)
  * Return non-zero if the packet's node-record is kept, zero
  * otherwise.
  */
-static __inline int MyClass::
+static __inline int
 ieee80211_needs_rxnode(struct ieee80211com *ic,
                        const struct ieee80211_frame *wh, const u_int8_t **bssid)
 {
@@ -903,9 +907,11 @@ ieee80211_setup_rates(struct ieee80211com *ic, struct ieee80211_node *ni,
 /*
  * Compare nodes in the tree by lladdr
  */
-int MyClass::
-ieee80211_node_cmp(const struct ieee80211_node *b1,
-                   const struct ieee80211_node *b2)
+int voodoo_ieee80211_node_cmp(const struct ieee80211_node *b1,
+                              const struct ieee80211_node *b2);
+int
+voodoo_ieee80211_node_cmp(const struct ieee80211_node *b1,
+                          const struct ieee80211_node *b2)
 {
 	return (memcmp(b1->ni_macaddr, b2->ni_macaddr, IEEE80211_ADDR_LEN));
 }
@@ -913,4 +919,4 @@ ieee80211_node_cmp(const struct ieee80211_node *b1,
 /*
  * Generate red-black tree function logic
  */
-RB_GENERATE(ieee80211_tree, ieee80211_node, ni_node, ieee80211_node_cmp);
+RB_GENERATE(ieee80211_tree, ieee80211_node, ni_node, voodoo_ieee80211_node_cmp);
