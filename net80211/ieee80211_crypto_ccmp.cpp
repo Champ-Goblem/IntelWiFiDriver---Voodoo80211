@@ -40,8 +40,7 @@
 #include <netinet/if_ether.h>
 #endif
 
-#include <net80211/ieee80211_var.h>
-#include <net80211/ieee80211_crypto.h>
+#include "Voodoo80211Device.h"
 
 #include "crypto/rijndael.h"
 
@@ -54,7 +53,7 @@ struct ieee80211_ccmp_ctx {
  * Initialize software crypto context.  This function can be overridden
  * by drivers doing hardware crypto.
  */
-int
+int MyClass::
 ieee80211_ccmp_set_key(struct ieee80211com *ic, struct ieee80211_key *k)
 {
 	struct ieee80211_ccmp_ctx *ctx;
@@ -68,7 +67,7 @@ ieee80211_ccmp_set_key(struct ieee80211com *ic, struct ieee80211_key *k)
 	return 0;
 }
 
-void
+void MyClass::
 ieee80211_ccmp_delete_key(struct ieee80211com *ic, struct ieee80211_key *k)
 {
 	if (k->k_priv != NULL)
@@ -160,7 +159,7 @@ ieee80211_ccmp_phase1(rijndael_ctx *ctx, const struct ieee80211_frame *wh,
 	rijndael_encrypt(ctx, a, s0);
 }
 
-struct mbuf *
+struct mbuf * MyClass::
 ieee80211_ccmp_encrypt(struct ieee80211com *ic, struct mbuf *m0,
                        struct ieee80211_key *k)
 {
@@ -299,7 +298,7 @@ nospace:
 	return NULL;
 }
 
-struct mbuf *
+struct mbuf * MyClass::
 ieee80211_ccmp_decrypt(struct ieee80211com *ic, struct mbuf *m0,
                        struct ieee80211_key *k)
 {

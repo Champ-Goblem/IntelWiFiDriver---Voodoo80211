@@ -8,8 +8,6 @@
 
 #include "Voodoo80211Device.h"
 #include <IOKit/IOLib.h>
-#define MyClass Voodoo80211Device
-#define super   IOService
 
 OSDefineMetaClassAndStructors(Voodoo80211Device, IOService)
 

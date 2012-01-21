@@ -36,6 +36,9 @@
 
 #include <sys/kpi_mbuf.h>
 #include "sys/tree.h"
+#include "compat/timeout.h"
+#include <IOKit/network/IOPacketQueue.h>
+#include <libkern/OSAtomic.h>
 
 #define	IEEE80211_PSCAN_WAIT	5		/* passive scan wait */
 #define	IEEE80211_TRANS_WAIT	5		/* transition wait */
@@ -189,10 +192,10 @@ struct ieee80211_node {
     
 	/* power saving mode */
 	u_int8_t		ni_pwrsave;
-	struct ifqueue		ni_savedq;	/* packets queued for pspoll */
+	IOPacketQueue*	ni_savedq;	/* packets queued for pspoll */
     
 	/* RSN */
-	struct timeout		ni_eapol_to;
+	struct timeout	ni_eapol_to;
 	u_int			ni_rsn_state;
 	u_int			ni_rsn_gstate;
 	u_int			ni_rsn_retries;
@@ -257,21 +260,13 @@ struct ieee80211_node {
 RB_HEAD(ieee80211_tree, ieee80211_node);
 
 // pvaibhav: replace with IOkit specific atomic increment
-#define ieee80211_node_incref(ni)			\
-do {						\
-int _s = splnet();			\
-(ni)->ni_refcnt++;			\
-splx(_s);				\
-} while (0)
+#define ieee80211_node_incref(ni)	OSIncrementAtomic(&((ni)->ni_refcnt))
 
 static __inline int
 ieee80211_node_decref(struct ieee80211_node *ni)
 {
-	int refcnt, s;
-	s = splnet();
-	refcnt = --ni->ni_refcnt;
-	splx(s);
-	return refcnt;
+    OSDecrementAtomic(&ni->ni_refcnt);
+	return ni->ni_refcnt;
 }
 
 static __inline struct ieee80211_node *
@@ -294,51 +289,6 @@ struct ieee80211com;
 MALLOC_DECLARE(M_80211_NODE);
 #endif
 
-extern	void ieee80211_node_attach(struct ifnet *);
-extern	void ieee80211_node_lateattach(struct ifnet *);
-extern	void ieee80211_node_detach(struct ifnet *);
-
-extern	void ieee80211_begin_scan(struct ifnet *);
-extern	void ieee80211_next_scan(struct ifnet *);
-extern	void ieee80211_end_scan(struct ifnet *);
-extern	void ieee80211_reset_scan(struct ifnet *);
-extern	struct ieee80211_node *ieee80211_alloc_node(struct ieee80211com *,
-                                                    const u_int8_t *);
-extern	struct ieee80211_node *ieee80211_dup_bss(struct ieee80211com *,
-                                                 const u_int8_t *);
-extern	struct ieee80211_node *ieee80211_find_node(struct ieee80211com *,
-                                                   const u_int8_t *);
-extern	struct ieee80211_node *ieee80211_find_rxnode(struct ieee80211com *,
-                                                     const struct ieee80211_frame *);
-extern	struct ieee80211_node *ieee80211_find_txnode(struct ieee80211com *,
-                                                     const u_int8_t *);
-extern	struct ieee80211_node *
-ieee80211_find_node_for_beacon(struct ieee80211com *,
-                               const u_int8_t *, const struct ieee80211_channel *,
-                               const char *, u_int8_t);
-extern	void ieee80211_release_node(struct ieee80211com *,
-                                    struct ieee80211_node *);
-extern	void ieee80211_free_allnodes(struct ieee80211com *);
-typedef void ieee80211_iter_func(void *, struct ieee80211_node *);
-extern	void ieee80211_iterate_nodes(struct ieee80211com *ic,
-                                     ieee80211_iter_func *, void *);
-extern	void ieee80211_clean_nodes(struct ieee80211com *);
-extern	int ieee80211_setup_rates(struct ieee80211com *,
-                                  struct ieee80211_node *, const u_int8_t *, const u_int8_t *, int);
-extern  int ieee80211_iserp_sta(const struct ieee80211_node *);
-
-extern	void ieee80211_node_join(struct ieee80211com *,
-                                 struct ieee80211_node *, int);
-extern	void ieee80211_node_leave(struct ieee80211com *,
-                                  struct ieee80211_node *);
-extern	int ieee80211_match_bss(struct ieee80211com *,
-                                struct ieee80211_node *);
-extern	void ieee80211_create_ibss(struct ieee80211com* ,
-                                   struct ieee80211_channel *);
-extern	void ieee80211_notify_dtim(struct ieee80211com *);
-
-extern	int ieee80211_node_cmp(const struct ieee80211_node *,
-                               const struct ieee80211_node *);
 RB_PROTOTYPE(ieee80211_tree, ieee80211_node, ni_node, ieee80211_node_cmp);
 
 #endif /* _NET80211_IEEE80211_NODE_H_ */

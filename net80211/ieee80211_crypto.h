@@ -23,6 +23,8 @@
  * 802.11 protocol crypto-related definitions.
  */
 
+#include <sys/queue.h>
+
 /*
  * 802.11 ciphers.
  */
@@ -105,73 +107,5 @@ struct ieee80211_pmk {
 /* forward references */
 struct	ieee80211com;
 struct	ieee80211_node;
-
-void	ieee80211_crypto_attach(struct ifnet *);
-void	ieee80211_crypto_detach(struct ifnet *);
-
-struct	ieee80211_key *ieee80211_get_txkey(struct ieee80211com *,
-                                           const struct ieee80211_frame *, struct ieee80211_node *);
-struct	ieee80211_key *ieee80211_get_rxkey(struct ieee80211com *,
-                                           mbuf_t, struct ieee80211_node *);
-mbuf_t	ieee80211_encrypt(struct ieee80211com *, mbuf_t,
-                                struct ieee80211_key *);
-mbuf_t	ieee80211_decrypt(struct ieee80211com *, mbuf_t,
-                                struct ieee80211_node *);
-
-int	ieee80211_set_key(struct ieee80211com *, struct ieee80211_node *,
-                      struct ieee80211_key *);
-void	ieee80211_delete_key(struct ieee80211com *, struct ieee80211_node *,
-                             struct ieee80211_key *);
-
-void	ieee80211_eapol_key_mic(struct ieee80211_eapol_key *,
-                                const u_int8_t *);
-int	ieee80211_eapol_key_check_mic(struct ieee80211_eapol_key *,
-                                  const u_int8_t *);
-int	ieee80211_eapol_key_decrypt(struct ieee80211_eapol_key *,
-                                const u_int8_t *);
-
-struct	ieee80211_pmk *ieee80211_pmksa_add(struct ieee80211com *,
-                                           enum ieee80211_akm, const u_int8_t *, const u_int8_t *, u_int32_t);
-struct	ieee80211_pmk *ieee80211_pmksa_find(struct ieee80211com *,
-                                            struct ieee80211_node *, const u_int8_t *);
-void	ieee80211_derive_ptk(enum ieee80211_akm, const u_int8_t *,
-                             const u_int8_t *, const u_int8_t *, const u_int8_t *,
-                             const u_int8_t *, struct ieee80211_ptk *);
-int	ieee80211_cipher_keylen(enum ieee80211_cipher);
-
-int	ieee80211_wep_set_key(struct ieee80211com *, struct ieee80211_key *);
-void	ieee80211_wep_delete_key(struct ieee80211com *,
-                                 struct ieee80211_key *);
-mbuf_t	ieee80211_wep_encrypt(struct ieee80211com *, mbuf_t,
-                                    struct ieee80211_key *);
-mbuf_t	ieee80211_wep_decrypt(struct ieee80211com *, mbuf_t,
-                                    struct ieee80211_key *);
-
-int	ieee80211_tkip_set_key(struct ieee80211com *, struct ieee80211_key *);
-void	ieee80211_tkip_delete_key(struct ieee80211com *,
-                                  struct ieee80211_key *);
-mbuf_t	ieee80211_tkip_encrypt(struct ieee80211com *,
-                                     mbuf_t, struct ieee80211_key *);
-mbuf_t	ieee80211_tkip_decrypt(struct ieee80211com *,
-                                     mbuf_t, struct ieee80211_key *);
-void	ieee80211_tkip_mic(mbuf_t, int, const u_int8_t *,
-                           u_int8_t[IEEE80211_TKIP_MICLEN]);
-void	ieee80211_michael_mic_failure(struct ieee80211com *, u_int64_t);
-
-int	ieee80211_ccmp_set_key(struct ieee80211com *, struct ieee80211_key *);
-void	ieee80211_ccmp_delete_key(struct ieee80211com *,
-                                  struct ieee80211_key *);
-mbuf_t	ieee80211_ccmp_encrypt(struct ieee80211com *, mbuf_t,
-                                     struct ieee80211_key *);
-mbuf_t	ieee80211_ccmp_decrypt(struct ieee80211com *, mbuf_t,
-                                     struct ieee80211_key *);
-
-int	ieee80211_bip_set_key(struct ieee80211com *, struct ieee80211_key *);
-void	ieee80211_bip_delete_key(struct ieee80211com *,
-                                 struct ieee80211_key *);
-mbuf_t	ieee80211_bip_encap(struct ieee80211com *, mbuf_t,
-                                  struct ieee80211_key *);
-mbuf_t	ieee80211_bip_decap(struct ieee80211com *, mbuf_t,
-                                  struct ieee80211_key *);
 
 #endif /* _NET80211_IEEE80211_CRYPTO_H_ */

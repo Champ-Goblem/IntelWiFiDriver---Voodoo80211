@@ -42,19 +42,13 @@
 #define IEEE80211_NO_HT		1	/* no HT yet */
 #endif
 
-// pvaibhav: common definitions
-#define mtod(m, t)  (t) mbuf_data(m)
-#define M_DEVBUF    2
-#define malloc      _MALLOC
-#define free        _FREE
-
 #include <sys/queue.h>
 #include <net80211/ieee80211.h>
 #include <net80211/ieee80211_crypto.h>
 #include <net80211/ieee80211_ioctl.h>		/* for ieee80211_stats */
 #include <net80211/ieee80211_node.h>
 #include <net80211/ieee80211_proto.h>
-#include <iokit/network/IOEthernetController.h>
+#include <iokit/network/IOPacketQueue.h>
 
 #define	IEEE80211_CHAN_MAX	255
 #define	IEEE80211_CHAN_ANY	0xffff		/* token for ``any channel'' */
@@ -228,8 +222,8 @@ struct ieee80211com {
 	u_char			ic_chan_avail[howmany(IEEE80211_CHAN_MAX,NBBY)];
 	u_char			ic_chan_active[howmany(IEEE80211_CHAN_MAX, NBBY)];
 	u_char			ic_chan_scan[howmany(IEEE80211_CHAN_MAX,NBBY)];
-	IOOutputQueue*	ic_mgtq;
-	IOOutputQueue*	ic_pwrsaveq;
+	IOPacketQueue*	ic_mgtq;
+	IOPacketQueue*	ic_pwrsaveq;
 	u_int			ic_scan_lock;	/* user-initiated scan */
 	u_int8_t		ic_scan_count;	/* count scans */
 	u_int32_t		ic_flags;	/* state flags */
@@ -375,29 +369,6 @@ extern struct ieee80211com_head ieee80211com_head;
 #define	IEEE80211_F_DOFRATE	0x00000002	/* use fixed rate */
 #define	IEEE80211_F_DONEGO	0x00000004	/* calc negotiated rate */
 #define	IEEE80211_F_DODEL	0x00000008	/* delete ignore rate */
-
-void	ieee80211_ifattach(struct ifnet *);
-void	ieee80211_ifdetach(struct ifnet *);
-// TODO void	ieee80211_media_init(struct ifnet *, ifm_change_cb_t, ifm_stat_cb_t);
-int     ieee80211_media_change(struct ifnet *);
-void	ieee80211_media_status(struct ifnet *, struct ifmediareq *);
-int     ieee80211_ioctl(struct ifnet *, u_long, caddr_t);
-int     ieee80211_get_rate(struct ieee80211com *);
-void	ieee80211_watchdog(struct ifnet *);
-int     ieee80211_fix_rate(struct ieee80211com *, struct ieee80211_node *, int);
-int     ieee80211_rate2media(struct ieee80211com *, int,
-                             enum ieee80211_phymode);
-int     ieee80211_media2rate(int);
-u_int8_t ieee80211_rate2plcp(u_int8_t, enum ieee80211_phymode);
-u_int8_t ieee80211_plcp2rate(u_int8_t, enum ieee80211_phymode);
-u_int	ieee80211_mhz2ieee(u_int, u_int);
-u_int	ieee80211_chan2ieee(struct ieee80211com *,
-                            const struct ieee80211_channel *);
-u_int	ieee80211_ieee2mhz(u_int, u_int);
-int     ieee80211_setmode(struct ieee80211com *, enum ieee80211_phymode);
-enum ieee80211_phymode ieee80211_next_mode(struct ifnet *);
-enum ieee80211_phymode ieee80211_chan2mode(struct ieee80211com *,
-                                           const struct ieee80211_channel *);
 
 extern	int ieee80211_cache_size;
 

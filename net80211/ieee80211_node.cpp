@@ -62,28 +62,13 @@
 #include <net/if_bridge.h>
 #endif
 
-#include <net80211/ieee80211_var.h>
-#include <net80211/ieee80211_priv.h>
+#include "Voodoo80211Device.h"
 
 #include <dev/rndvar.h>
 
-struct ieee80211_node *ieee80211_node_alloc(struct ieee80211com *);
-void ieee80211_node_free(struct ieee80211com *, struct ieee80211_node *);
-void ieee80211_node_copy(struct ieee80211com *, struct ieee80211_node *,
-                         const struct ieee80211_node *);
-void ieee80211_choose_rsnparams(struct ieee80211com *);
-u_int8_t ieee80211_node_getrssi(struct ieee80211com *,
-                                const struct ieee80211_node *);
-void ieee80211_setup_node(struct ieee80211com *, struct ieee80211_node *,
-                          const u_int8_t *);
-void ieee80211_free_node(struct ieee80211com *, struct ieee80211_node *);
-struct ieee80211_node *ieee80211_alloc_node_helper(struct ieee80211com *);
-void ieee80211_node_cleanup(struct ieee80211com *, struct ieee80211_node *);
-void ieee80211_needs_auth(struct ieee80211com *, struct ieee80211_node *);
-
 #define M_80211_NODE	M_DEVBUF
 
-void
+void MyClass::
 ieee80211_node_attach(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
@@ -102,7 +87,7 @@ ieee80211_node_attach(struct ifnet *ifp)
 		ic->ic_max_aid = IEEE80211_AID_MAX;
 }
 
-struct ieee80211_node *
+struct ieee80211_node * MyClass::
 ieee80211_alloc_node_helper(struct ieee80211com *ic)
 {
 	struct ieee80211_node *ni;
@@ -116,7 +101,7 @@ ieee80211_alloc_node_helper(struct ieee80211com *ic)
 	return ni;
 }
 
-void
+void MyClass::
 ieee80211_node_lateattach(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
@@ -130,7 +115,7 @@ ieee80211_node_lateattach(struct ifnet *ifp)
 	ic->ic_txpower = IEEE80211_TXPOWER_MAX;
 }
 
-void
+void MyClass::
 ieee80211_node_detach(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
@@ -151,7 +136,7 @@ ieee80211_node_detach(struct ifnet *ifp)
  * Initialize the active channel set based on the set
  * of available channels and the current PHY mode.
  */
-void
+void MyClass::
 ieee80211_reset_scan(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
@@ -166,7 +151,7 @@ ieee80211_reset_scan(struct ifnet *ifp)
 /*
  * Begin an active scan.
  */
-void
+void MyClass::
 ieee80211_begin_scan(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
@@ -213,7 +198,7 @@ ieee80211_begin_scan(struct ifnet *ifp)
 /*
  * Switch to the next channel marked for scanning.
  */
-void
+void MyClass::
 ieee80211_next_scan(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
@@ -245,7 +230,7 @@ ieee80211_next_scan(struct ifnet *ifp)
 	ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 }
 
-int
+int MyClass::
 ieee80211_match_bss(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	u_int8_t rate;
@@ -355,7 +340,7 @@ ieee80211_match_bss(struct ieee80211com *ic, struct ieee80211_node *ni)
 /*
  * Complete a scan of potential channels.
  */
-void
+void MyClass::
 ieee80211_end_scan(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
@@ -454,7 +439,7 @@ wakeup:
  * Autoselect the best RSN parameters (protocol, AKMP, pairwise cipher...)
  * that are supported by both peers (STA mode only).
  */
-void
+void MyClass::
 ieee80211_choose_rsnparams(struct ieee80211com *ic)
 {
 	struct ieee80211_node *ni = ic->ic_bss;
@@ -507,7 +492,7 @@ ieee80211_choose_rsnparams(struct ieee80211com *ic)
 		ni->ni_flags |= IEEE80211_NODE_MFP;
 }
 
-int
+int MyClass::
 ieee80211_get_rate(struct ieee80211com *ic)
 {
 	u_int8_t (*rates)[IEEE80211_RATE_MAXSIZE];
@@ -525,14 +510,14 @@ ieee80211_get_rate(struct ieee80211com *ic)
 	return rate & IEEE80211_RATE_VAL;
 }
 
-struct ieee80211_node *
+struct ieee80211_node * MyClass::
 ieee80211_node_alloc(struct ieee80211com *ic)
 {
 	return malloc(sizeof(struct ieee80211_node), M_80211_NODE,
                   M_NOWAIT | M_ZERO);
 }
 
-void
+void MyClass::
 ieee80211_node_cleanup(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	if (ni->ni_rsnie != NULL) {
@@ -541,14 +526,14 @@ ieee80211_node_cleanup(struct ieee80211com *ic, struct ieee80211_node *ni)
 	}
 }
 
-void
+void MyClass::
 ieee80211_node_free(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	ieee80211_node_cleanup(ic, ni);
 	free(ni, M_80211_NODE);
 }
 
-void
+void MyClass::
 ieee80211_node_copy(struct ieee80211com *ic,
                     struct ieee80211_node *dst, const struct ieee80211_node *src)
 {
@@ -559,14 +544,14 @@ ieee80211_node_copy(struct ieee80211com *ic,
 		ieee80211_save_ie(src->ni_rsnie, &dst->ni_rsnie);
 }
 
-u_int8_t
+u_int8_t MyClass::
 ieee80211_node_getrssi(struct ieee80211com *ic,
                        const struct ieee80211_node *ni)
 {
 	return ni->ni_rssi;
 }
 
-void
+void MyClass::
 ieee80211_setup_node(struct ieee80211com *ic,
                      struct ieee80211_node *ni, const u_int8_t *macaddr)
 {
@@ -595,7 +580,7 @@ ieee80211_setup_node(struct ieee80211com *ic,
 	splx(s);
 }
 
-struct ieee80211_node *
+struct ieee80211_node * MyClass::
 ieee80211_alloc_node(struct ieee80211com *ic, const u_int8_t *macaddr)
 {
 	struct ieee80211_node *ni = ieee80211_alloc_node_helper(ic);
@@ -606,7 +591,7 @@ ieee80211_alloc_node(struct ieee80211com *ic, const u_int8_t *macaddr)
 	return ni;
 }
 
-struct ieee80211_node *
+struct ieee80211_node * MyClass::
 ieee80211_dup_bss(struct ieee80211com *ic, const u_int8_t *macaddr)
 {
 	struct ieee80211_node *ni = ieee80211_alloc_node_helper(ic);
@@ -622,7 +607,7 @@ ieee80211_dup_bss(struct ieee80211com *ic, const u_int8_t *macaddr)
 	return ni;
 }
 
-struct ieee80211_node *
+struct ieee80211_node * MyClass::
 ieee80211_find_node(struct ieee80211com *ic, const u_int8_t *macaddr)
 {
 	struct ieee80211_node *ni;
@@ -649,7 +634,7 @@ ieee80211_find_node(struct ieee80211com *ic, const u_int8_t *macaddr)
  * Drivers will call this, so increase the reference count before
  * returning the node.
  */
-struct ieee80211_node *
+struct ieee80211_node * MyClass::
 ieee80211_find_txnode(struct ieee80211com *ic, const u_int8_t *macaddr)
 {
 	/*
@@ -686,7 +671,7 @@ ieee80211_find_txnode(struct ieee80211com *ic, const u_int8_t *macaddr)
  * Return non-zero if the packet's node-record is kept, zero
  * otherwise.
  */
-static __inline int
+static __inline int MyClass::
 ieee80211_needs_rxnode(struct ieee80211com *ic,
                        const struct ieee80211_frame *wh, const u_int8_t **bssid)
 {
@@ -734,7 +719,7 @@ ieee80211_needs_rxnode(struct ieee80211com *ic,
  * Drivers call this, so increase the reference count before returning
  * the node.
  */
-struct ieee80211_node *
+struct ieee80211_node * MyClass::
 ieee80211_find_rxnode(struct ieee80211com *ic,
                       const struct ieee80211_frame *wh)
 {
@@ -769,7 +754,7 @@ ieee80211_find_rxnode(struct ieee80211com *ic,
 	return ieee80211_ref_node(ni);
 }
 
-struct ieee80211_node *
+struct ieee80211_node * MyClass::
 ieee80211_find_node_for_beacon(struct ieee80211com *ic,
                                const u_int8_t *macaddr, const struct ieee80211_channel *chan,
                                const char *ssid, u_int8_t rssi)
@@ -793,7 +778,7 @@ ieee80211_find_node_for_beacon(struct ieee80211com *ic,
 	return (keep);
 }
 
-void
+void MyClass::
 ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	if (ni == ic->ic_bss)
@@ -808,7 +793,7 @@ ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 	/* TBD indicate to drivers that a new node can be allocated */
 }
 
-void
+void MyClass::
 ieee80211_release_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	int s;
@@ -823,7 +808,7 @@ ieee80211_release_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 	}
 }
 
-void
+void MyClass::
 ieee80211_free_allnodes(struct ieee80211com *ic)
 {
 	struct ieee80211_node *ni;
@@ -842,7 +827,7 @@ ieee80211_free_allnodes(struct ieee80211com *ic)
 /*
  * Timeout inactive nodes.
  */
-void
+void MyClass::
 ieee80211_clean_nodes(struct ieee80211com *ic)
 {
 	struct ieee80211_node *ni, *next_ni;
@@ -871,7 +856,7 @@ ieee80211_clean_nodes(struct ieee80211com *ic)
 	splx(s);
 }
 
-void
+void MyClass::
 ieee80211_iterate_nodes(struct ieee80211com *ic, ieee80211_iter_func *f,
                         void *arg)
 {
@@ -887,7 +872,7 @@ ieee80211_iterate_nodes(struct ieee80211com *ic, ieee80211_iter_func *f,
 /*
  * Install received rate set information in the node's state block.
  */
-int
+int MyClass::
 ieee80211_setup_rates(struct ieee80211com *ic, struct ieee80211_node *ni,
                       const u_int8_t *rates, const u_int8_t *xrates, int flags)
 {
@@ -918,7 +903,7 @@ ieee80211_setup_rates(struct ieee80211com *ic, struct ieee80211_node *ni,
 /*
  * Compare nodes in the tree by lladdr
  */
-int
+int MyClass::
 ieee80211_node_cmp(const struct ieee80211_node *b1,
                    const struct ieee80211_node *b2)
 {
