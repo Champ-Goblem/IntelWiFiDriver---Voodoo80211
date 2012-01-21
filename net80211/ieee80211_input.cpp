@@ -31,6 +31,7 @@
  */
 
 #include "Voodoo80211Device.h"
+#include <libkern/OSMalloc.h>
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_priv.h>

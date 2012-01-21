@@ -24,7 +24,7 @@
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
-#include "endian.h"
+#include "sys/endian.h"
 #include <sys/errno.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
@@ -44,14 +44,17 @@
 #include <net80211/ieee80211_priv.h>
 
 #include <dev/rndvar.h>
-#include <crypto/arc4.h>
-#include <crypto/md5.h>
-#include <crypto/sha1.h>
-#include <crypto/sha2.h>
-#include <crypto/hmac.h>
-#include <crypto/rijndael.h>
-#include <crypto/cmac.h>
-#include <crypto/key_wrap.h>
+#include "crypto/arc4.h"
+#include "crypto/md5.h"
+#include "crypto/sha1.h"
+#include "crypto/sha2.h"
+#include "crypto/hmac.h"
+#include "crypto/rijndael.h"
+#include "crypto/cmac.h"
+#include "crypto/key_wrap.h"
+
+#include <IOKit/IOLib.h>
+#include <libkern/OSMalloc.h>
 
 void	ieee80211_prf(const u_int8_t *, size_t, const u_int8_t *, size_t,
                       const u_int8_t *, size_t, u_int8_t *, size_t);
@@ -63,7 +66,7 @@ void	ieee80211_derive_pmkid(enum ieee80211_akm, const u_int8_t *,
 void
 ieee80211_crypto_attach(struct ifnet *ifp)
 {
-	struct ieee80211com *ic = (void *)ifp;
+	struct ieee80211com *ic = (ieee80211com *)ifp;
     
 	TAILQ_INIT(&ic->ic_pmksa);
 	if (ic->ic_caps & IEEE80211_C_RSN) {
@@ -81,15 +84,16 @@ ieee80211_crypto_attach(struct ifnet *ifp)
 void
 ieee80211_crypto_detach(struct ifnet *ifp)
 {
-	struct ieee80211com *ic = (void *)ifp;
+	struct ieee80211com *ic = (ieee80211com *)ifp;
 	struct ieee80211_pmk *pmk;
 	int i;
     
 	/* purge the PMKSA cache */
 	while ((pmk = TAILQ_FIRST(&ic->ic_pmksa)) != NULL) {
 		TAILQ_REMOVE(&ic->ic_pmksa, pmk, pmk_next);
-		explicit_bzero(pmk, sizeof(*pmk));
-		free(pmk, M_DEVBUF);
+		bzero(pmk, sizeof(*pmk)); // XXX: was explicit_bzero
+        IOFree(pmk, sizeof(ieee80211_pmk));
+		//free(pmk, M_DEVBUF);
 	}
     
 	/* clear all group keys from memory */
@@ -97,11 +101,11 @@ ieee80211_crypto_detach(struct ifnet *ifp)
 		struct ieee80211_key *k = &ic->ic_nw_keys[i];
 		if (k->k_cipher != IEEE80211_CIPHER_NONE)
 			(*ic->ic_delete_key)(ic, NULL, k);
-		explicit_bzero(k, sizeof(*k));
+		/*explicit_*/bzero(k, sizeof(*k));
 	}
     
 	/* clear pre-shared key from memory */
-	explicit_bzero(ic->ic_psk, IEEE80211_PMK_LEN);
+	/*explicit_*/bzero(ic->ic_psk, IEEE80211_PMK_LEN);
 }
 
 /*
@@ -175,7 +179,7 @@ ieee80211_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
             /* should not get there */
             break;
 	}
-	explicit_bzero(k, sizeof(*k));
+	/*explicit_*/bzero(k, sizeof(*k));
 }
 
 struct ieee80211_key *
@@ -381,7 +385,7 @@ ieee80211_derive_ptk(enum ieee80211_akm akm, const u_int8_t *pmk,
 	memcpy(&buf[44], ret ? snonce : anonce, EAPOL_KEY_NONCE_LEN);
     
 	kdf = ieee80211_is_sha256_akm(akm) ? ieee80211_kdf : ieee80211_prf;
-	(*kdf)(pmk, IEEE80211_PMK_LEN, "Pairwise key expansion", 23,
+	(*kdf)(pmk, IEEE80211_PMK_LEN, (const u_int8_t *)"Pairwise key expansion", 23,
            buf, sizeof buf, (u_int8_t *)ptk, sizeof(*ptk));
 }
 
@@ -393,7 +397,7 @@ ieee80211_pmkid_sha1(const u_int8_t *pmk, const u_int8_t *aa,
 	u_int8_t digest[SHA1_DIGEST_LENGTH];
     
 	HMAC_SHA1_Init(&ctx, pmk, IEEE80211_PMK_LEN);
-	HMAC_SHA1_Update(&ctx, "PMK Name", 8);
+	HMAC_SHA1_Update(&ctx, (const u_int8_t *)"PMK Name", 8);
 	HMAC_SHA1_Update(&ctx, aa, IEEE80211_ADDR_LEN);
 	HMAC_SHA1_Update(&ctx, spa, IEEE80211_ADDR_LEN);
 	HMAC_SHA1_Final(digest, &ctx);
@@ -409,7 +413,7 @@ ieee80211_pmkid_sha256(const u_int8_t *pmk, const u_int8_t *aa,
 	u_int8_t digest[SHA256_DIGEST_LENGTH];
     
 	HMAC_SHA256_Init(&ctx, pmk, IEEE80211_PMK_LEN);
-	HMAC_SHA256_Update(&ctx, "PMK Name", 8);
+	HMAC_SHA256_Update(&ctx, (const u_int8_t *)"PMK Name", 8);
 	HMAC_SHA256_Update(&ctx, aa, IEEE80211_ADDR_LEN);
 	HMAC_SHA256_Update(&ctx, spa, IEEE80211_ADDR_LEN);
 	HMAC_SHA256_Final(digest, &ctx);
@@ -551,7 +555,7 @@ ieee80211_pmksa_add(struct ieee80211com *ic, enum ieee80211_akm akm,
 	}
 	if (pmk == NULL) {
 		/* allocate a new PMKSA entry */
-		if ((pmk = malloc(sizeof(*pmk), M_DEVBUF, M_NOWAIT)) == NULL)
+		if ((pmk = (ieee80211_pmk*) malloc(sizeof(*pmk), M_DEVBUF, M_NOWAIT)) == NULL)
 			return NULL;
 		pmk->pmk_akm = akm;
 		IEEE80211_ADDR_COPY(pmk->pmk_macaddr, macaddr);

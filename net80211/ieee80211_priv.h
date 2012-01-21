@@ -19,9 +19,6 @@
 #ifndef _NET80211_IEEE80211_PRIV_H_
 #define _NET80211_IEEE80211_PRIV_H_
 
-// pvaibhav: common definitions
-#define mtod(m, t) (t) mbuf_data(m)
-
 #ifdef IEEE80211_DEBUG
 extern int ieee80211_debug;
 #define DPRINTF(X) do {				\

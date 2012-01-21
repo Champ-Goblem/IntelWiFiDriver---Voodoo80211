@@ -27,7 +27,7 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
-#include "endian.h"
+#include "sys/endian.h"
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -43,7 +43,7 @@
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_crypto.h>
 
-#include <crypto/rijndael.h>
+#include "crypto/rijndael.h"
 
 /* CCMP software crypto context */
 struct ieee80211_ccmp_ctx {
@@ -59,7 +59,8 @@ ieee80211_ccmp_set_key(struct ieee80211com *ic, struct ieee80211_key *k)
 {
 	struct ieee80211_ccmp_ctx *ctx;
     
-	ctx = malloc(sizeof(*ctx), M_DEVBUF, M_NOWAIT | M_ZERO);
+	ctx = (struct ieee80211_ccmp_ctx *)
+            malloc(sizeof(*ctx), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ctx == NULL)
 		return ENOMEM;
 	rijndael_set_key_enc_only(&ctx->rijndael, k->k_key, 128);
