@@ -535,7 +535,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 	ic->ic_state = nstate;			/* state transition */
 	ni = ic->ic_bss;			/* NB: no reference held */
 	if (ostate == IEEE80211_S_RUN)
-		ieee80211_set_link_state(ic, kIONetworkLinkActive);
+		ieee80211_set_link_state(ic, kIO80211NetworkLinkUp);
 	switch (nstate) {
 		case IEEE80211_S_INIT:
 			/*
@@ -717,7 +717,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 						 * NB: When RSN is enabled, we defer setting
 						 * the link up until the port is valid.
 						 */
-						ieee80211_set_link_state(ic, kIONetworkLinkActive);
+						ieee80211_set_link_state(ic, kIO80211NetworkLinkUp);
 					}
 					ic->ic_mgt_timer = 0;
 					fOutputQueue->start();
@@ -729,17 +729,14 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 }
 
 void MyClass::
-ieee80211_set_link_state(struct ieee80211com *ic, int nstate)
+ieee80211_set_link_state(struct ieee80211com *ic, IO80211LinkState nstate)
 {	
 	switch (ic->ic_opmode) {
 		case IEEE80211_M_MONITOR:
-			nstate = kIONetworkLinkDown;
+			nstate = kIO80211NetworkLinkDown;
 			break;
 		default:
 			break;
 	}
-	if (nstate != ifp->if_link_state) {
-		ifp->if_link_state = nstate;
-		if_link_state_change(ifp);
-	}
+	fInterface->setLinkState((IO80211LinkState) nstate, 0);
 }

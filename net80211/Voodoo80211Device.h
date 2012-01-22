@@ -15,7 +15,7 @@
 
 // pvaibhav: common definitions
 #define MyClass         Voodoo80211Device
-#define super           IOEthernetController
+#define super           IO80211Controller
 #define __packed        __attribute__((__packed__))
 #define mtod(m, t)      (t) mbuf_data(m)
 #define M_DEVBUF        2
@@ -34,14 +34,25 @@
 #include "ieee80211_var.h"
 #include "VoodooTimeout.h"
 
-class Voodoo80211Device : public IOEthernetController
+#include "apple80211/SL/IO80211Controller.h"
+#include "apple80211/SL/IO80211Interface.h"
+#include "apple80211/SL/IO80211WorkLoop.h"
+
+class Voodoo80211Device : public IO80211Controller
 {
 	OSDeclareDefaultStructors(Voodoo80211Device)
-    
+	
+public:
+#pragma mark I/O Kit specific
+	virtual bool start(IOService* provider);
+	virtual void stop(IOService* provider);
+	IOReturn getHardwareAddress(IOEthernetAddress * addrP);
+	SInt32 apple80211Request( UInt32 req, int type, IO80211Interface * intf, void * data );
+	
 private:
 #pragma mark Private data
-	IOEthernetInterface*    fInterface;
-	IOWorkLoop*             fWorkloop;
+	IO80211Interface*	fInterface;
+	IO80211WorkLoop*	fWorkloop;
 	IOTimerEventSource*     fTimer;
 	IOGatedOutputQueue*	fOutputQueue;
 
@@ -197,7 +208,7 @@ protected:
 #pragma mark ieee80211_proto.h
 	void	ieee80211_proto_attach(struct ifnet *);
 	void	ieee80211_proto_detach(struct ifnet *);
-	void	ieee80211_set_link_state(struct ieee80211com *, int);
+	void	ieee80211_set_link_state(struct ieee80211com *, IO80211LinkState);
 	u_int	ieee80211_get_hdrlen(const struct ieee80211_frame *);
 	void	ieee80211_input(struct ifnet *, mbuf_t, struct ieee80211_node *, struct ieee80211_rxinfo *);
 	int	ieee80211_output(struct ifnet *, mbuf_t, struct sockaddr *, struct rtentry *);
@@ -261,12 +272,6 @@ protected:
 #endif
 	// cpp file
 	int	ieee80211_newstate(struct ieee80211com *, enum ieee80211_state, int);
-    
-public:
-#pragma mark I/O Kit specific
-	virtual bool start(IOService* provider);
-	virtual void stop(IOService* provider);
-	IOReturn getHardwareAddress(IOEthernetAddress * addrP);
 };
 
 #endif

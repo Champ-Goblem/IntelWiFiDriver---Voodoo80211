@@ -9,7 +9,7 @@
 #include "Voodoo80211Device.h"
 #include <IOKit/IOLib.h>
 
-OSDefineMetaClassAndStructors(Voodoo80211Device, IOEthernetController)
+OSDefineMetaClassAndStructors(Voodoo80211Device, IO80211Controller)
 OSDefineMetaClassAndStructors(VoodooTimeout, OSObject)
 
 bool MyClass::start(IOService* provider) {
@@ -27,6 +27,10 @@ void MyClass::stop(IOService* provider) {
 
 IOReturn MyClass::getHardwareAddress(IOEthernetAddress * addrP) {
 	return kIOReturnSuccess;
+}
+
+SInt32 MyClass::apple80211Request( UInt32 req, int type, IO80211Interface * intf, void * data ) {
+	return 0;
 }
 
 #pragma mark Compatibility functions
