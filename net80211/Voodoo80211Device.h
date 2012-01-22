@@ -172,7 +172,7 @@ protected:
 	mbuf_t	ieee80211_defrag(struct ieee80211com *, mbuf_t, int);
 	void	ieee80211_defrag_timeout(void *);
 	#ifndef IEEE80211_NO_HT
-	void	ieee80211_input_ba(struct ifnet *, mbuf_t, struct ieee80211_node *, int, struct ieee80211_rxinfo *);
+	void	ieee80211_input_ba(struct ieee80211com *, mbuf_t, struct ieee80211_node *, int, struct ieee80211_rxinfo *);
 	void	ieee80211_ba_move_window(struct ieee80211com *, struct ieee80211_node *, u_int8_t, u_int16_t);
 	#endif
 	mbuf_t	ieee80211_align_mbuf(mbuf_t);
@@ -210,7 +210,7 @@ protected:
 	void	ieee80211_proto_detach(struct ifnet *);
 	void	ieee80211_set_link_state(struct ieee80211com *, IO80211LinkState);
 	u_int	ieee80211_get_hdrlen(const struct ieee80211_frame *);
-	void	ieee80211_input(struct ifnet *, mbuf_t, struct ieee80211_node *, struct ieee80211_rxinfo *);
+	void	ieee80211_input(struct ieee80211com *, mbuf_t, struct ieee80211_node *, struct ieee80211_rxinfo *);
 	int	ieee80211_output(struct ifnet *, mbuf_t, struct sockaddr *, struct rtentry *);
 	void	ieee80211_recv_mgmt(struct ieee80211com *, mbuf_t, struct ieee80211_node *, struct ieee80211_rxinfo *, int);
 	int	ieee80211_send_mgmt(struct ieee80211com *, struct ieee80211_node *, int, int, int);

@@ -87,8 +87,8 @@ void MyClass::
 ieee80211_proto_attach(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (struct ieee80211com *)ifp;
-	
-	// TODO: ifp->if_hdrlen = sizeof(struct ieee80211_frame);
+	// XXX: ifp->if_hdrlen = sizeof(struct ieee80211_frame);
+	// assuming that IO80211Interface automatically sets this (setMediaHeaderLength() is protected)
 	
 #ifdef notdef
 	ic->ic_rtsthreshold = IEEE80211_RTS_DEFAULT;

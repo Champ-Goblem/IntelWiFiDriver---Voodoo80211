@@ -169,7 +169,7 @@ struct ieee80211_edca_ac_params {
  * Entry in the fragment cache.
  */
 struct ieee80211_defrag {
-	VoodooTimeout*	df_to; // TODO: replace with iokit equiv
+	VoodooTimeout*	df_to;
 	mbuf_t		df_m;
 	u_int16_t	df_seq;
 	u_int8_t	df_frag;
@@ -189,34 +189,21 @@ struct ieee80211_defrag {
 struct ieee80211com {
 	//TODO struct arpcom		ic_ac;
 	LIST_ENTRY(ieee80211com) ic_list;	/* chain of all ieee80211com */
-	void			(*ic_recv_mgmt)(struct ieee80211com *,
-				    struct mbuf *, struct ieee80211_node *,
+	void			(*ic_recv_mgmt)(struct ieee80211com *, mbuf_t, struct ieee80211_node *,
 				    struct ieee80211_rxinfo *, int);
-	int			(*ic_send_mgmt)(struct ieee80211com *,
-				    struct ieee80211_node *, int, int, int);
-	int			(*ic_newstate)(struct ieee80211com *,
-				    enum ieee80211_state, int);
-	void			(*ic_newassoc)(struct ieee80211com *,
-				    struct ieee80211_node *, int);
-	void			(*ic_node_leave)(struct ieee80211com *,
-				    struct ieee80211_node *);
+	int			(*ic_send_mgmt)(struct ieee80211com *, struct ieee80211_node *, int, int, int);
+	int			(*ic_newstate)(struct ieee80211com *, enum ieee80211_state, int);
+	void			(*ic_newassoc)(struct ieee80211com *, struct ieee80211_node *, int);
+	void			(*ic_node_leave)(struct ieee80211com *, struct ieee80211_node *);
 	void			(*ic_updateslot)(struct ieee80211com *);
 	void			(*ic_updateedca)(struct ieee80211com *);
 	void			(*ic_set_tim)(struct ieee80211com *, int, int);
-	int			(*ic_set_key)(struct ieee80211com *,
-				    struct ieee80211_node *,
-				    struct ieee80211_key *);
-	void			(*ic_delete_key)(struct ieee80211com *,
-				    struct ieee80211_node *,
-				    struct ieee80211_key *);
-	int			(*ic_ampdu_tx_start)(struct ieee80211com *,
-				    struct ieee80211_node *, u_int8_t);
-	void			(*ic_ampdu_tx_stop)(struct ieee80211com *,
-				    struct ieee80211_node *, u_int8_t);
-	int			(*ic_ampdu_rx_start)(struct ieee80211com *,
-				    struct ieee80211_node *, u_int8_t);
-	void			(*ic_ampdu_rx_stop)(struct ieee80211com *,
-				    struct ieee80211_node *, u_int8_t);
+	int			(*ic_set_key)(struct ieee80211com *, struct ieee80211_node *, struct ieee80211_key *);
+	void			(*ic_delete_key)(struct ieee80211com *, struct ieee80211_node *, struct ieee80211_key *);
+	int			(*ic_ampdu_tx_start)(struct ieee80211com *, struct ieee80211_node *, u_int8_t);
+	void			(*ic_ampdu_tx_stop)(struct ieee80211com *, struct ieee80211_node *, u_int8_t);
+	int			(*ic_ampdu_rx_start)(struct ieee80211com *, struct ieee80211_node *, u_int8_t);
+	void			(*ic_ampdu_rx_stop)(struct ieee80211com *, struct ieee80211_node *, u_int8_t);
 	u_int8_t		ic_myaddr[IEEE80211_ADDR_LEN];
 	struct ieee80211_rateset ic_sup_rates[IEEE80211_MODE_MAX];
 	struct ieee80211_channel ic_channels[IEEE80211_CHAN_MAX+1];
@@ -246,13 +233,9 @@ struct ieee80211com {
 	u_int16_t		ic_fragthreshold;
 	u_int			ic_scangen;	/* gen# for timeout scan */
 	struct ieee80211_node	*(*ic_node_alloc)(struct ieee80211com *);
-	void			(*ic_node_free)(struct ieee80211com *,
-					struct ieee80211_node *);
-	void			(*ic_node_copy)(struct ieee80211com *,
-					struct ieee80211_node *,
-					const struct ieee80211_node *);
-	u_int8_t		(*ic_node_getrssi)(struct ieee80211com *,
-					const struct ieee80211_node *);
+	void			(*ic_node_free)(struct ieee80211com *, struct ieee80211_node *);
+	void			(*ic_node_copy)(struct ieee80211com *, struct ieee80211_node *, const struct ieee80211_node *);
+	u_int8_t		(*ic_node_getrssi)(struct ieee80211com *, const struct ieee80211_node *);
 	u_int8_t		ic_max_rssi;
 	struct ieee80211_tree	ic_tree;
 	int			ic_nnodes;	/* length of ic_nnodes */
@@ -271,14 +254,12 @@ struct ieee80211com {
 	struct ieee80211_channel *ic_des_chan;	/* desired channel */
 	u_int8_t		ic_des_bssid[IEEE80211_ADDR_LEN];
 	struct ieee80211_key	ic_nw_keys[IEEE80211_GROUP_NKID];
-	int             ic_def_txkey;	/* group data key index */
+	int			ic_def_txkey;	/* group data key index */
 #define ic_wep_txkey	ic_def_txkey
-	int             ic_igtk_kid;	/* IGTK key index */
+	int			ic_igtk_kid;	/* IGTK key index */
 	u_int32_t		ic_iv;		/* initial vector for wep */
 	struct ieee80211_stats	ic_stats;	/* statistics */
-	//TODO struct timeval	ic_last_merge_print;	/* for rate-limiting
-                                             /* IBSS merge print-outs
-                                             */
+	// TODO struct timeval		ic_last_merge_print;	/* for rate-limiting IBSS merge print-outs */
 	struct ieee80211_edca_ac_params ic_edca_ac[EDCA_NUM_AC];
 	u_int			ic_edca_updtcount;
 	u_int16_t		ic_tid_noack;
