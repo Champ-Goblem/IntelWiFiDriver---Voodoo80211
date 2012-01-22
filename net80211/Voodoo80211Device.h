@@ -67,8 +67,8 @@ private:
 
 protected:
 #pragma mark ieee80211_var.h
-	void	ieee80211_ifattach(struct ifnet *);
-	void	ieee80211_ifdetach(struct ifnet *);
+	void	ieee80211_ifattach(struct ieee80211com *);
+	void	ieee80211_ifdetach(struct ieee80211com *);
 	// TODO void	ieee80211_media_init(struct ifnet *, ifm_change_cb_t, ifm_stat_cb_t);
 	int     ieee80211_media_change(struct ifnet *);
 	void	ieee80211_media_status(struct ifnet *, struct ifmediareq *);
@@ -133,8 +133,8 @@ protected:
 	void	ieee80211_kdf(const u_int8_t *, size_t, const u_int8_t *, size_t, const u_int8_t *, size_t, u_int8_t *, size_t);
 	void	ieee80211_derive_pmkid(enum ieee80211_akm, const u_int8_t *, const u_int8_t *, const u_int8_t *, u_int8_t *);
 	// header file
-	void	ieee80211_crypto_attach(struct ifnet *);
-	void	ieee80211_crypto_detach(struct ifnet *);
+	void	ieee80211_crypto_attach(struct ieee80211com *);
+	void	ieee80211_crypto_detach(struct ieee80211com *);
 	struct	ieee80211_key *ieee80211_get_txkey(struct ieee80211com *, const struct ieee80211_frame *, struct ieee80211_node *);
 	struct	ieee80211_key *ieee80211_get_rxkey(struct ieee80211com *, mbuf_t, struct ieee80211_node *);
 	mbuf_t	ieee80211_encrypt(struct ieee80211com *, mbuf_t, struct ieee80211_key *);
@@ -167,6 +167,11 @@ protected:
 	mbuf_t	ieee80211_bip_encap(struct ieee80211com *, mbuf_t, struct ieee80211_key *);
 	mbuf_t	ieee80211_bip_decap(struct ieee80211com *, mbuf_t, struct ieee80211_key *);  
 
+#pragma mark ieee80211.cpp
+	// cpp file
+	void	ieee80211_setbasicrates(struct ieee80211com *);
+	int	ieee80211_findrate(struct ieee80211com *, enum ieee80211_phymode, int);
+	
 #pragma mark ieee80211_input.cpp
 	// cpp file
 	mbuf_t	ieee80211_defrag(struct ieee80211com *, mbuf_t, int);
@@ -225,8 +230,8 @@ protected:
 	mbuf_t	ieee80211_get_action(struct ieee80211com *, struct ieee80211_node *, u_int8_t, u_int8_t, int);
 	
 #pragma mark ieee80211_proto.h
-	void	ieee80211_proto_attach(struct ifnet *);
-	void	ieee80211_proto_detach(struct ifnet *);
+	void	ieee80211_proto_attach(struct ieee80211com *);
+	void	ieee80211_proto_detach(struct ieee80211com *);
 	void	ieee80211_set_link_state(struct ieee80211com *, IO80211LinkState);
 	u_int	ieee80211_get_hdrlen(const struct ieee80211_frame *);
 	void	ieee80211_input(struct ieee80211com *, mbuf_t, struct ieee80211_node *, struct ieee80211_rxinfo *);

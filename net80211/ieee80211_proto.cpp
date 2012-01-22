@@ -84,9 +84,8 @@ const char * const ieee80211_phymode_name[] = {
 };
 
 void MyClass::
-ieee80211_proto_attach(struct ifnet *ifp)
+ieee80211_proto_attach(struct ieee80211com *ic)
 {
-	struct ieee80211com *ic = (struct ieee80211com *)ifp;
 	// XXX: ifp->if_hdrlen = sizeof(struct ieee80211_frame);
 	// assuming that IO80211Interface automatically sets this (setMediaHeaderLength() is protected)
 	
@@ -108,9 +107,8 @@ ieee80211_proto_attach(struct ifnet *ifp)
 }
 
 void MyClass::
-ieee80211_proto_detach(struct ifnet *ifp)
+ieee80211_proto_detach(struct ieee80211com *ic)
 {
-	struct ieee80211com *ic = (struct ieee80211com *)ifp;
 	ic->ic_mgtq->flush();
 	ic->ic_pwrsaveq->flush();
 }

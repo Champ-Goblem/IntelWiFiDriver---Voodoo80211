@@ -56,10 +56,8 @@
 #include <libkern/OSMalloc.h>
 
 void MyClass::
-ieee80211_crypto_attach(struct ifnet *ifp)
+ieee80211_crypto_attach(struct ieee80211com *ic)
 {
-	struct ieee80211com *ic = (ieee80211com *)ifp;
-    
 	TAILQ_INIT(&ic->ic_pmksa);
 	if (ic->ic_caps & IEEE80211_C_RSN) {
 		ic->ic_rsnprotos = IEEE80211_PROTO_WPA | IEEE80211_PROTO_RSN;
@@ -69,13 +67,12 @@ ieee80211_crypto_attach(struct ifnet *ifp)
 		ic->ic_rsngroupmgmtcipher = IEEE80211_CIPHER_BIP;
 	}
 	VoodooSetFunction(ic->ic_set_key, ieee80211_set_key);
-    VoodooSetFunction(ic->ic_delete_key, ieee80211_delete_key);
+	VoodooSetFunction(ic->ic_delete_key, ieee80211_delete_key);
 }
 
 void MyClass::
-ieee80211_crypto_detach(struct ifnet *ifp)
+ieee80211_crypto_detach(struct ieee80211com *ic)
 {
-	struct ieee80211com *ic = (ieee80211com *)ifp;
 	struct ieee80211_pmk *pmk;
 	int i;
     
