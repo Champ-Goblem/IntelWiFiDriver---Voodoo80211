@@ -53,6 +53,7 @@
 		1FDB516314CBA53000C16F95 /* IO80211Interface.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDB515714CBA53000C16F95 /* IO80211Interface.h */; };
 		1FDB516414CBA53000C16F95 /* IO80211WorkLoop.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDB515814CBA53000C16F95 /* IO80211WorkLoop.h */; };
 		1FDB516614CBA8A800C16F95 /* ieee80211_input.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FDB516514CBA8A800C16F95 /* ieee80211_input.cpp */; };
+		1FDB516814CC412600C16F95 /* ieee80211_output.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FDB516714CC412500C16F95 /* ieee80211_output.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -106,6 +107,7 @@
 		1FDB515714CBA53000C16F95 /* IO80211Interface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IO80211Interface.h; sourceTree = "<group>"; };
 		1FDB515814CBA53000C16F95 /* IO80211WorkLoop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IO80211WorkLoop.h; sourceTree = "<group>"; };
 		1FDB516514CBA8A800C16F95 /* ieee80211_input.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ieee80211_input.cpp; sourceTree = "<group>"; };
+		1FDB516714CC412500C16F95 /* ieee80211_output.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ieee80211_output.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -174,6 +176,7 @@
 				1FDB510714C9BA6700C16F95 /* ieee80211_crypto_ccmp.cpp */,
 				1FDB513614CA3EDF00C16F95 /* ieee80211_ioctl.h */,
 				1FDB516514CBA8A800C16F95 /* ieee80211_input.cpp */,
+				1FDB516714CC412500C16F95 /* ieee80211_output.cpp */,
 			);
 			path = net80211;
 			sourceTree = "<group>";
@@ -383,6 +386,7 @@
 				1FDB513214CA3D0D00C16F95 /* sha2.c in Sources */,
 				1FDB513E14CB81FB00C16F95 /* ieee80211_proto.cpp in Sources */,
 				1FDB516614CBA8A800C16F95 /* ieee80211_input.cpp in Sources */,
+				1FDB516814CC412600C16F95 /* ieee80211_output.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

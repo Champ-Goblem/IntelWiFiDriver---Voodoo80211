@@ -205,17 +205,36 @@ protected:
 	void	ieee80211_bar_tid(struct ieee80211com *, struct ieee80211_node *, u_int8_t, u_int16_t);
 	#endif
 	
+#pragma mark ieee80211_output.cpp
+	// cpp file
+	int	ieee80211_classify(struct ieee80211com *, mbuf_t);
+	int	ieee80211_mgmt_output(struct ieee80211com *, struct ieee80211_node *, mbuf_t, int);
+	u_int8_t *ieee80211_add_rsn_body(u_int8_t *, struct ieee80211com *, const struct ieee80211_node *, int);
+	mbuf_t	ieee80211_getmgmt(int, int, u_int);
+	mbuf_t	ieee80211_get_probe_req(struct ieee80211com *, struct ieee80211_node *);
+	mbuf_t	ieee80211_get_auth(struct ieee80211com *, struct ieee80211_node *, u_int16_t, u_int16_t);
+	mbuf_t	ieee80211_get_deauth(struct ieee80211com *, struct ieee80211_node *, u_int16_t);
+	mbuf_t	ieee80211_get_assoc_req(struct ieee80211com *, struct ieee80211_node *, int);
+	mbuf_t	ieee80211_get_disassoc(struct ieee80211com *, struct ieee80211_node *, u_int16_t);
+#ifndef IEEE80211_NO_HT
+	mbuf_t	ieee80211_get_addba_req(struct ieee80211com *, struct ieee80211_node *, u_int8_t);
+	mbuf_t	ieee80211_get_addba_resp(struct ieee80211com *, struct ieee80211_node *, u_int8_t, u_int8_t, u_int16_t);
+	mbuf_t	ieee80211_get_delba(struct ieee80211com *, struct ieee80211_node *, u_int8_t, u_int8_t, u_int16_t);
+#endif
+	mbuf_t	ieee80211_get_sa_query(struct ieee80211com *, struct ieee80211_node *, u_int8_t);
+	mbuf_t	ieee80211_get_action(struct ieee80211com *, struct ieee80211_node *, u_int8_t, u_int8_t, int);
+	
 #pragma mark ieee80211_proto.h
 	void	ieee80211_proto_attach(struct ifnet *);
 	void	ieee80211_proto_detach(struct ifnet *);
 	void	ieee80211_set_link_state(struct ieee80211com *, IO80211LinkState);
 	u_int	ieee80211_get_hdrlen(const struct ieee80211_frame *);
 	void	ieee80211_input(struct ieee80211com *, mbuf_t, struct ieee80211_node *, struct ieee80211_rxinfo *);
-	int	ieee80211_output(struct ifnet *, mbuf_t, struct sockaddr *, struct rtentry *);
+	int	ieee80211_output(struct ieee80211com *, mbuf_t, struct sockaddr *, struct rtentry *);
 	void	ieee80211_recv_mgmt(struct ieee80211com *, mbuf_t, struct ieee80211_node *, struct ieee80211_rxinfo *, int);
 	int	ieee80211_send_mgmt(struct ieee80211com *, struct ieee80211_node *, int, int, int);
 	void	ieee80211_eapol_key_input(struct ieee80211com *, mbuf_t, struct ieee80211_node *);
-	mbuf_t	ieee80211_encap(struct ifnet *, mbuf_t, struct ieee80211_node **);
+	mbuf_t	ieee80211_encap(struct ieee80211com *, mbuf_t, struct ieee80211_node **);
 	mbuf_t	ieee80211_get_rts(struct ieee80211com *, const struct ieee80211_frame *, u_int16_t);
 	mbuf_t	ieee80211_get_cts_to_self(struct ieee80211com *, u_int16_t);
 	mbuf_t	ieee80211_beacon_alloc(struct ieee80211com *, struct ieee80211_node *);
