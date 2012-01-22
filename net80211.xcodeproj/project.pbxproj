@@ -38,6 +38,20 @@
 		1FDB513414CA3D0D00C16F95 /* endian.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDB512214CA3D0D00C16F95 /* endian.h */; };
 		1FDB513514CA3D0D00C16F95 /* tree.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDB512314CA3D0D00C16F95 /* tree.h */; };
 		1FDB513714CA3EDF00C16F95 /* ieee80211_ioctl.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDB513614CA3EDF00C16F95 /* ieee80211_ioctl.h */; };
+		1FDB513E14CB81FB00C16F95 /* ieee80211_proto.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FDB513D14CB81FB00C16F95 /* ieee80211_proto.cpp */; };
+		1FDB514314CB920800C16F95 /* VoodooTimeout.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDB514214CB920800C16F95 /* VoodooTimeout.h */; };
+		1FDB515914CBA53000C16F95 /* apple80211_ioctl.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDB514C14CBA53000C16F95 /* apple80211_ioctl.h */; };
+		1FDB515A14CBA53000C16F95 /* apple80211_var.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDB514D14CBA53000C16F95 /* apple80211_var.h */; };
+		1FDB515B14CBA53000C16F95 /* apple80211_wps.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDB514E14CBA53000C16F95 /* apple80211_wps.h */; };
+		1FDB515C14CBA53000C16F95 /* IO80211Controller.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDB514F14CBA53000C16F95 /* IO80211Controller.h */; };
+		1FDB515D14CBA53000C16F95 /* IO80211Interface.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDB515014CBA53000C16F95 /* IO80211Interface.h */; };
+		1FDB515E14CBA53000C16F95 /* IO80211WorkLoop.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDB515114CBA53000C16F95 /* IO80211WorkLoop.h */; };
+		1FDB515F14CBA53000C16F95 /* apple80211_ioctl.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDB515314CBA53000C16F95 /* apple80211_ioctl.h */; };
+		1FDB516014CBA53000C16F95 /* apple80211_var.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDB515414CBA53000C16F95 /* apple80211_var.h */; };
+		1FDB516114CBA53000C16F95 /* apple80211_wps.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDB515514CBA53000C16F95 /* apple80211_wps.h */; };
+		1FDB516214CBA53000C16F95 /* IO80211Controller.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDB515614CBA53000C16F95 /* IO80211Controller.h */; };
+		1FDB516314CBA53000C16F95 /* IO80211Interface.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDB515714CBA53000C16F95 /* IO80211Interface.h */; };
+		1FDB516414CBA53000C16F95 /* IO80211WorkLoop.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDB515814CBA53000C16F95 /* IO80211WorkLoop.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -76,6 +90,20 @@
 		1FDB512214CA3D0D00C16F95 /* endian.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = endian.h; sourceTree = "<group>"; };
 		1FDB512314CA3D0D00C16F95 /* tree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tree.h; sourceTree = "<group>"; };
 		1FDB513614CA3EDF00C16F95 /* ieee80211_ioctl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ieee80211_ioctl.h; sourceTree = "<group>"; };
+		1FDB513D14CB81FB00C16F95 /* ieee80211_proto.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ieee80211_proto.cpp; sourceTree = "<group>"; };
+		1FDB514214CB920800C16F95 /* VoodooTimeout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VoodooTimeout.h; sourceTree = "<group>"; };
+		1FDB514C14CBA53000C16F95 /* apple80211_ioctl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = apple80211_ioctl.h; sourceTree = "<group>"; };
+		1FDB514D14CBA53000C16F95 /* apple80211_var.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = apple80211_var.h; sourceTree = "<group>"; };
+		1FDB514E14CBA53000C16F95 /* apple80211_wps.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = apple80211_wps.h; sourceTree = "<group>"; };
+		1FDB514F14CBA53000C16F95 /* IO80211Controller.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IO80211Controller.h; sourceTree = "<group>"; };
+		1FDB515014CBA53000C16F95 /* IO80211Interface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IO80211Interface.h; sourceTree = "<group>"; };
+		1FDB515114CBA53000C16F95 /* IO80211WorkLoop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IO80211WorkLoop.h; sourceTree = "<group>"; };
+		1FDB515314CBA53000C16F95 /* apple80211_ioctl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = apple80211_ioctl.h; sourceTree = "<group>"; };
+		1FDB515414CBA53000C16F95 /* apple80211_var.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = apple80211_var.h; sourceTree = "<group>"; };
+		1FDB515514CBA53000C16F95 /* apple80211_wps.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = apple80211_wps.h; sourceTree = "<group>"; };
+		1FDB515614CBA53000C16F95 /* IO80211Controller.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IO80211Controller.h; sourceTree = "<group>"; };
+		1FDB515714CBA53000C16F95 /* IO80211Interface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IO80211Interface.h; sourceTree = "<group>"; };
+		1FDB515814CBA53000C16F95 /* IO80211WorkLoop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IO80211WorkLoop.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -125,17 +153,20 @@
 		1F0A493A149FF9E200CDC173 /* net80211 */ = {
 			isa = PBXGroup;
 			children = (
+				1FDB514A14CBA53000C16F95 /* apple80211 */,
 				1FDB511014CA3D0C00C16F95 /* crypto */,
 				1FDB512114CA3D0C00C16F95 /* sys */,
 				1F0A493B149FF9E200CDC173 /* Supporting Files */,
 				1F0A494C149FFCB900CDC173 /* Voodoo80211Device.h */,
 				1F0A494E149FFD5800CDC173 /* Voodoo80211Device.cpp */,
+				1FDB514214CB920800C16F95 /* VoodooTimeout.h */,
 				1F0A495E14A0C22D00CDC173 /* ieee80211.h */,
 				1FDB510A14C9C97F00C16F95 /* ieee80211_node.h */,
 				1FDB510C14CA21E300C16F95 /* ieee80211_node.cpp */,
 				1F0A495A14A02B4100CDC173 /* ieee80211_priv.h */,
 				1F0A495B14A02B4100CDC173 /* ieee80211_var.h */,
 				1FDB510E14CA2DAA00C16F95 /* ieee80211_proto.h */,
+				1FDB513D14CB81FB00C16F95 /* ieee80211_proto.cpp */,
 				1FDB50D514C9007F00C16F95 /* ieee80211_crypto.h */,
 				1FDB50DB14C9AFBE00C16F95 /* ieee80211_crypto.cpp */,
 				1FDB510714C9BA6700C16F95 /* ieee80211_crypto_ccmp.cpp */,
@@ -186,6 +217,41 @@
 			path = sys;
 			sourceTree = "<group>";
 		};
+		1FDB514A14CBA53000C16F95 /* apple80211 */ = {
+			isa = PBXGroup;
+			children = (
+				1FDB514B14CBA53000C16F95 /* Leopard */,
+				1FDB515214CBA53000C16F95 /* SL */,
+			);
+			path = apple80211;
+			sourceTree = "<group>";
+		};
+		1FDB514B14CBA53000C16F95 /* Leopard */ = {
+			isa = PBXGroup;
+			children = (
+				1FDB514C14CBA53000C16F95 /* apple80211_ioctl.h */,
+				1FDB514D14CBA53000C16F95 /* apple80211_var.h */,
+				1FDB514E14CBA53000C16F95 /* apple80211_wps.h */,
+				1FDB514F14CBA53000C16F95 /* IO80211Controller.h */,
+				1FDB515014CBA53000C16F95 /* IO80211Interface.h */,
+				1FDB515114CBA53000C16F95 /* IO80211WorkLoop.h */,
+			);
+			path = Leopard;
+			sourceTree = "<group>";
+		};
+		1FDB515214CBA53000C16F95 /* SL */ = {
+			isa = PBXGroup;
+			children = (
+				1FDB515314CBA53000C16F95 /* apple80211_ioctl.h */,
+				1FDB515414CBA53000C16F95 /* apple80211_var.h */,
+				1FDB515514CBA53000C16F95 /* apple80211_wps.h */,
+				1FDB515614CBA53000C16F95 /* IO80211Controller.h */,
+				1FDB515714CBA53000C16F95 /* IO80211Interface.h */,
+				1FDB515814CBA53000C16F95 /* IO80211WorkLoop.h */,
+			);
+			path = SL;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -212,6 +278,19 @@
 				1FDB513414CA3D0D00C16F95 /* endian.h in Headers */,
 				1FDB513514CA3D0D00C16F95 /* tree.h in Headers */,
 				1FDB513714CA3EDF00C16F95 /* ieee80211_ioctl.h in Headers */,
+				1FDB514314CB920800C16F95 /* VoodooTimeout.h in Headers */,
+				1FDB515914CBA53000C16F95 /* apple80211_ioctl.h in Headers */,
+				1FDB515A14CBA53000C16F95 /* apple80211_var.h in Headers */,
+				1FDB515B14CBA53000C16F95 /* apple80211_wps.h in Headers */,
+				1FDB515C14CBA53000C16F95 /* IO80211Controller.h in Headers */,
+				1FDB515D14CBA53000C16F95 /* IO80211Interface.h in Headers */,
+				1FDB515E14CBA53000C16F95 /* IO80211WorkLoop.h in Headers */,
+				1FDB515F14CBA53000C16F95 /* apple80211_ioctl.h in Headers */,
+				1FDB516014CBA53000C16F95 /* apple80211_var.h in Headers */,
+				1FDB516114CBA53000C16F95 /* apple80211_wps.h in Headers */,
+				1FDB516214CBA53000C16F95 /* IO80211Controller.h in Headers */,
+				1FDB516314CBA53000C16F95 /* IO80211Interface.h in Headers */,
+				1FDB516414CBA53000C16F95 /* IO80211WorkLoop.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -299,6 +378,7 @@
 				1FDB512D14CA3D0D00C16F95 /* michael.c in Sources */,
 				1FDB512F14CA3D0D00C16F95 /* rijndael.c in Sources */,
 				1FDB513214CA3D0D00C16F95 /* sha2.c in Sources */,
+				1FDB513E14CB81FB00C16F95 /* ieee80211_proto.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

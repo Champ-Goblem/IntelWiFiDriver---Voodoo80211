@@ -26,11 +26,13 @@
 #include <IOKit/IOService.h>
 #include <IOKit/network/IOEthernetInterface.h>
 #include <IOKit/IOWorkloop.h>
+#include <IOKit/network/IOGatedOutputQueue.h>
 #include <IOKit/IOTimerEventSource.h>
 
 #include "ieee80211.h"
 #include "ieee80211_priv.h"
 #include "ieee80211_var.h"
+#include "VoodooTimeout.h"
 
 class Voodoo80211Device : public IOEthernetController
 {
@@ -41,10 +43,16 @@ private:
 	IOEthernetInterface*    fInterface;
 	IOWorkLoop*             fWorkloop;
 	IOTimerEventSource*     fTimer;
+	IOGatedOutputQueue*	fOutputQueue;
 
 #pragma mark Compatibility functions
 	int     splnet();
 	void    splx(int);
+	void	voodooTimeoutOccurred(OSObject* owner, IOTimerEventSource* timer);
+	void	timeout_set(VoodooTimeout*, void (*func)(void *), void* arg);
+	void	timeout_add_sec(VoodooTimeout*, const unsigned int sec);
+	void	timeout_add_usec(VoodooTimeout*, const unsigned int usec);
+	void	timeout_del(VoodooTimeout* t);
 
 protected:
 #pragma mark ieee80211_var.h
@@ -65,7 +73,7 @@ protected:
 	u_int	ieee80211_chan2ieee(struct ieee80211com *, const struct ieee80211_channel *);
 	u_int	ieee80211_ieee2mhz(u_int, u_int);
 	int     ieee80211_setmode(struct ieee80211com *, enum ieee80211_phymode);
-	enum ieee80211_phymode ieee80211_next_mode(struct ifnet *);
+	enum ieee80211_phymode ieee80211_next_mode(struct ieee80211com *);
 	enum ieee80211_phymode ieee80211_chan2mode(struct ieee80211com *, const struct ieee80211_channel *);
 
 #pragma mark ieee80211_node.h
@@ -81,13 +89,13 @@ protected:
 	void    ieee80211_node_cleanup(struct ieee80211com *, struct ieee80211_node *);
 	void    ieee80211_needs_auth(struct ieee80211com *, struct ieee80211_node *);
 	// header functions
-	void    ieee80211_node_attach(struct ifnet *);
-	void    ieee80211_node_lateattach(struct ifnet *);
-	void    ieee80211_node_detach(struct ifnet *);
-	void    ieee80211_begin_scan(struct ifnet *);
-	void    ieee80211_next_scan(struct ifnet *);
-	void    ieee80211_end_scan(struct ifnet *);
-	void    ieee80211_reset_scan(struct ifnet *);
+	void    ieee80211_node_attach(struct ieee80211com *);
+	void    ieee80211_node_lateattach(struct ieee80211com *);
+	void    ieee80211_node_detach(struct ieee80211com *);
+	void    ieee80211_begin_scan(struct ieee80211com *);
+	void    ieee80211_next_scan(struct ieee80211com *);
+	void    ieee80211_end_scan(struct ieee80211com *);
+	void    ieee80211_reset_scan(struct ieee80211com *);
 	struct  ieee80211_node *ieee80211_alloc_node(struct ieee80211com *, const u_int8_t *);
 	struct  ieee80211_node *ieee80211_dup_bss(struct ieee80211com *, const u_int8_t *);
 	struct  ieee80211_node *ieee80211_find_node(struct ieee80211com *, const u_int8_t *);
@@ -251,7 +259,8 @@ protected:
 	int	ieee80211_addba_request(struct ieee80211com *, struct ieee80211_node *,  u_int16_t, u_int8_t);
 	void	ieee80211_delba_request(struct ieee80211com *, struct ieee80211_node *, u_int16_t, u_int8_t, u_int8_t);
 #endif
-
+	// cpp file
+	int	ieee80211_newstate(struct ieee80211com *, enum ieee80211_state, int);
     
 public:
 #pragma mark I/O Kit specific

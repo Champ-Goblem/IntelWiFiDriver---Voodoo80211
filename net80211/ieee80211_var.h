@@ -169,7 +169,7 @@ struct ieee80211_edca_ac_params {
  * Entry in the fragment cache.
  */
 struct ieee80211_defrag {
-	IOTimerEventSource*	df_to; // TODO: replace with iokit equiv
+	VoodooTimeout*	df_to; // TODO: replace with iokit equiv
 	mbuf_t		df_m;
 	u_int16_t	df_seq;
 	u_int8_t	df_frag;
@@ -285,7 +285,7 @@ struct ieee80211com {
 	u_int8_t		ic_globalcnt[EAPOL_KEY_NONCE_LEN];
 	u_int8_t		ic_nonce[EAPOL_KEY_NONCE_LEN];
 	u_int8_t		ic_psk[IEEE80211_PMK_LEN];
-	IOTimerEventSource*	ic_rsn_timeout;
+	VoodooTimeout*		ic_rsn_timeout;
 	u_int16_t		ic_rsn_keydonesta;
 	int			ic_tkip_micfail;
 	u_int64_t		ic_tkip_micfail_last_tsc;

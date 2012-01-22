@@ -83,8 +83,7 @@ ieee80211_crypto_detach(struct ifnet *ifp)
 	while ((pmk = TAILQ_FIRST(&ic->ic_pmksa)) != NULL) {
 		TAILQ_REMOVE(&ic->ic_pmksa, pmk, pmk_next);
 		bzero(pmk, sizeof(*pmk)); // XXX: was explicit_bzero
-        IOFree(pmk, sizeof(ieee80211_pmk));
-		//free(pmk, M_DEVBUF);
+		compat_free(pmk, M_DEVBUF);
 	}
     
 	/* clear all group keys from memory */

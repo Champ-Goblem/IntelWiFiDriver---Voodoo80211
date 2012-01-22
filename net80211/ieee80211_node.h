@@ -36,9 +36,9 @@
 
 #include <sys/kpi_mbuf.h>
 #include "sys/tree.h"
-#include "compat/timeout.h"
 #include <IOKit/network/IOPacketQueue.h>
 #include <libkern/OSAtomic.h>
+#include "VoodooTimeout.h"
 
 #define	IEEE80211_PSCAN_WAIT	5		/* passive scan wait */
 #define	IEEE80211_TRANS_WAIT	5		/* transition wait */
@@ -114,7 +114,7 @@ struct ieee80211_rxinfo {
 /* Block Acknowledgement Record */
 struct ieee80211_tx_ba {
 	struct ieee80211_node	*ba_ni;	/* backpointer for callbacks */
-	IOTimerEventSource*	ba_to;
+	VoodooTimeout*		ba_to;
 	int			ba_timeout_val;
 #define IEEE80211_BA_MIN_TIMEOUT	(10 * 1000)		/* 10msec */
 #define IEEE80211_BA_MAX_TIMEOUT	(10 * 1000 * 1000)	/* 10sec */
@@ -138,7 +138,7 @@ struct ieee80211_rx_ba {
 		mbuf_t m;
 		struct ieee80211_rxinfo	rxi;
 	}			*ba_buf;
-	IOTimerEventSource*	ba_to;
+	VoodooTimeout*		ba_to;
 	int			ba_timeout_val;
 	int			ba_state;
 	u_int16_t		ba_winstart;
@@ -195,7 +195,7 @@ struct ieee80211_node {
 	IOPacketQueue*	ni_savedq;	/* packets queued for pspoll */
     
 	/* RSN */
-	IOTimerEventSource*	ni_eapol_to;
+	VoodooTimeout*		ni_eapol_to;
 	u_int			ni_rsn_state;
 	u_int			ni_rsn_gstate;
 	u_int			ni_rsn_retries;
@@ -221,7 +221,7 @@ struct ieee80211_node {
     
 	/* SA Query */
 	u_int16_t		ni_sa_query_trid;
-	IOTimerEventSource*	ni_sa_query_to;
+	VoodooTimeout*		ni_sa_query_to;
 	int			ni_sa_query_count;
     
 	/* Block Ack records */

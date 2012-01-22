@@ -69,10 +69,8 @@
 #define M_80211_NODE	M_DEVBUF
 
 void MyClass::
-ieee80211_node_attach(struct ifnet *ifp)
+ieee80211_node_attach(struct ieee80211com *ic)
 {
-	struct ieee80211com *ic = (struct ieee80211com *)ifp;
-    
 	RB_INIT(&ic->ic_tree);
 	VoodooSetFunction(ic->ic_node_alloc, ieee80211_node_alloc);
 	VoodooSetFunction(ic->ic_node_free, ieee80211_node_free);
@@ -102,9 +100,8 @@ ieee80211_alloc_node_helper(struct ieee80211com *ic)
 }
 
 void MyClass::
-ieee80211_node_lateattach(struct ifnet *ifp)
+ieee80211_node_lateattach(struct ieee80211com *ic)
 {
-	struct ieee80211com *ic = (struct ieee80211com *)ifp;
 	struct ieee80211_node *ni;
     
 	ni = ieee80211_alloc_node_helper(ic);
@@ -116,16 +113,14 @@ ieee80211_node_lateattach(struct ifnet *ifp)
 }
 
 void MyClass::
-ieee80211_node_detach(struct ifnet *ifp)
+ieee80211_node_detach(struct ieee80211com *ic)
 {
-	struct ieee80211com *ic = (struct ieee80211com *)ifp;
-    
 	if (ic->ic_bss != NULL) {
 		(*ic->ic_node_free)(ic, ic->ic_bss);
 		ic->ic_bss = NULL;
 	}
 	ieee80211_free_allnodes(ic);
-	ic->ic_rsn_timeout->cancelTimeout();
+	timeout_del(ic->ic_rsn_timeout);
 }
 
 /*
@@ -137,10 +132,8 @@ ieee80211_node_detach(struct ifnet *ifp)
  * of available channels and the current PHY mode.
  */
 void MyClass::
-ieee80211_reset_scan(struct ifnet *ifp)
+ieee80211_reset_scan(struct ieee80211com *ic)
 {
-	struct ieee80211com *ic = (struct ieee80211com *)ifp;
-    
 	memcpy(ic->ic_chan_scan, ic->ic_chan_active,
            sizeof(ic->ic_chan_active));
 	/* NB: hack, setup so next_scan starts with the first channel */
@@ -152,10 +145,8 @@ ieee80211_reset_scan(struct ifnet *ifp)
  * Begin an active scan.
  */
 void MyClass::
-ieee80211_begin_scan(struct ifnet *ifp)
+ieee80211_begin_scan(struct ieee80211com *ic)
 {
-	struct ieee80211com *ic = (struct ieee80211com *)ifp;
-    
 	if (ic->ic_scan_lock & IEEE80211_SCAN_LOCKED)
 		return;
 	ic->ic_scan_lock |= IEEE80211_SCAN_LOCKED;
@@ -192,16 +183,15 @@ ieee80211_begin_scan(struct ifnet *ifp)
 	ic->ic_scan_count = 0;
     
 	/* Scan the next channel. */
-	ieee80211_next_scan(ifp);
+	ieee80211_next_scan(ic);
 }
 
 /*
  * Switch to the next channel marked for scanning.
  */
 void MyClass::
-ieee80211_next_scan(struct ifnet *ifp)
+ieee80211_next_scan(struct ieee80211com *ic)
 {
-	struct ieee80211com *ic = (struct ieee80211com *)ifp;
 	struct ieee80211_channel *chan;
     
 	chan = ic->ic_bss->ni_chan;
@@ -218,7 +208,7 @@ ieee80211_next_scan(struct ifnet *ifp)
 				break;
 		}
 		if (chan == ic->ic_bss->ni_chan) {
-			ieee80211_end_scan(ifp);
+			ieee80211_end_scan(ic);
 			return;
 		}
 	}
@@ -341,9 +331,8 @@ ieee80211_match_bss(struct ieee80211com *ic, struct ieee80211_node *ni)
  * Complete a scan of potential channels.
  */
 void MyClass::
-ieee80211_end_scan(struct ifnet *ifp)
+ieee80211_end_scan(struct ieee80211com *ic)
 {
-	struct ieee80211com *ic = (struct ieee80211com *)ifp;
 	struct ieee80211_node *ni, *nextbs, *selbs;
     
     /* TODO
@@ -369,7 +358,7 @@ ieee80211_end_scan(struct ifnet *ifp)
 		 * like 11b and "pure" 11G mode. This will loop
 		 * forever except for user-initiated scans.
 		 */
-		if (ieee80211_next_mode(ifp) == IEEE80211_MODE_AUTO) {
+		if (ieee80211_next_mode(ic) == IEEE80211_MODE_AUTO) {
 			if (ic->ic_scan_lock & IEEE80211_SCAN_REQUEST &&
 			    ic->ic_scan_lock & IEEE80211_SCAN_RESUME) {
 				ic->ic_scan_lock = IEEE80211_SCAN_LOCKED;
@@ -383,7 +372,7 @@ ieee80211_end_scan(struct ifnet *ifp)
 		/*
 		 * Reset the list of channels to scan and start again.
 		 */
-		ieee80211_next_scan(ifp);
+		ieee80211_next_scan(ic);
 		return;
 	}
 	selbs = NULL;
