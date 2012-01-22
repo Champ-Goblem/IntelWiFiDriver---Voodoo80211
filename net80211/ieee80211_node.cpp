@@ -160,7 +160,7 @@ ieee80211_begin_scan(struct ieee80211com *ic)
 		ic->ic_stats.is_scan_active++;
 	}
 	if (false /* ifp->debugOn */)
-		printf("%s: begin %s scan\n", fInterface->getName(),
+		printf("%s: begin %s scan\n", fInterface->getBSDName(),
                (ic->ic_flags & IEEE80211_F_ASCAN) ?
                "active" : "passive");
     
@@ -176,7 +176,7 @@ ieee80211_begin_scan(struct ieee80211com *ic)
 	 * Reset the current mode. Setting the current mode will also
 	 * reset scan state.
 	 */
-    if (ic->ic_media->getType() & IFM_AUTO)
+    if (getCurrentMedium()->getType() & IFM_AUTO)
 		ic->ic_curmode = IEEE80211_MODE_AUTO;
 	ieee80211_setmode(ic, (enum ieee80211_phymode) ic->ic_curmode);
     

@@ -284,10 +284,10 @@ ieee80211_input(struct ieee80211com *ic, mbuf_t m, struct ieee80211_node *ni,
 #ifdef IEEE80211_DEBUG
                 doprint += ieee80211_debug;
 #endif
-		    /* TODO
+		    /* TODO debug
                 if (doprint)
                     printf("%s: received %s from %s rssi %d mode %s\n",
-                           fInterface->getName(),
+                           fInterface->getBSDName(),
                            ieee80211_mgt_subtype_name[subtype
                                                       >> IEEE80211_FC0_SUBTYPE_SHIFT],
                            ether_sprintf(wh->i_addr2), rxi->rxi_rssi,
@@ -1408,10 +1408,10 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, mbuf_t m,
 	capinfo = LE_READ_2(frm); frm += 2;
 	status =  LE_READ_2(frm); frm += 2;
 	if (status != IEEE80211_STATUS_SUCCESS) {
-		/* TODO
+		/* TODO debug
 		if (fInterface->getFlags() & IFF_DEBUG)
 			printf("%s: %sassociation failed (status %d)"
-                   " for %s\n", fInterface->getName(),
+                   " for %s\n", fInterface->getBSDName(),
                    reassoc ?  "re" : "",
                    status, ether_sprintf((u_int8_t *)wh->i_addr3));
 		 */

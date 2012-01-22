@@ -138,8 +138,7 @@ ieee80211_output(struct ieee80211com *ic, mbuf_t m, struct sockaddr *dst,
 	}
 #endif // 0
 fallback:
-	return outputPacket(m, 0);
-	// TODO return (ether_output(ifp, m, dst, rt));
+	return getOutputQueue()->enqueue(m, 0);
 	
 bad:
 	if (m)
@@ -206,7 +205,7 @@ ieee80211_mgmt_output(struct ieee80211com *ic, struct ieee80211_node *ni,
 			    wh->i_fc[1] |= IEEE80211_FC1_PROTECTED;
 	    }
 	
-#if 0 // TODO
+#if 0 // TODO debug
 	if (fInterface->getFlags() & IFF_DEBUG) {
 		/* avoid to print too many frames */
 		if (
@@ -227,8 +226,8 @@ ieee80211_mgmt_output(struct ieee80211com *ic, struct ieee80211_node *ni,
 	}
 #endif // debug
 	// TODO: ic->ic_mgtq->enqueue(m); (enqueue on management queue?)
-	fOutputQueue->enqueue(m, 0);
-	fOutputQueue->start();
+	getOutputQueue()->enqueue(m, 0);
+	getOutputQueue()->start();
 	return 0;
 }
 
@@ -1264,7 +1263,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 			if ((m = ieee80211_get_deauth(ic, ni, arg1)) == NULL)
 				senderr(ENOMEM, is_tx_nombuf);
 			
-			/* TODO
+			/* TODO debug
 			if (ifp->if_flags & IFF_DEBUG) {
 				printf("%s: station %s deauthenticate (reason %d)\n",
 				       ifp->if_xname, ether_sprintf(ni->ni_macaddr),
@@ -1284,7 +1283,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 			if ((m = ieee80211_get_disassoc(ic, ni, arg1)) == NULL)
 				senderr(ENOMEM, is_tx_nombuf);
 			
-			/* TODO
+			/* TODO debug
 			if (ifp->if_flags & IFF_DEBUG) {
 				printf("%s: station %s disassociate (reason %d)\n",
 				       ifp->if_xname, ether_sprintf(ni->ni_macaddr),

@@ -224,7 +224,7 @@ struct ieee80211com {
 	u_int32_t		*ic_aid_bitmap;
 	u_int16_t		ic_max_aid;
 	enum ieee80211_protmode	ic_protmode;	/* 802.11g protection mode */
-	IONetworkMedium*	ic_media;
+	OSDictionary*		ic_media;
 	caddr_t			ic_rawbpf;	/* packet filter structure */
 	struct ieee80211_node	*ic_bss;	/* information for this node */
 	struct ieee80211_channel *ic_ibss_chan;

@@ -69,12 +69,12 @@ protected:
 #pragma mark ieee80211_var.h
 	void	ieee80211_ifattach(struct ieee80211com *);
 	void	ieee80211_ifdetach(struct ieee80211com *);
-	// TODO void	ieee80211_media_init(struct ifnet *, ifm_change_cb_t, ifm_stat_cb_t);
-	int     ieee80211_media_change(struct ifnet *);
-	void	ieee80211_media_status(struct ifnet *, struct ifmediareq *);
+	void	ieee80211_media_init(struct ieee80211com */*, ifm_change_cb_t, ifm_stat_cb_t*/);
+	int     ieee80211_media_change(struct ieee80211com *);
+	void	ieee80211_media_status(struct ieee80211com *ic, IONetworkMedium* imr);
 	int     ieee80211_ioctl(struct ifnet *, u_long, caddr_t);
 	int     ieee80211_get_rate(struct ieee80211com *);
-	void	ieee80211_watchdog(struct ifnet *);
+	void	ieee80211_watchdog(struct ieee80211com *);
 	int     ieee80211_fix_rate(struct ieee80211com *, struct ieee80211_node *, int);
 	int     ieee80211_rate2media(struct ieee80211com *, int, enum ieee80211_phymode);
 	int     ieee80211_media2rate(int);

@@ -60,6 +60,7 @@
 #endif
 
 #include "Voodoo80211Device.h"
+#include <IOKit/network/IONetworkMedium.h>
 
 #ifdef IEEE80211_DEBUG
 int	ieee80211_debug = 0;
@@ -73,16 +74,19 @@ LIST_HEAD_INITIALIZER(ieee80211com_head);
 void MyClass::
 ieee80211_ifattach(struct ieee80211com *ic)
 {
-	// TODO
+	// XXX: check this function for completeness
 	struct ieee80211_channel *c;
 	int i;
 	
+	/* XXX: not required
 	memcpy(((struct arpcom *)ifp)->ac_enaddr, ic->ic_myaddr,
 	       ETHER_ADDR_LEN);
 	ether_ifattach(ifp);
 	
 	ifp->if_output = ieee80211_output;
+	*/
 	
+	attachInterface((IONetworkInterface**) &fInterface, /* attach to DLIL = */ true);
 	ieee80211_crypto_attach(ic);
 	
 	/*
@@ -101,7 +105,7 @@ ieee80211_ifattach(struct ieee80211com *ic)
 			if (i != ieee80211_chan2ieee(ic, c)) {
 				printf("%s: bad channel ignored; "
 				       "freq %u flags %x number %u\n",
-				       fInterface->getName(), c->ic_freq, c->ic_flags,
+				       fInterface->getBSDName(), c->ic_freq, c->ic_flags,
 				       i);
 				c->ic_flags = 0;	/* NB: remove */
 				continue;
@@ -126,8 +130,8 @@ ieee80211_ifattach(struct ieee80211com *ic)
 	ic->ic_des_chan = IEEE80211_CHAN_ANYC;	/* any channel is ok */
 	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
 	
-	/* IEEE 802.11 defines a MTU >= 2290 */
-	ifp->if_capabilities |= IFCAP_VLAN_MTU;
+	/* TODO (what is this?): IEEE 802.11 defines a MTU >= 2290 
+	ifp->if_capabilities |= IFCAP_VLAN_MTU; */
 	
 	ieee80211_setbasicrates(ic);
 	(void)ieee80211_setmode(ic, (enum ieee80211_phymode) ic->ic_curmode);
@@ -141,7 +145,7 @@ ieee80211_ifattach(struct ieee80211com *ic)
 	ieee80211_node_attach(ic);
 	ieee80211_proto_attach(ic);
 	
-	/* TODO
+	/* XXX: not needed?
 	if_addgroup(ifp, "wlan");
 	ifp->if_priority = IF_WIRELESS_DEFAULT_PRIORITY;
 	 */
@@ -154,8 +158,8 @@ ieee80211_ifdetach(struct ieee80211com *ic)
 	ieee80211_crypto_detach(ic);
 	ieee80211_node_detach(ic);
 	LIST_REMOVE(ic, ic_list);
-	ifmedia_delete_instance(&ic->ic_media, IFM_INST_ANY);
-	ether_ifdetach(ic); // TODO
+	// XXX: not needed in OS X?: ifmedia_delete_instance(&ic->ic_media, IFM_INST_ANY);
+	detachInterface((IONetworkInterface*) fInterface);
 }
 
 /*
@@ -196,10 +200,10 @@ ieee80211_chan2ieee(struct ieee80211com *ic, const struct ieee80211_channel *c)
 		return IEEE80211_CHAN_ANY;
 	else if (c != NULL) {
 		printf("%s: invalid channel freq %u flags %x\n",
-		       fInterface->getName(), c->ic_freq, c->ic_flags);
+		       fInterface->getBSDName(), c->ic_freq, c->ic_flags);
 		return 0;		/* XXX */
 	} else {
-		printf("%s: invalid channel (NULL)\n", fInterface->getName());
+		printf("%s: invalid channel (NULL)\n", fInterface->getBSDName());
 		return 0;		/* XXX */
 	}
 }
@@ -236,28 +240,27 @@ ieee80211_ieee2mhz(u_int chan, u_int flags)
  * ieee80211_attach and before most anything else.
  */
 void MyClass::
-ieee80211_media_init(struct ifnet *ifp,
-		     ifm_change_cb_t media_change, ifm_stat_cb_t media_stat)
+ieee80211_media_init(struct ieee80211com *ic/*, XXX
+		     ifm_change_cb_t media_change, ifm_stat_cb_t media_stat*/)
 {
 #define	ADD(_ic, _s, _o) \
-ifmedia_add(&(_ic)->ic_media, \
-IFM_MAKEWORD(IFM_IEEE80211, (_s), (_o), 0), 0, NULL)
-	struct ieee80211com *ic = (void *)ifp;
-	struct ifmediareq imr;
+IONetworkMedium::addMedium((_ic)->ic_media, IONetworkMedium::medium(IFM_IEEE80211 & (_s) & (_o), ieee80211_media2rate(_s) * 500000, kIOMediumOptionHalfDuplex))
+	//struct ifmediareq imr;
 	int i, j, mode, rate, maxrate, mword, mopt, r;
 	const struct ieee80211_rateset *rs;
 	struct ieee80211_rateset allrates;
+	IONetworkMedium* current;
 	
 	/*
 	 * Do late attach work that must wait for any subclass
 	 * (i.e. driver) work such as overriding methods.
 	 */
-	ieee80211_node_lateattach(ifp);
+	ieee80211_node_lateattach(ic);
 	
 	/*
 	 * Fill in media characteristics.
 	 */
-	ifmedia_init(&ic->ic_media, 0, media_change, media_stat);
+	ic->ic_media = OSDictionary::withCapacity(10); // about 10 media initially?
 	maxrate = 0;
 	memset(&allrates, 0, sizeof(allrates));
 	for (mode = IEEE80211_MODE_AUTO; mode < IEEE80211_MODE_MAX; mode++) {
@@ -268,10 +271,13 @@ IFM_MAKEWORD(IFM_IEEE80211, (_s), (_o), 0), 0, NULL)
 			IFM_IEEE80211_11G,
 			IFM_IEEE80211_11A | IFM_IEEE80211_TURBO,
 		};
+		static const u_int mspeeds[] = {
+			0, 54000000, 11000000, 54000000, 108000000
+		};
 		if ((ic->ic_modecaps & (1<<mode)) == 0)
 			continue;
 		mopt = mopts[mode];
-		ADD(ic, IFM_AUTO, mopt);	/* e.g. 11a auto */
+		ADD(ic, IFM_AUTO, mopt);
 		if (ic->ic_caps & IEEE80211_C_MONITOR)
 			ADD(ic, IFM_AUTO, mopt | IFM_IEEE80211_MONITOR);
 		if (mode == IEEE80211_MODE_AUTO)
@@ -279,7 +285,7 @@ IFM_MAKEWORD(IFM_IEEE80211, (_s), (_o), 0), 0, NULL)
 		rs = &ic->ic_sup_rates[mode];
 		for (i = 0; i < rs->rs_nrates; i++) {
 			rate = rs->rs_rates[i];
-			mword = ieee80211_rate2media(ic, rate, mode);
+			mword = ieee80211_rate2media(ic, rate, (enum ieee80211_phymode) mode);
 			if (mword == 0)
 				continue;
 			ADD(ic, mword, mopt);
@@ -312,11 +318,15 @@ IFM_MAKEWORD(IFM_IEEE80211, (_s), (_o), 0), 0, NULL)
 		if (ic->ic_caps & IEEE80211_C_MONITOR)
 			ADD(ic, mword, IFM_IEEE80211_MONITOR);
 	}
-	ieee80211_media_status(ifp, &imr);
-	ifmedia_set(&ic->ic_media, imr.ifm_active);
+
+	ieee80211_media_status(ic, current);
+	setSelectedMedium(current);
+	publishMediumDictionary(ic->ic_media);
 	
+	/* XXX: not needed? individual media has this property already
 	if (maxrate)
 		ifp->if_baudrate = IF_Mbps(maxrate);
+	 */
 	
 #undef ADD
 }
@@ -339,8 +349,9 @@ ieee80211_findrate(struct ieee80211com *ic, enum ieee80211_phymode mode,
  * Handle a media change request.
  */
 int MyClass::
-ieee80211_media_change(struct ifnet *ifp)
+ieee80211_media_change(struct ieee80211com *ic)
 {
+#if 0 // pvaibhav: TODO (or not to do?)
 	struct ieee80211com *ic = (void *)ifp;
 	struct ifmedia_entry *ime;
 	enum ieee80211_opmode newopmode;
@@ -463,62 +474,68 @@ ieee80211_media_change(struct ifnet *ifp)
 		ifp->if_baudrate = ifmedia_baudrate(ime->ifm_media);
 #endif
 	return error;
+#endif // TODO
+	return 0;
 }
 
 void MyClass::
-ieee80211_media_status(struct ifnet *ifp, struct ifmediareq *imr)
+ieee80211_media_status(struct ieee80211com *ic, IONetworkMedium* imr)
 {
-	struct ieee80211com *ic = (void *)ifp;
 	const struct ieee80211_node *ni = NULL;
+	uint32_t flags, type;
 	
-	imr->ifm_status = IFM_AVALID;
-	imr->ifm_active = IFM_IEEE80211;
+	flags = IFM_AVALID & kIOMediumOptionHalfDuplex;
+	type = IFM_IEEE80211;
 	if (ic->ic_state == IEEE80211_S_RUN &&
 	    (ic->ic_opmode != IEEE80211_M_STA ||
 	     !(ic->ic_flags & IEEE80211_F_RSNON) ||
 	     ic->ic_bss->ni_port_valid))
-		imr->ifm_status |= IFM_ACTIVE;
-	imr->ifm_active |= IFM_AUTO;
+		flags |= IFM_ACTIVE;
+	type |= IFM_AUTO;
 	switch (ic->ic_opmode) {
 		case IEEE80211_M_STA:
 			ni = ic->ic_bss;
 			/* calculate rate subtype */
-			imr->ifm_active |= ieee80211_rate2media(ic,
-								ni->ni_rates.rs_rates[ni->ni_txrate], ic->ic_curmode);
+			type |= ieee80211_rate2media(ic, ni->ni_rates.rs_rates[ni->ni_txrate], (enum ieee80211_phymode)ic->ic_curmode);
 			break;
 		case IEEE80211_M_MONITOR:
-			imr->ifm_active |= IFM_IEEE80211_MONITOR;
+			type |= IFM_IEEE80211_MONITOR;
 			break;
 		default:
 			break;
 	}
 	switch (ic->ic_curmode) {
 		case IEEE80211_MODE_11A:
-			imr->ifm_active |= IFM_IEEE80211_11A;
+			type |= IFM_IEEE80211_11A;
 			break;
 		case IEEE80211_MODE_11B:
-			imr->ifm_active |= IFM_IEEE80211_11B;
+			type |= IFM_IEEE80211_11B;
 			break;
 		case IEEE80211_MODE_11G:
-			imr->ifm_active |= IFM_IEEE80211_11G;
+			type |= IFM_IEEE80211_11G;
 			break;
 		case IEEE80211_MODE_TURBO:
-			imr->ifm_active |= IFM_IEEE80211_11A
-			|  IFM_IEEE80211_TURBO;
+			type |= IFM_IEEE80211_11A | IFM_IEEE80211_TURBO;
 			break;
+	}
+	imr = IONetworkMedium::getMediumWithType(ic->ic_media, type);
+	if (imr == NULL) {
+		/* make a new one if it doesn't already exist in the media dictionary
+		 * XXX: but also add it and publish the medium dictionary? */
+		imr = IONetworkMedium::medium(type, ieee80211_media2rate(type) * 500000, flags);
 	}
 }
 
 void MyClass::
-ieee80211_watchdog(struct ifnet *ifp)
-{
-	struct ieee80211com *ic = (void *)ifp;
-	
+ieee80211_watchdog(struct ieee80211com *ic)
+{	
 	if (ic->ic_mgt_timer && --ic->ic_mgt_timer == 0)
 		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 	
+	/* TODO: ??
 	if (ic->ic_mgt_timer != 0)
 		ifp->if_timer = 1;
+	 */
 }
 
 const struct ieee80211_rateset ieee80211_std_rateset_11a =
@@ -668,7 +685,7 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 enum ieee80211_phymode MyClass::
 ieee80211_next_mode(struct ieee80211com *ic)
 {
-	if (IFM_MODE(ic->ic_media.ifm_cur->ifm_media) != IFM_AUTO) {
+	if (getCurrentMedium()->getType() & IFM_AUTO) {
 		/*
 		 * Reset the scan state and indicate a wrap around
 		 * if we're running in a fixed, user-specified phy mode.

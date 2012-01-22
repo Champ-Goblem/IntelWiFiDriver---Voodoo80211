@@ -284,6 +284,32 @@ ieee80211_get_qos(const struct ieee80211_frame *wh)
 }
 
 /*
+ * pvaibhav: More media types for compatibility
+ */
+#define IFM_IEEE80211_OFDM6     10      /* OFDM 6Mbps */
+#define IFM_IEEE80211_OFDM9     11      /* OFDM 9Mbps */
+#define IFM_IEEE80211_OFDM12    12      /* OFDM 12Mbps */
+#define IFM_IEEE80211_OFDM18    13      /* OFDM 18Mbps */
+#define IFM_IEEE80211_OFDM24    14      /* OFDM 24Mbps */
+#define IFM_IEEE80211_OFDM36    15      /* OFDM 36Mbps */
+#define IFM_IEEE80211_OFDM48    16      /* OFDM 48Mbps */
+#define IFM_IEEE80211_OFDM54    17      /* OFDM 54Mbps */
+#define IFM_IEEE80211_OFDM72    18      /* OFDM 72Mbps */
+
+#define IFM_IEEE80211_HOSTAP    0x200   /* Operate in Host AP mode */
+#define IFM_IEEE80211_IBSS      0x400   /* Operate in IBSS mode */
+#define IFM_IEEE80211_IBSSMASTER 0x800  /* Operate as an IBSS master */
+#define IFM_IEEE80211_MONITOR   0x1000  /* Operate in Monitor mode */
+#define IFM_IEEE80211_TURBO     0x2000  /* Operate in Turbo mode */
+
+/* operating mode for multi-mode devices */
+#define IFM_IEEE80211_11A       0x00010000      /* 5Ghz, OFDM mode */
+#define IFM_IEEE80211_11B       0x00020000      /* Direct Sequence mode */
+#define IFM_IEEE80211_11G       0x00030000      /* 2Ghz, CCK mode */
+#define IFM_IEEE80211_FH        0x00040000      /* 2Ghz, GFSK mode */
+
+
+/*
  * Capability Information field (see 7.3.1.4).
  */
 #define	IEEE80211_CAPINFO_ESS			0x0001
