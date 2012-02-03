@@ -42,12 +42,18 @@
 	<string>Copyright © 2011 Prashant Vaibhav. All rights reserved.</string>
 	<key>OSBundleLibraries</key>
 	<dict>
+		<key>com.apple.iokit.IONetworkingFamily</key>
+		<string>2.0</string>
+		<key>com.apple.iokit.IO80211Family</key>
+		<string>400.0</string>
 		<key>com.apple.kpi.bsd</key>
-		<string>10.2</string>
+		<string>11.0.0</string>
 		<key>com.apple.kpi.iokit</key>
-		<string>10.2</string>
+		<string>11.0.0</string>
 		<key>com.apple.kpi.libkern</key>
-		<string>10.2</string>
+		<string>11.0.0</string>
+		<key>com.apple.kpi.mach</key>
+		<string>11.0.0</string>
 	</dict>
 </dict>
 </plist>

@@ -26,6 +26,7 @@ void MyClass::stop(IOService* provider) {
 }
 
 IOReturn MyClass::getHardwareAddress(IOEthernetAddress * addrP) {
+	bcopy(fPriv->ic_myaddr, addrP, ETHER_ADDR_LEN);
 	return kIOReturnSuccess;
 }
 

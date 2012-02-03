@@ -34,9 +34,9 @@
 #include "ieee80211_var.h"
 #include "VoodooTimeout.h"
 
-#include "apple80211/SL/IO80211Controller.h"
-#include "apple80211/SL/IO80211Interface.h"
-#include "apple80211/SL/IO80211WorkLoop.h"
+#include "apple80211/Lion/IO80211Controller.h"
+#include "apple80211/Lion/IO80211Interface.h"
+#include "apple80211/Lion/IO80211WorkLoop.h"
 
 class Voodoo80211Device : public IO80211Controller
 {
@@ -66,6 +66,9 @@ private:
 	void	timeout_del(VoodooTimeout* t);
 
 protected:
+#pragma mark Protected data
+	ieee80211com*	fPriv;
+	
 #pragma mark ieee80211_var.h
 	void	ieee80211_ifattach(struct ieee80211com *);
 	void	ieee80211_ifdetach(struct ieee80211com *);
