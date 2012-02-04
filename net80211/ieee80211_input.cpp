@@ -1012,7 +1012,7 @@ ieee80211_save_ie(const u_int8_t *frm, u_int8_t **ie)
 {
 	if (*ie == NULL || (*ie)[1] != frm[1]) {
 		if (*ie != NULL)
-			compat_free(*ie, M_DEVBUF);
+			free(*ie);
 		*ie = (u_int8_t*)malloc(2 + frm[1], M_DEVBUF, M_NOWAIT);
 		if (*ie == NULL)
 			return ENOMEM;
@@ -1689,7 +1689,7 @@ ieee80211_recv_addba_req(struct ieee80211com *ic, mbuf_t m,
 	/* notify drivers of this new Block Ack agreement */
 	if (ieee80211_ampdu_rx_start(ic, ni, tid) != 0) {
 		/* driver failed to setup, rollback */
-		compat_free(ba->ba_buf, M_DEVBUF);
+		free(ba->ba_buf);
 		ba->ba_buf = NULL;
 		status = IEEE80211_STATUS_REFUSED;
 		goto resp;
@@ -1825,7 +1825,7 @@ ieee80211_recv_delba(struct ieee80211com *ic, mbuf_t m,
 				if (ba->ba_buf[i].m != NULL)
 					mbuf_freem(ba->ba_buf[i].m);
 			/* free reordering buffer */
-			compat_free(ba->ba_buf, M_DEVBUF);
+			free(ba->ba_buf);
 			ba->ba_buf = NULL;
 		}
 	} else {

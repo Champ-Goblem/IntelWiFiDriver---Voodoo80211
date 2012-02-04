@@ -35,6 +35,21 @@ SInt32 Voodoo80211Device::apple80211Request( UInt32 req, int type, IO80211Interf
 }
 
 #pragma mark Compatibility functions
+void* Voodoo80211Device::malloc(vm_size_t len, int type, int how) {
+	// Allocate some extra space and store the length of the allocation there
+	// so that we can use this to free() later
+	void* addr = IOMalloc(len + sizeof(vm_size_t));
+	*((vm_size_t*) addr) = len;
+	return (void*)((uint8_t*)addr + sizeof(vm_size_t));
+}
+
+void Voodoo80211Device::free(void* addr) {
+	// Get address of actual allocation (we prepended a vm_size_t when malloc'ing)
+	void* actual_addr = (void*)((uint8_t*)addr - sizeof(vm_size_t));
+	vm_size_t len = *((vm_size_t*) actual_addr); // find the length of this malloc block
+	IOFree(actual_addr, len + sizeof(vm_size_t)); // free the whole thing
+}
+
 void Voodoo80211Device::timeout_set(VoodooTimeout* t, VoodooTimeout::CallbackFunction fn, void* arg) {
 	t = new VoodooTimeout();
 	t->timer = IOTimerEventSource::timerEventSource(t, OSMemberFunctionCast(IOTimerEventSource::Action, t, &Voodoo80211Device::voodooTimeoutOccurred));

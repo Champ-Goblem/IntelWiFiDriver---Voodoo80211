@@ -509,7 +509,7 @@ void Voodoo80211Device::
 ieee80211_node_cleanup(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	if (ni->ni_rsnie != NULL) {
-		compat_free(ni->ni_rsnie, M_DEVBUF);
+		free(ni->ni_rsnie);
 		ni->ni_rsnie = NULL;
 	}
 }
@@ -518,7 +518,7 @@ void Voodoo80211Device::
 ieee80211_node_free(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	ieee80211_node_cleanup(ic, ni);
-	compat_free(ni, M_80211_NODE);
+	free(ni);
 }
 
 void Voodoo80211Device::

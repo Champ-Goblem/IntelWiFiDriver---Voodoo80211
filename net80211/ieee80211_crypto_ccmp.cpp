@@ -73,7 +73,7 @@ void Voodoo80211Device::
 ieee80211_ccmp_delete_key(struct ieee80211com *ic, struct ieee80211_key *k)
 {
 	if (k->k_priv != NULL)
-		compat_free(k->k_priv, M_DEVBUF);
+		free(k->k_priv);
 	k->k_priv = NULL;
 }
 

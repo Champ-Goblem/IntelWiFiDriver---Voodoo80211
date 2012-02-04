@@ -456,7 +456,7 @@ ieee80211_delba_request(struct ieee80211com *ic, struct ieee80211_node *ni,
 				if (ba->ba_buf[i].m != NULL)
 					mbuf_freem(ba->ba_buf[i].m);
 			/* free reordering buffer */
-			compat_free(ba->ba_buf, M_DEVBUF);
+			free(ba->ba_buf);
 			ba->ba_buf = NULL;
 		}
 	}

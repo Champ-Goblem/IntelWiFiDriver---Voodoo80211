@@ -17,8 +17,6 @@
 #define __packed        __attribute__((__packed__))
 #define mtod(m, t)      (t) mbuf_data(m)
 #define M_DEVBUF        2
-#define malloc          _MALLOC
-#define compat_free     _FREE
 
 #include <IOKit/IOService.h>
 #include <IOKit/network/IOEthernetInterface.h>
@@ -58,6 +56,8 @@ protected:
 	ieee80211com*	fPriv;
 	
 #pragma mark Compatibility functions
+	void*	malloc(vm_size_t len, int type, int how);
+	void	free(void* addr);
 	int     splnet();
 	void    splx(int);
 	void	voodooTimeoutOccurred(OSObject* owner, IOTimerEventSource* timer);
