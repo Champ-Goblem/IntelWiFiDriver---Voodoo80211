@@ -55,7 +55,7 @@
 #include <IOKit/IOLib.h>
 #include <libkern/OSMalloc.h>
 
-void MyClass::
+void Voodoo80211Device::
 ieee80211_crypto_attach(struct ieee80211com *ic)
 {
 	TAILQ_INIT(&ic->ic_pmksa);
@@ -66,11 +66,9 @@ ieee80211_crypto_attach(struct ieee80211com *ic)
 		ic->ic_rsngroupcipher = IEEE80211_CIPHER_TKIP;
 		ic->ic_rsngroupmgmtcipher = IEEE80211_CIPHER_BIP;
 	}
-	VoodooSetFunction(ic->ic_set_key, ieee80211_set_key);
-	VoodooSetFunction(ic->ic_delete_key, ieee80211_delete_key);
 }
 
-void MyClass::
+void Voodoo80211Device::
 ieee80211_crypto_detach(struct ieee80211com *ic)
 {
 	struct ieee80211_pmk *pmk;
@@ -87,7 +85,7 @@ ieee80211_crypto_detach(struct ieee80211com *ic)
 	for (i = 0; i < IEEE80211_GROUP_NKID; i++) {
 		struct ieee80211_key *k = &ic->ic_nw_keys[i];
 		if (k->k_cipher != IEEE80211_CIPHER_NONE)
-			(*ic->ic_delete_key)(ic, NULL, k);
+			ieee80211_delete_key(ic, NULL, k);
 		/*explicit_*/bzero(k, sizeof(*k));
 	}
     
@@ -98,7 +96,7 @@ ieee80211_crypto_detach(struct ieee80211com *ic)
 /*
  * Return the length in bytes of a cipher suite key (see Table 60).
  */
-int MyClass::
+int Voodoo80211Device::
 ieee80211_cipher_keylen(enum ieee80211_cipher cipher)
 {
 	switch (cipher) {
@@ -117,7 +115,7 @@ ieee80211_cipher_keylen(enum ieee80211_cipher cipher)
 	}
 }
 
-int MyClass::
+int Voodoo80211Device::
 ieee80211_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
                   struct ieee80211_key *k)
 {
@@ -144,7 +142,7 @@ ieee80211_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	return error;
 }
 
-void MyClass::
+void Voodoo80211Device::
 ieee80211_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
                      struct ieee80211_key *k)
 {
@@ -169,7 +167,7 @@ ieee80211_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	/*explicit_*/bzero(k, sizeof(*k));
 }
 
-struct ieee80211_key * MyClass::
+struct ieee80211_key * Voodoo80211Device::
 ieee80211_get_txkey(struct ieee80211com *ic, const struct ieee80211_frame *wh,
                     struct ieee80211_node *ni)
 {
@@ -189,7 +187,7 @@ ieee80211_get_txkey(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 	return &ic->ic_nw_keys[kid];
 }
 
-mbuf_t MyClass::
+mbuf_t Voodoo80211Device::
 ieee80211_encrypt(struct ieee80211com *ic, mbuf_t m0,
                   struct ieee80211_key *k)
 {
@@ -215,7 +213,7 @@ ieee80211_encrypt(struct ieee80211com *ic, mbuf_t m0,
 	return m0;
 }
 
-mbuf_t MyClass::
+mbuf_t Voodoo80211Device::
 ieee80211_decrypt(struct ieee80211com *ic, mbuf_t m0,
                   struct ieee80211_node *ni)
 {
@@ -290,7 +288,7 @@ ieee80211_decrypt(struct ieee80211com *ic, mbuf_t m0,
 /*
  * SHA1-based Pseudo-Random Function (see 8.5.1.1).
  */
-void MyClass::
+void Voodoo80211Device::
 ieee80211_prf(const u_int8_t *key, size_t key_len, const u_int8_t *label,
               size_t label_len, const u_int8_t *context, size_t context_len,
               u_int8_t *output, size_t len)
@@ -319,7 +317,7 @@ ieee80211_prf(const u_int8_t *key, size_t key_len, const u_int8_t *label,
 /*
  * SHA256-based Key Derivation Function (see 8.5.1.5.2).
  */
-void MyClass::
+void Voodoo80211Device::
 ieee80211_kdf(const u_int8_t *key, size_t key_len, const u_int8_t *label,
               size_t label_len, const u_int8_t *context, size_t context_len,
               u_int8_t *output, size_t len)
@@ -351,7 +349,7 @@ ieee80211_kdf(const u_int8_t *key, size_t key_len, const u_int8_t *label,
 /*
  * Derive Pairwise Transient Key (PTK) (see 8.5.1.2).
  */
-void MyClass::
+void Voodoo80211Device::
 ieee80211_derive_ptk(enum ieee80211_akm akm, const u_int8_t *pmk,
                      const u_int8_t *aa, const u_int8_t *spa, const u_int8_t *anonce,
                      const u_int8_t *snonce, struct ieee80211_ptk *ptk)
@@ -410,7 +408,7 @@ ieee80211_pmkid_sha256(const u_int8_t *pmk, const u_int8_t *aa,
 /*
  * Derive Pairwise Master Key Identifier (PMKID) (see 8.5.1.2).
  */
-void MyClass::
+void Voodoo80211Device::
 ieee80211_derive_pmkid(enum ieee80211_akm akm, const u_int8_t *pmk,
                        const u_int8_t *aa, const u_int8_t *spa, u_int8_t *pmkid)
 {
@@ -431,7 +429,7 @@ typedef union _ANY_CTX {
  * Confirmation Key (KCK).  The hash function can be HMAC-MD5, HMAC-SHA1
  * or AES-128-CMAC depending on the EAPOL-Key Key Descriptor Version.
  */
-void MyClass::
+void Voodoo80211Device::
 ieee80211_eapol_key_mic(struct ieee80211_eapol_key *key, const u_int8_t *kck)
 {
 	u_int8_t digest[SHA1_DIGEST_LENGTH];
@@ -466,7 +464,7 @@ ieee80211_eapol_key_mic(struct ieee80211_eapol_key *key, const u_int8_t *kck)
  * Check the MIC of a received EAPOL-Key frame using the specified Key
  * Confirmation Key (KCK).
  */
-int MyClass::
+int Voodoo80211Device::
 ieee80211_eapol_key_check_mic(struct ieee80211_eapol_key *key,
                               const u_int8_t *kck)
 {
@@ -484,7 +482,7 @@ ieee80211_eapol_key_check_mic(struct ieee80211_eapol_key *key,
  * Encryption Key (KEK).  The encryption algorithm can be either ARC4 or
  * AES Key Wrap depending on the EAPOL-Key Key Descriptor Version.
  */
-int MyClass::
+int Voodoo80211Device::
 ieee80211_eapol_key_decrypt(struct ieee80211_eapol_key *key,
                             const u_int8_t *kek)
 {
@@ -527,7 +525,7 @@ ieee80211_eapol_key_decrypt(struct ieee80211_eapol_key *key,
 /*
  * Add a PMK entry to the PMKSA cache.
  */
-struct ieee80211_pmk * MyClass::
+struct ieee80211_pmk * Voodoo80211Device::
 ieee80211_pmksa_add(struct ieee80211com *ic, enum ieee80211_akm akm,
                     const u_int8_t *macaddr, const u_int8_t *key, u_int32_t lifetime)
 {
@@ -559,7 +557,7 @@ ieee80211_pmksa_add(struct ieee80211com *ic, enum ieee80211_akm akm,
 /*
  * Check if we have a cached PMK entry for the specified node and PMKID.
  */
-struct ieee80211_pmk * MyClass::
+struct ieee80211_pmk * Voodoo80211Device::
 ieee80211_pmksa_find(struct ieee80211com *ic, struct ieee80211_node *ni,
                      const u_int8_t *pmkid)
 {

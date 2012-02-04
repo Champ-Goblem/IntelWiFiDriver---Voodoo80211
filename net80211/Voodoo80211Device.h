@@ -14,14 +14,11 @@
 #include <kern/assert.h>
 
 // pvaibhav: common definitions
-#define MyClass         Voodoo80211Device
-#define super           IO80211Controller
 #define __packed        __attribute__((__packed__))
 #define mtod(m, t)      (t) mbuf_data(m)
 #define M_DEVBUF        2
 #define malloc          _MALLOC
 #define compat_free     _FREE
-#define VoodooSetFunction(fptr, fn) fptr = OSMemberFunctionCast(typeof(fptr), this, &MyClass::fn)
 
 #include <IOKit/IOService.h>
 #include <IOKit/network/IOEthernetInterface.h>
@@ -56,6 +53,10 @@ private:
 	IOTimerEventSource*     fTimer;
 	IOGatedOutputQueue*	fOutputQueue;
 
+protected:
+#pragma mark Protected data
+	ieee80211com*	fPriv;
+	
 #pragma mark Compatibility functions
 	int     splnet();
 	void    splx(int);
@@ -64,12 +65,17 @@ private:
 	void	timeout_add_sec(VoodooTimeout*, const unsigned int sec);
 	void	timeout_add_usec(VoodooTimeout*, const unsigned int usec);
 	void	timeout_del(VoodooTimeout* t);
-
-protected:
-#pragma mark Protected data
-	ieee80211com*	fPriv;
 	
 #pragma mark ieee80211_var.h
+	// Overloadable functions from ieee80211com*
+	virtual void	ieee80211_newassoc(struct ieee80211com *, struct ieee80211_node *, int) {}
+	virtual void	ieee80211_updateslot(struct ieee80211com *) {}
+	virtual void	ieee80211_updateedca(struct ieee80211com *) {}
+	virtual void	ieee80211_set_tim(struct ieee80211com *, int, int) {}
+	virtual int	ieee80211_ampdu_tx_start(struct ieee80211com *, struct ieee80211_node *, u_int8_t) { return 0; }
+	virtual void	ieee80211_ampdu_tx_stop(struct ieee80211com *, struct ieee80211_node *, u_int8_t) {}
+	virtual int	ieee80211_ampdu_rx_start(struct ieee80211com *, struct ieee80211_node *, u_int8_t) { return 0; }
+	virtual void	ieee80211_ampdu_rx_stop(struct ieee80211com *, struct ieee80211_node *, u_int8_t) {}
 	void	ieee80211_ifattach(struct ieee80211com *);
 	void	ieee80211_ifdetach(struct ieee80211com *);
 	void	ieee80211_media_init(struct ieee80211com */*, ifm_change_cb_t, ifm_stat_cb_t*/);
@@ -92,11 +98,11 @@ protected:
 
 #pragma mark ieee80211_node.h
 	// cpp functions
-	struct  ieee80211_node *ieee80211_node_alloc(struct ieee80211com *);
-	void    ieee80211_node_free(struct ieee80211com *, struct ieee80211_node *);
-	void    ieee80211_node_copy(struct ieee80211com *, struct ieee80211_node *, const struct ieee80211_node *);
+	virtual struct ieee80211_node *ieee80211_node_alloc(struct ieee80211com *);
+	virtual void ieee80211_node_free(struct ieee80211com *, struct ieee80211_node *);
+	virtual void ieee80211_node_copy(struct ieee80211com *, struct ieee80211_node *, const struct ieee80211_node *);
 	void    ieee80211_choose_rsnparams(struct ieee80211com *);
-	u_int8_t ieee80211_node_getrssi(struct ieee80211com *, const struct ieee80211_node *);
+	virtual u_int8_t ieee80211_node_getrssi(struct ieee80211com *, const struct ieee80211_node *);
 	void    ieee80211_setup_node(struct ieee80211com *, struct ieee80211_node *, const u_int8_t *);
 	void    ieee80211_free_node(struct ieee80211com *, struct ieee80211_node *);
 	struct  ieee80211_node *ieee80211_alloc_node_helper(struct ieee80211com *);
@@ -123,8 +129,8 @@ protected:
 	void    ieee80211_clean_nodes(struct ieee80211com *);
 	int     ieee80211_setup_rates(struct ieee80211com *, struct ieee80211_node *, const u_int8_t *, const u_int8_t *, int);
 	int     ieee80211_iserp_sta(const struct ieee80211_node *);
-	void    ieee80211_node_join(struct ieee80211com *, struct ieee80211_node *, int);
-	void    ieee80211_node_leave(struct ieee80211com *, struct ieee80211_node *);
+	virtual void ieee80211_node_join(struct ieee80211com *, struct ieee80211_node *, int) {}
+	virtual void ieee80211_node_leave(struct ieee80211com *, struct ieee80211_node *);
 	int     ieee80211_match_bss(struct ieee80211com *, struct ieee80211_node *);
 	void    ieee80211_create_ibss(struct ieee80211com*, struct ieee80211_channel *);
 	void    ieee80211_notify_dtim(struct ieee80211com *);
@@ -142,8 +148,8 @@ protected:
 	struct	ieee80211_key *ieee80211_get_rxkey(struct ieee80211com *, mbuf_t, struct ieee80211_node *);
 	mbuf_t	ieee80211_encrypt(struct ieee80211com *, mbuf_t, struct ieee80211_key *);
 	mbuf_t	ieee80211_decrypt(struct ieee80211com *, mbuf_t, struct ieee80211_node *);
-	int     ieee80211_set_key(struct ieee80211com *, struct ieee80211_node *, struct ieee80211_key *);
-	void	ieee80211_delete_key(struct ieee80211com *, struct ieee80211_node *, struct ieee80211_key *);
+	virtual int ieee80211_set_key(struct ieee80211com *, struct ieee80211_node *, struct ieee80211_key *);
+	virtual void ieee80211_delete_key(struct ieee80211com *, struct ieee80211_node *, struct ieee80211_key *);
 	void	ieee80211_eapol_key_mic(struct ieee80211_eapol_key *, const u_int8_t *);
 	int     ieee80211_eapol_key_check_mic(struct ieee80211_eapol_key *, const u_int8_t *);
 	int     ieee80211_eapol_key_decrypt(struct ieee80211_eapol_key *, const u_int8_t *);
@@ -239,14 +245,14 @@ protected:
 	u_int	ieee80211_get_hdrlen(const struct ieee80211_frame *);
 	void	ieee80211_input(struct ieee80211com *, mbuf_t, struct ieee80211_node *, struct ieee80211_rxinfo *);
 	int	ieee80211_output(struct ieee80211com *, mbuf_t, struct sockaddr *, struct rtentry *);
-	void	ieee80211_recv_mgmt(struct ieee80211com *, mbuf_t, struct ieee80211_node *, struct ieee80211_rxinfo *, int);
-	int	ieee80211_send_mgmt(struct ieee80211com *, struct ieee80211_node *, int, int, int);
+	virtual void ieee80211_recv_mgmt(struct ieee80211com *, mbuf_t, struct ieee80211_node *, struct ieee80211_rxinfo *, int);
+	virtual int ieee80211_send_mgmt(struct ieee80211com *, struct ieee80211_node *, int, int, int);
 	void	ieee80211_eapol_key_input(struct ieee80211com *, mbuf_t, struct ieee80211_node *);
 	mbuf_t	ieee80211_encap(struct ieee80211com *, mbuf_t, struct ieee80211_node **);
 	mbuf_t	ieee80211_get_rts(struct ieee80211com *, const struct ieee80211_frame *, u_int16_t);
 	mbuf_t	ieee80211_get_cts_to_self(struct ieee80211com *, u_int16_t);
 	mbuf_t	ieee80211_beacon_alloc(struct ieee80211com *, struct ieee80211_node *);
-	//FIXME int	ieee80211_save_ie(const u_int8_t *, u_int8_t **);
+	// FIXME doesnt need to be here int	ieee80211_save_ie(const u_int8_t *, u_int8_t **);
 	void	ieee80211_eapol_timeout(void *);
 	int	ieee80211_send_4way_msg1(struct ieee80211com *, struct ieee80211_node *);
 	int	ieee80211_send_4way_msg2(struct ieee80211com *, struct ieee80211_node *, const u_int8_t *, const struct ieee80211_ptk *);
@@ -256,8 +262,6 @@ protected:
 	int	ieee80211_send_group_msg2(struct ieee80211com *, struct ieee80211_node *, const struct ieee80211_key *);
 	int	ieee80211_send_eapol_key_req(struct ieee80211com *, struct ieee80211_node *, u_int16_t, u_int64_t);
 	int	ieee80211_pwrsave(struct ieee80211com *, mbuf_t, struct ieee80211_node *);
-#define	ieee80211_new_state(_ic, _nstate, _arg) \
-(((_ic)->ic_newstate)((_ic), (_nstate), (_arg)))
 	enum ieee80211_edca_ac ieee80211_up_to_ac(struct ieee80211com *, int);
 	u_int8_t *ieee80211_add_capinfo(u_int8_t *, struct ieee80211com *, const struct ieee80211_node *);
 	u_int8_t *ieee80211_add_ssid(u_int8_t *, const u_int8_t *, u_int);
@@ -298,7 +302,7 @@ protected:
 	void	ieee80211_delba_request(struct ieee80211com *, struct ieee80211_node *, u_int16_t, u_int8_t, u_int8_t);
 #endif
 	// cpp file
-	int	ieee80211_newstate(struct ieee80211com *, enum ieee80211_state, int);
+	virtual int ieee80211_newstate(struct ieee80211com *, enum ieee80211_state, int);
 };
 
 #endif

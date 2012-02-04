@@ -47,11 +47,11 @@ enum ieee80211_state {
 #define	IEEE80211_S_MAX		(IEEE80211_S_RUN+1)
 
 #define	IEEE80211_SEND_MGMT(_ic,_ni,_type,_arg) \
-((*(_ic)->ic_send_mgmt)(_ic, _ni, _type, _arg, 0))
+ieee80211_send_mgmt(_ic, _ni, _type, _arg, 0)
 /* shortcut */
 #define IEEE80211_SEND_ACTION(_ic,_ni,_categ,_action,_arg) \
-((*(_ic)->ic_send_mgmt)(_ic, _ni, IEEE80211_FC0_SUBTYPE_ACTION, \
-(_categ) << 16 | (_action), _arg))
+ieee80211_send_mgmt(_ic, _ni, IEEE80211_FC0_SUBTYPE_ACTION, \
+(_categ) << 16 | (_action), _arg)
 
 extern	const char * const ieee80211_mgt_subtype_name[];
 extern	const char * const ieee80211_state_name[IEEE80211_S_MAX];

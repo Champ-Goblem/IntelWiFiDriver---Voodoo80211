@@ -38,7 +38,7 @@
 /*
  * Retrieve the length in bytes of an 802.11 header.
  */
-u_int MyClass::
+u_int Voodoo80211Device::
 ieee80211_get_hdrlen(const struct ieee80211_frame *wh)
 {
 	u_int size = sizeof(*wh);
@@ -65,7 +65,7 @@ ieee80211_get_hdrlen(const struct ieee80211_frame *wh)
  * mean ``better signal''.  The receive timestamp is currently not used
  * by the 802.11 layer.
  */
-void MyClass::
+void Voodoo80211Device::
 ieee80211_input(struct ieee80211com *ic, mbuf_t m, struct ieee80211_node *ni,
                 struct ieee80211_rxinfo *rxi)
 {
@@ -295,7 +295,7 @@ ieee80211_input(struct ieee80211com *ic, mbuf_t m, struct ieee80211_node *ni,
                                                                       ic->ic_bss->ni_chan)]);
 		     */
             }
-            (*ic->ic_recv_mgmt)(ic, m, ni, rxi, subtype);
+            ieee80211_recv_mgmt(ic, m, ni, rxi, subtype);
             mbuf_freem(m);
             return;
             
@@ -330,7 +330,7 @@ out:
  * Handle defragmentation (see 9.5 and Annex C).  We support the concurrent
  * reception of fragments of three fragmented MSDUs or MMPDUs.
  */
-mbuf_t MyClass::
+mbuf_t Voodoo80211Device::
 ieee80211_defrag(struct ieee80211com *ic, mbuf_t m, int hdrlen)
 {
 	const struct ieee80211_frame *owh, *wh;
@@ -404,7 +404,7 @@ ieee80211_defrag(struct ieee80211com *ic, mbuf_t m, int hdrlen)
 /*
  * Receive MSDU defragmentation timer exceeds aMaxReceiveLifetime.
  */
-void MyClass::
+void Voodoo80211Device::
 ieee80211_defrag_timeout(void *arg)
 {
 	struct ieee80211_defrag *df = (struct ieee80211_defrag *)arg;
@@ -422,7 +422,7 @@ ieee80211_defrag_timeout(void *arg)
  * Process a received data MPDU related to a specific HT-immediate Block Ack
  * agreement (see 9.10.7.6).
  */
-void MyClass::
+void Voodoo80211Device::
 ieee80211_input_ba(struct ieee80211com *ifp, mbuf_t m,
                    struct ieee80211_node *ni, int tid, struct ieee80211_rxinfo *rxi)
 {
@@ -492,7 +492,7 @@ ieee80211_input_ba(struct ieee80211com *ifp, mbuf_t m,
  * Change the value of WinStartB (move window forward) upon reception of a
  * BlockAckReq frame or an ADDBA Request (PBAC).
  */
-void MyClass::
+void Voodoo80211Device::
 ieee80211_ba_move_window(struct ieee80211com *ic, struct ieee80211_node *ni,
                          u_int8_t tid, u_int16_t ssn)
 {
@@ -530,7 +530,7 @@ ieee80211_ba_move_window(struct ieee80211com *ic, struct ieee80211_node *ni,
 }
 #endif	/* !IEEE80211_NO_HT */
 
-void MyClass::
+void Voodoo80211Device::
 ieee80211_deliver_data(struct ieee80211com *ic, mbuf_t m,
                        struct ieee80211_node *ni)
 {
@@ -573,7 +573,7 @@ ieee80211_deliver_data(struct ieee80211com *ic, mbuf_t m,
  * XXX -- this is horrible
  * FIXME -- pvaibhav: need to fix this whole function at some point (mbufs)
  */
-mbuf_t MyClass::
+mbuf_t Voodoo80211Device::
 ieee80211_align_mbuf(mbuf_t m)
 {
 	mbuf_t n, *n0, **np;
@@ -629,7 +629,7 @@ ieee80211_align_mbuf(mbuf_t m)
 }
 #endif	/* __STRICT_ALIGNMENT */
 
-void MyClass::
+void Voodoo80211Device::
 ieee80211_decap(struct ieee80211com *ic, mbuf_t m,
                 struct ieee80211_node *ni, int hdrlen)
 {
@@ -691,7 +691,7 @@ ieee80211_decap(struct ieee80211com *ic, mbuf_t m,
 /*
  * Decapsulate an Aggregate MSDU (see 7.2.2.2).
  */
-void MyClass::
+void Voodoo80211Device::
 ieee80211_amsdu_decap(struct ieee80211com *ic, mbuf_t m,
                       struct ieee80211_node *ni, int hdrlen)
 {
@@ -760,7 +760,7 @@ ieee80211_amsdu_decap(struct ieee80211com *ic, mbuf_t m,
 /*
  * Parse an EDCA Parameter Set element (see 7.3.2.27).
  */
-int MyClass::
+int Voodoo80211Device::
 ieee80211_parse_edca_params_body(struct ieee80211com *ic, const u_int8_t *frm)
 {
 	u_int updtcount;
@@ -790,13 +790,13 @@ ieee80211_parse_edca_params_body(struct ieee80211com *ic, const u_int8_t *frm)
 		frm += 4;
 	}
 	/* give drivers a chance to update their settings */
-	if ((ic->ic_flags & IEEE80211_F_QOS) && ic->ic_updateedca != NULL)
-		(*ic->ic_updateedca)(ic);
+	if ((ic->ic_flags & IEEE80211_F_QOS))
+		ieee80211_updateedca(ic);
     
 	return 0;
 }
 
-int MyClass::
+int Voodoo80211Device::
 ieee80211_parse_edca_params(struct ieee80211com *ic, const u_int8_t *frm)
 {
 	if (frm[1] < 18) {
@@ -806,7 +806,7 @@ ieee80211_parse_edca_params(struct ieee80211com *ic, const u_int8_t *frm)
 	return ieee80211_parse_edca_params_body(ic, frm + 2);
 }
 
-int MyClass::
+int Voodoo80211Device::
 ieee80211_parse_wmm_params(struct ieee80211com *ic, const u_int8_t *frm)
 {
 	if (frm[1] < 24) {
@@ -816,7 +816,7 @@ ieee80211_parse_wmm_params(struct ieee80211com *ic, const u_int8_t *frm)
 	return ieee80211_parse_edca_params_body(ic, frm + 8);
 }
 
-enum ieee80211_cipher MyClass::
+enum ieee80211_cipher Voodoo80211Device::
 ieee80211_parse_rsn_cipher(const u_int8_t selector[4])
 {
 	if (memcmp(selector, MICROSOFT_OUI, 3) == 0) {	/* WPA */
@@ -852,7 +852,7 @@ ieee80211_parse_rsn_cipher(const u_int8_t selector[4])
 	return IEEE80211_CIPHER_NONE;	/* ignore unknown ciphers */
 }
 
-enum ieee80211_akm MyClass::
+enum ieee80211_akm Voodoo80211Device::
 ieee80211_parse_rsn_akm(const u_int8_t selector[4])
 {
 	if (memcmp(selector, MICROSOFT_OUI, 3) == 0) {	/* WPA */
@@ -881,7 +881,7 @@ ieee80211_parse_rsn_akm(const u_int8_t selector[4])
 /*
  * Parse an RSN element (see 7.3.2.25).
  */
-int MyClass::
+int Voodoo80211Device::
 ieee80211_parse_rsn_body(struct ieee80211com *ic, const u_int8_t *frm,
                          u_int len, struct ieee80211_rsnparams *rsn)
 {
@@ -982,7 +982,7 @@ ieee80211_parse_rsn_body(struct ieee80211com *ic, const u_int8_t *frm,
 	return IEEE80211_STATUS_SUCCESS;
 }
 
-int MyClass::
+int Voodoo80211Device::
 ieee80211_parse_rsn(struct ieee80211com *ic, const u_int8_t *frm,
                     struct ieee80211_rsnparams *rsn)
 {
@@ -993,7 +993,7 @@ ieee80211_parse_rsn(struct ieee80211com *ic, const u_int8_t *frm,
 	return ieee80211_parse_rsn_body(ic, frm + 2, frm[1], rsn);
 }
 
-int MyClass::
+int Voodoo80211Device::
 ieee80211_parse_wpa(struct ieee80211com *ic, const u_int8_t *frm,
                     struct ieee80211_rsnparams *rsn)
 {
@@ -1007,7 +1007,7 @@ ieee80211_parse_wpa(struct ieee80211com *ic, const u_int8_t *frm,
 /*
  * Create (or update) a copy of an information element.
  */
-int MyClass::
+int Voodoo80211Device::
 ieee80211_save_ie(const u_int8_t *frm, u_int8_t **ie)
 {
 	if (*ie == NULL || (*ie)[1] != frm[1]) {
@@ -1037,7 +1037,7 @@ ieee80211_save_ie(const u_int8_t *frm, u_int8_t **ie)
  * [tlv] HT Capabilities (802.11n)
  * [tlv] HT Operation (802.11n)
  */
-void MyClass::
+void Voodoo80211Device::
 ieee80211_recv_probe_resp(struct ieee80211com *ic, mbuf_t m,
                           struct ieee80211_node *ni, struct ieee80211_rxinfo *rxi, int isprobe)
 {
@@ -1326,8 +1326,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, mbuf_t m,
 		 * private state.  The rate set has been setup above;
 		 * there is no handshake as in ap/station operation.
 		 */
-		if (ic->ic_newassoc)
-			(*ic->ic_newassoc)(ic, ni, 1);
+		ieee80211_newassoc(ic, ni, 1);
 	}
 }
 
@@ -1337,7 +1336,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, mbuf_t m,
  * [2] Authentication transaction sequence number
  * [2] Status code
  */
-void MyClass::
+void Voodoo80211Device::
 ieee80211_recv_auth(struct ieee80211com *ic, mbuf_t m,
                     struct ieee80211_node *ni, struct ieee80211_rxinfo *rxi)
 {
@@ -1380,7 +1379,7 @@ ieee80211_recv_auth(struct ieee80211com *ic, mbuf_t m,
  * [tlv] HT Capabilities (802.11n)
  * [tlv] HT Operation (802.11n)
  */
-void MyClass::
+void Voodoo80211Device::
 ieee80211_recv_assoc_resp(struct ieee80211com *ic, mbuf_t m,
                           struct ieee80211_node *ni, int reassoc)
 {
@@ -1516,7 +1515,7 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, mbuf_t m,
 	} else if (ic->ic_flags & IEEE80211_F_WEPON)
 		ni->ni_flags |= IEEE80211_NODE_TXRXPROT;
     
-	ieee80211_new_state(ic, IEEE80211_S_RUN,
+	ieee80211_newstate(ic, IEEE80211_S_RUN,
                         IEEE80211_FC0_SUBTYPE_ASSOC_RESP);
 }
 
@@ -1524,7 +1523,7 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, mbuf_t m,
  * Deauthentication frame format:
  * [2] Reason code
  */
-void MyClass::
+void Voodoo80211Device::
 ieee80211_recv_deauth(struct ieee80211com *ic, mbuf_t m,
                       struct ieee80211_node *ni)
 {
@@ -1545,7 +1544,7 @@ ieee80211_recv_deauth(struct ieee80211com *ic, mbuf_t m,
 	ic->ic_stats.is_rx_deauth++;
 	switch (ic->ic_opmode) {
         case IEEE80211_M_STA:
-            ieee80211_new_state(ic, IEEE80211_S_AUTH,
+            ieee80211_newstate(ic, IEEE80211_S_AUTH,
                                 IEEE80211_FC0_SUBTYPE_DEAUTH);
             break;
         default:
@@ -1557,7 +1556,7 @@ ieee80211_recv_deauth(struct ieee80211com *ic, mbuf_t m,
  * Disassociation frame format:
  * [2] Reason code
  */
-void MyClass::
+void Voodoo80211Device::
 ieee80211_recv_disassoc(struct ieee80211com *ic, mbuf_t m,
                         struct ieee80211_node *ni)
 {
@@ -1578,7 +1577,7 @@ ieee80211_recv_disassoc(struct ieee80211com *ic, mbuf_t m,
 	ic->ic_stats.is_rx_disassoc++;
 	switch (ic->ic_opmode) {
         case IEEE80211_M_STA:
-            ieee80211_new_state(ic, IEEE80211_S_ASSOC,
+            ieee80211_newstate(ic, IEEE80211_S_ASSOC,
                                 IEEE80211_FC0_SUBTYPE_DISASSOC);
             break;
         default:
@@ -1596,7 +1595,7 @@ ieee80211_recv_disassoc(struct ieee80211com *ic, mbuf_t m,
  * [2] Block Ack Timeout Value
  * [2] Block Ack Starting Sequence Control
  */
-void MyClass::
+void Voodoo80211Device::
 ieee80211_recv_addba_req(struct ieee80211com *ic, mbuf_t m,
                          struct ieee80211_node *ni)
 {
@@ -1672,7 +1671,7 @@ ieee80211_recv_addba_req(struct ieee80211com *ic, mbuf_t m,
 		ba->ba_timeout_val = IEEE80211_BA_MIN_TIMEOUT;
 	else if (ba->ba_timeout_val > IEEE80211_BA_MAX_TIMEOUT)
 		ba->ba_timeout_val = IEEE80211_BA_MAX_TIMEOUT;
-	timeout_set(ba->ba_to, OSMemberFunctionCast(VoodooTimeout::CallbackFunction, this, &MyClass::ieee80211_rx_ba_timeout), ba);
+	timeout_set(ba->ba_to, OSMemberFunctionCast(VoodooTimeout::CallbackFunction, this, &Voodoo80211Device::ieee80211_rx_ba_timeout), ba);
 	ba->ba_winsize = bufsz;
 	if (ba->ba_winsize == 0 || ba->ba_winsize > IEEE80211_BA_MAX_WINSZ)
 		ba->ba_winsize = IEEE80211_BA_MAX_WINSZ;
@@ -1688,8 +1687,7 @@ ieee80211_recv_addba_req(struct ieee80211com *ic, mbuf_t m,
 	ba->ba_head = 0;
     
 	/* notify drivers of this new Block Ack agreement */
-	if (ic->ic_ampdu_rx_start != NULL &&
-	    ic->ic_ampdu_rx_start(ic, ni, tid) != 0) {
+	if (ieee80211_ampdu_rx_start(ic, ni, tid) != 0) {
 		/* driver failed to setup, rollback */
 		compat_free(ba->ba_buf, M_DEVBUF);
 		ba->ba_buf = NULL;
@@ -1715,7 +1713,7 @@ resp:
  * [2] Block Ack Parameter Set
  * [2] Block Ack Timeout Value
  */
-void MyClass::
+void Voodoo80211Device::
 ieee80211_recv_addba_resp(struct ieee80211com *ic, mbuf_t m,
                           struct ieee80211_node *ni)
 {
@@ -1768,8 +1766,7 @@ ieee80211_recv_addba_resp(struct ieee80211com *ic, mbuf_t m,
 	ba->ba_state = IEEE80211_BA_AGREED;
     
 	/* notify drivers of this new Block Ack agreement */
-	if (ic->ic_ampdu_tx_start != NULL)
-		(void)ic->ic_ampdu_tx_start(ic, ni, tid);
+	ieee80211_ampdu_tx_start(ic, ni, tid);
     
 	/* start Block Ack inactivity timeout */
 	if (ba->ba_timeout_val != 0)
@@ -1783,7 +1780,7 @@ ieee80211_recv_addba_resp(struct ieee80211com *ic, mbuf_t m,
  * [2] DELBA Parameter Set
  * [2] Reason Code
  */
-void MyClass::
+void Voodoo80211Device::
 ieee80211_recv_delba(struct ieee80211com *ic, mbuf_t m,
                      struct ieee80211_node *ni)
 {
@@ -1816,8 +1813,7 @@ ieee80211_recv_delba(struct ieee80211com *ic, mbuf_t m,
 			return;
 		}
 		/* notify drivers of the end of the Block Ack agreement */
-		if (ic->ic_ampdu_rx_stop != NULL)
-			ic->ic_ampdu_rx_stop(ic, ni, tid);
+		ieee80211_ampdu_rx_stop(ic, ni, tid);
         
 		ba->ba_state = IEEE80211_BA_INIT;
 		/* stop Block Ack inactivity timer */
@@ -1841,8 +1837,7 @@ ieee80211_recv_delba(struct ieee80211com *ic, mbuf_t m,
 			return;
 		}
 		/* notify drivers of the end of the Block Ack agreement */
-		if (ic->ic_ampdu_tx_stop != NULL)
-			ic->ic_ampdu_tx_stop(ic, ni, tid);
+		ieee80211_ampdu_tx_stop(ic, ni, tid);
         
 		ba->ba_state = IEEE80211_BA_INIT;
 		/* stop Block Ack inactivity timer */
@@ -1857,7 +1852,7 @@ ieee80211_recv_delba(struct ieee80211com *ic, mbuf_t m,
  * [1] Action
  * [2] Transaction Identifier
  */
-void MyClass::
+void Voodoo80211Device::
 ieee80211_recv_sa_query_req(struct ieee80211com *ic, mbuf_t m,
                             struct ieee80211_node *ni)
 {
@@ -1893,7 +1888,7 @@ ieee80211_recv_sa_query_req(struct ieee80211com *ic, mbuf_t m,
  * [1] Category
  * [1] Action
  */
-void MyClass::
+void Voodoo80211Device::
 ieee80211_recv_action(struct ieee80211com *ic, mbuf_t m,
                       struct ieee80211_node *ni)
 {
@@ -1936,7 +1931,7 @@ ieee80211_recv_action(struct ieee80211com *ic, mbuf_t m,
 	}
 }
 
-void MyClass::
+void Voodoo80211Device::
 ieee80211_recv_mgmt(struct ieee80211com *ic, mbuf_t m,
                     struct ieee80211_node *ni, struct ieee80211_rxinfo *rxi, int subtype)
 {
@@ -1977,7 +1972,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, mbuf_t m,
 /*
  * Process an incoming BlockAckReq control frame (see 7.2.1.7).
  */
-void MyClass::
+void Voodoo80211Device::
 ieee80211_recv_bar(struct ieee80211com *ic, mbuf_t m,
                    struct ieee80211_node *ni)
 {
@@ -2030,7 +2025,7 @@ ieee80211_recv_bar(struct ieee80211com *ic, mbuf_t m,
  * Process a BlockAckReq for a specific TID (see 9.10.7.6.3).
  * This is the common back-end for all BlockAckReq frame variants.
  */
-void MyClass::
+void Voodoo80211Device::
 ieee80211_bar_tid(struct ieee80211com *ic, struct ieee80211_node *ni,
                   u_int8_t tid, u_int16_t ssn)
 {

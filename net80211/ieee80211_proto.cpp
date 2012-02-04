@@ -83,7 +83,7 @@ const char * const ieee80211_phymode_name[] = {
 	"turbo",	/* IEEE80211_MODE_TURBO */
 };
 
-void MyClass::
+void Voodoo80211Device::
 ieee80211_proto_attach(struct ieee80211com *ic)
 {
 	// XXX: ifp->if_hdrlen = sizeof(struct ieee80211_frame);
@@ -97,23 +97,16 @@ ieee80211_proto_attach(struct ieee80211com *ic)
 	ic->ic_fragthreshold = 2346;		/* XXX not used yet */
 	ic->ic_fixed_rate = -1;			/* no fixed rate */
 	ic->ic_protmode = IEEE80211_PROT_CTSONLY;
-	
-	/* protocol state change handler */
-	VoodooSetFunction(ic->ic_newstate, ieee80211_newstate);
-	
-	/* initialize management frame handlers */
-	VoodooSetFunction(ic->ic_recv_mgmt, ieee80211_recv_mgmt);
-	VoodooSetFunction(ic->ic_send_mgmt, ieee80211_send_mgmt);
 }
 
-void MyClass::
+void Voodoo80211Device::
 ieee80211_proto_detach(struct ieee80211com *ic)
 {
 	ic->ic_mgtq->flush();
 	ic->ic_pwrsaveq->flush();
 }
 
-void MyClass::
+void Voodoo80211Device::
 ieee80211_print_essid(const u_int8_t *essid, int len)
 {
 	int i;
@@ -139,7 +132,7 @@ ieee80211_print_essid(const u_int8_t *essid, int len)
 }
 
 #ifdef IEEE80211_DEBUG
-void MyClass::
+void Voodoo80211Device::
 ieee80211_dump_pkt(const u_int8_t *buf, int len, int rate, int rssi)
 {
 	struct ieee80211_frame *wh;
@@ -200,7 +193,7 @@ ieee80211_dump_pkt(const u_int8_t *buf, int len, int rate, int rssi)
 }
 #endif
 
-int MyClass::
+int Voodoo80211Device::
 ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_node *ni,
 		   int flags)
 {
@@ -302,7 +295,7 @@ ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_node *ni,
 /*
  * Reset 11g-related state.
  */
-void MyClass::
+void Voodoo80211Device::
 ieee80211_reset_erp(struct ieee80211com *ic)
 {
 	ic->ic_flags &= ~IEEE80211_F_USEPROT;
@@ -329,7 +322,7 @@ ieee80211_reset_erp(struct ieee80211com *ic)
 /*
  * Set the short slot time state and notify the driver.
  */
-void MyClass::
+void Voodoo80211Device::
 ieee80211_set_shortslottime(struct ieee80211com *ic, int on)
 {
 	if (on)
@@ -338,15 +331,14 @@ ieee80211_set_shortslottime(struct ieee80211com *ic, int on)
 		ic->ic_flags &= ~IEEE80211_F_SHSLOT;
 	
 	/* notify the driver */
-	if (ic->ic_updateslot != NULL)
-		ic->ic_updateslot(ic);
+	ieee80211_updateslot(ic);
 }
 
 /*
  * This function is called by the 802.1X PACP machine (via an ioctl) when
  * the transmit key machine (4-Way Handshake for 802.11) should run.
  */
-int MyClass::
+int Voodoo80211Device::
 ieee80211_keyrun(struct ieee80211com *ic, u_int8_t *macaddr)
 {
 	/* STA must be associated or AP must be ready */
@@ -359,7 +351,7 @@ ieee80211_keyrun(struct ieee80211com *ic, u_int8_t *macaddr)
 }
 
 #ifndef IEEE80211_NO_HT
-void MyClass::
+void Voodoo80211Device::
 ieee80211_tx_ba_timeout(void *arg)
 {
 	struct ieee80211_tx_ba *ba = (struct ieee80211_tx_ba *)arg;
@@ -382,7 +374,7 @@ ieee80211_tx_ba_timeout(void *arg)
 	splx(s);
 }
 
-void MyClass::
+void Voodoo80211Device::
 ieee80211_rx_ba_timeout(void *arg)
 {
 	struct ieee80211_rx_ba *ba = (struct ieee80211_rx_ba *)arg;
@@ -403,7 +395,7 @@ ieee80211_rx_ba_timeout(void *arg)
 /*
  * Request initiation of Block Ack with the specified peer.
  */
-int MyClass::
+int Voodoo80211Device::
 ieee80211_addba_request(struct ieee80211com *ic, struct ieee80211_node *ni,
 			u_int16_t ssn, u_int8_t tid)
 {
@@ -415,7 +407,7 @@ ieee80211_addba_request(struct ieee80211com *ic, struct ieee80211_node *ni,
 	ba->ba_state = IEEE80211_BA_REQUESTED;
 	ba->ba_token = ic->ic_dialog_token++;
 	ba->ba_timeout_val = IEEE80211_BA_MAX_TIMEOUT;
-	timeout_set(ba->ba_to, OSMemberFunctionCast(VoodooTimeout::CallbackFunction, this, &MyClass::ieee80211_tx_ba_timeout), ba);
+	timeout_set(ba->ba_to, OSMemberFunctionCast(VoodooTimeout::CallbackFunction, this, &Voodoo80211Device::ieee80211_tx_ba_timeout), ba);
 	ba->ba_winsize = IEEE80211_BA_MAX_WINSZ;
 	ba->ba_winstart = ssn;
 	ba->ba_winend = (ba->ba_winstart + ba->ba_winsize - 1) & 0xfff;
@@ -429,7 +421,7 @@ ieee80211_addba_request(struct ieee80211com *ic, struct ieee80211_node *ni,
 /*
  * Request the deletion of Block Ack with a peer.
  */
-void MyClass::
+void Voodoo80211Device::
 ieee80211_delba_request(struct ieee80211com *ic, struct ieee80211_node *ni,
 			u_int16_t reason, u_int8_t dir, u_int8_t tid)
 {
@@ -442,8 +434,7 @@ ieee80211_delba_request(struct ieee80211com *ic, struct ieee80211_node *ni,
 		/* MLME-DELBA.confirm(Originator) */
 		struct ieee80211_tx_ba *ba = &ni->ni_tx_ba[tid];
 		
-		if (ic->ic_ampdu_tx_stop != NULL)
-			ic->ic_ampdu_tx_stop(ic, ni, tid);
+		ieee80211_ampdu_tx_stop(ic, ni, tid);
 		
 		ba->ba_state = IEEE80211_BA_INIT;
 		/* stop Block Ack inactivity timer */
@@ -453,8 +444,7 @@ ieee80211_delba_request(struct ieee80211com *ic, struct ieee80211_node *ni,
 		struct ieee80211_rx_ba *ba = &ni->ni_rx_ba[tid];
 		int i;
 		
-		if (ic->ic_ampdu_rx_stop != NULL)
-			ic->ic_ampdu_rx_stop(ic, ni, tid);
+		ieee80211_ampdu_rx_stop(ic, ni, tid);
 		
 		ba->ba_state = IEEE80211_BA_INIT;
 		/* stop Block Ack inactivity timer */
@@ -473,7 +463,7 @@ ieee80211_delba_request(struct ieee80211com *ic, struct ieee80211_node *ni,
 }
 #endif	/* !IEEE80211_NO_HT */
 
-void MyClass::
+void Voodoo80211Device::
 ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 		    struct ieee80211_node *ni, struct ieee80211_rxinfo *rxi, u_int16_t seq,
 		    u_int16_t status)
@@ -494,7 +484,7 @@ ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 				ic->ic_bss->ni_flags &= ~IEEE80211_NODE_TXRXPROT;
 				ic->ic_bss->ni_port_valid = 0;
 				ic->ic_bss->ni_replaycnt_ok = 0;
-				(*ic->ic_delete_key)(ic, ic->ic_bss,
+				ieee80211_delete_key(ic, ic->ic_bss,
 						     &ic->ic_bss->ni_pairwise_key);
 			}
 			if (status != 0) {
@@ -510,7 +500,7 @@ ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 				ic->ic_stats.is_rx_auth_fail++;
 				return;
 			}
-			ieee80211_new_state(ic, IEEE80211_S_ASSOC,
+			ieee80211_newstate(ic, IEEE80211_S_ASSOC,
 					    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
 			break;
 		default:
@@ -518,7 +508,7 @@ ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 	}
 }
 
-int MyClass::
+int Voodoo80211Device::
 ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 		   int mgt)
 {
@@ -726,7 +716,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 	return 0;
 }
 
-void MyClass::
+void Voodoo80211Device::
 ieee80211_set_link_state(struct ieee80211com *ic, IO80211LinkState nstate)
 {	
 	switch (ic->ic_opmode) {

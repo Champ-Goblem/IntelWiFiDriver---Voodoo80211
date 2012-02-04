@@ -72,7 +72,7 @@ static const int MBUF_CLSIZE = 4096;
  * later by the driver. This function can be used to send raw frames
  * if the mbuf has been tagged with a 802.11 data link type.
  */
-int MyClass::
+int Voodoo80211Device::
 ieee80211_output(struct ieee80211com *ic, mbuf_t m, struct sockaddr *dst,
 		 struct rtentry *rt)
 {
@@ -153,7 +153,7 @@ bad:
  * dispatched to the driver, then it is responsible for freeing the
  * reference (and potentially free'ing up any associated storage).
  */
-int MyClass::
+int Voodoo80211Device::
 ieee80211_mgmt_output(struct ieee80211com *ic, struct ieee80211_node *ni,
 		      mbuf_t m, int type)
 {
@@ -300,7 +300,7 @@ ieee80211_edca_table[IEEE80211_MODE_MAX][EDCA_NUM_AC] = {
  * Return the EDCA Access Category to be used for transmitting a frame with
  * user-priority `up'.
  */
-enum ieee80211_edca_ac MyClass::
+enum ieee80211_edca_ac Voodoo80211Device::
 ieee80211_up_to_ac(struct ieee80211com *ic, int up)
 {
 	/* see Table 9-1 */
@@ -349,7 +349,7 @@ ieee80211_up_to_ac(struct ieee80211com *ic, int up)
  * Get mbuf's user-priority: if mbuf is not VLAN tagged, select user-priority
  * based on the DSCP (Differentiated Services Codepoint) field.
  */
-int MyClass::
+int Voodoo80211Device::
 ieee80211_classify(struct ieee80211com *ic, mbuf_t m)
 {
 	return 0;
@@ -418,7 +418,7 @@ ieee80211_classify(struct ieee80211com *ic, mbuf_t m)
  *     The convention is ic_bss is not reference counted; the caller must
  *     maintain that.
  */
-mbuf_t MyClass::
+mbuf_t Voodoo80211Device::
 ieee80211_encap(struct ieee80211com *ic, mbuf_t m, struct ieee80211_node **pni)
 {
 	struct ether_header eh;
@@ -583,7 +583,7 @@ bad:
 /*
  * Add a Capability Information field to a frame (see 7.3.1.4).
  */
-u_int8_t * MyClass::
+u_int8_t * Voodoo80211Device::
 ieee80211_add_capinfo(u_int8_t *frm, struct ieee80211com *ic,
 		      const struct ieee80211_node *ni)
 {
@@ -603,7 +603,7 @@ ieee80211_add_capinfo(u_int8_t *frm, struct ieee80211com *ic,
 /*
  * Add an SSID element to a frame (see 7.3.2.1).
  */
-u_int8_t * MyClass::
+u_int8_t * Voodoo80211Device::
 ieee80211_add_ssid(u_int8_t *frm, const u_int8_t *ssid, u_int len)
 {
 	*frm++ = IEEE80211_ELEMID_SSID;
@@ -615,7 +615,7 @@ ieee80211_add_ssid(u_int8_t *frm, const u_int8_t *ssid, u_int len)
 /*
  * Add a supported rates element to a frame (see 7.3.2.2).
  */
-u_int8_t * MyClass::
+u_int8_t * Voodoo80211Device::
 ieee80211_add_rates(u_int8_t *frm, const struct ieee80211_rateset *rs)
 {
 	int nrates;
@@ -630,7 +630,7 @@ ieee80211_add_rates(u_int8_t *frm, const struct ieee80211_rateset *rs)
 /*
  * Add a QoS Capability element to a frame (see 7.3.2.35).
  */
-u_int8_t * MyClass::
+u_int8_t * Voodoo80211Device::
 ieee80211_add_qos_capability(u_int8_t *frm, struct ieee80211com *ic)
 {
 	*frm++ = IEEE80211_ELEMID_QOS_CAP;
@@ -642,7 +642,7 @@ ieee80211_add_qos_capability(u_int8_t *frm, struct ieee80211com *ic)
 /*
  * Add an RSN element to a frame (see 7.3.2.25).
  */
-u_int8_t * MyClass::
+u_int8_t * Voodoo80211Device::
 ieee80211_add_rsn_body(u_int8_t *frm, struct ieee80211com *ic,
 		       const struct ieee80211_node *ni, int wpa)
 {
@@ -753,7 +753,7 @@ ieee80211_add_rsn_body(u_int8_t *frm, struct ieee80211com *ic,
 	return frm;
 }
 
-u_int8_t * MyClass::
+u_int8_t * Voodoo80211Device::
 ieee80211_add_rsn(u_int8_t *frm, struct ieee80211com *ic,
 		  const struct ieee80211_node *ni)
 {
@@ -772,7 +772,7 @@ ieee80211_add_rsn(u_int8_t *frm, struct ieee80211com *ic,
  * Add a vendor-specific WPA element to a frame.
  * This is required for compatibility with Wi-Fi Alliance WPA.
  */
-u_int8_t * MyClass::
+u_int8_t * Voodoo80211Device::
 ieee80211_add_wpa(u_int8_t *frm, struct ieee80211com *ic,
 		  const struct ieee80211_node *ni)
 {
@@ -792,7 +792,7 @@ ieee80211_add_wpa(u_int8_t *frm, struct ieee80211com *ic,
 /*
  * Add an extended supported rates element to a frame (see 7.3.2.14).
  */
-u_int8_t * MyClass::
+u_int8_t * Voodoo80211Device::
 ieee80211_add_xrates(u_int8_t *frm, const struct ieee80211_rateset *rs)
 {
 	int nrates;
@@ -810,7 +810,7 @@ ieee80211_add_xrates(u_int8_t *frm, const struct ieee80211_rateset *rs)
 /*
  * Add an HT Capabilities element to a frame (see 7.3.2.57).
  */
-u_int8_t * MyClass::
+u_int8_t * Voodoo80211Device::
 ieee80211_add_htcaps(u_int8_t *frm, struct ieee80211com *ic)
 {
 	*frm++ = IEEE80211_ELEMID_HTCAPS;
@@ -826,7 +826,7 @@ ieee80211_add_htcaps(u_int8_t *frm, struct ieee80211com *ic)
 
 #endif	/* !IEEE80211_NO_HT */
 
-mbuf_t MyClass::
+mbuf_t Voodoo80211Device::
 ieee80211_getmgmt(int flags, int type, u_int pktlen)
 {
 	// TODO: carefully understand and fix this if needed
@@ -857,7 +857,7 @@ ieee80211_getmgmt(int flags, int type, u_int pktlen)
  * [tlv] Extended Supported Rates (802.11g)
  * [tlv] HT Capabilities (802.11n)
  */
-mbuf_t MyClass::
+mbuf_t Voodoo80211Device::
 ieee80211_get_probe_req(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	const struct ieee80211_rateset *rs =
@@ -896,7 +896,7 @@ ieee80211_get_probe_req(struct ieee80211com *ic, struct ieee80211_node *ni)
  * [2] Authentication transaction sequence number
  * [2] Status code
  */
-mbuf_t MyClass::
+mbuf_t Voodoo80211Device::
 ieee80211_get_auth(struct ieee80211com *ic, struct ieee80211_node *ni,
 		   u_int16_t status, u_int16_t seq)
 {
@@ -922,7 +922,7 @@ ieee80211_get_auth(struct ieee80211com *ic, struct ieee80211_node *ni,
  * Deauthentication frame format:
  * [2] Reason code
  */
-mbuf_t MyClass::
+mbuf_t Voodoo80211Device::
 ieee80211_get_deauth(struct ieee80211com *ic, struct ieee80211_node *ni,
 		     u_int16_t reason)
 {
@@ -952,7 +952,7 @@ ieee80211_get_deauth(struct ieee80211com *ic, struct ieee80211_node *ni,
  * [tlv] QoS Capability (802.11e)
  * [tlv] HT Capabilities (802.11n)
  */
-mbuf_t MyClass::
+mbuf_t Voodoo80211Device::
 ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 			int type)
 {
@@ -1022,7 +1022,7 @@ ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
  * Disassociation frame format:
  * [2] Reason code
  */
-mbuf_t MyClass::
+mbuf_t Voodoo80211Device::
 ieee80211_get_disassoc(struct ieee80211com *ic, struct ieee80211_node *ni,
 		       u_int16_t reason)
 {
@@ -1051,7 +1051,7 @@ ieee80211_get_disassoc(struct ieee80211com *ic, struct ieee80211_node *ni,
  * [2] Block Ack Timeout Value
  * [2] Block Ack Starting Sequence Control
  */
-mbuf_t MyClass::
+mbuf_t Voodoo80211Device::
 ieee80211_get_addba_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 			u_int8_t tid)
 {
@@ -1088,7 +1088,7 @@ ieee80211_get_addba_req(struct ieee80211com *ic, struct ieee80211_node *ni,
  * [2] Block Ack Parameter Set
  * [2] Block Ack Timeout Value
  */
-mbuf_t MyClass::
+mbuf_t Voodoo80211Device::
 ieee80211_get_addba_resp(struct ieee80211com *ic, struct ieee80211_node *ni,
 			 u_int8_t tid, u_int8_t token, u_int16_t status)
 {
@@ -1129,7 +1129,7 @@ ieee80211_get_addba_resp(struct ieee80211com *ic, struct ieee80211_node *ni,
  * [2] DELBA Parameter Set
  * [2] Reason Code
  */
-mbuf_t MyClass::
+mbuf_t Voodoo80211Device::
 ieee80211_get_delba(struct ieee80211com *ic, struct ieee80211_node *ni,
 		    u_int8_t tid, u_int8_t dir, u_int16_t reason)
 {
@@ -1163,7 +1163,7 @@ ieee80211_get_delba(struct ieee80211com *ic, struct ieee80211_node *ni,
  * [1]  Action
  * [16] Transaction Identifier
  */
-mbuf_t MyClass::
+mbuf_t Voodoo80211Device::
 ieee80211_get_sa_query(struct ieee80211com *ic, struct ieee80211_node *ni,
 		       u_int8_t action)
 {
@@ -1185,7 +1185,7 @@ ieee80211_get_sa_query(struct ieee80211com *ic, struct ieee80211_node *ni,
 	return m;
 }
 
-mbuf_t MyClass::
+mbuf_t Voodoo80211Device::
 ieee80211_get_action(struct ieee80211com *ic, struct ieee80211_node *ni,
 		     u_int8_t categ, u_int8_t action, int arg)
 {
@@ -1225,7 +1225,7 @@ ieee80211_get_action(struct ieee80211com *ic, struct ieee80211_node *ni,
  * when in station mode).  Nodes other than ic_bss have their reference
  * count bumped to reflect our use for an indeterminant time.
  */
-int MyClass::
+int Voodoo80211Device::
 ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		    int type, int arg1, int arg2)
 {
@@ -1320,7 +1320,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 /*
  * Build a RTS (Request To Send) control frame (see 7.2.1.1).
  */
-mbuf_t MyClass::
+mbuf_t Voodoo80211Device::
 ieee80211_get_rts(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 		  u_int16_t dur)
 {
@@ -1348,7 +1348,7 @@ ieee80211_get_rts(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 /*
  * Build a CTS-to-self (Clear To Send) control frame (see 7.2.1.2).
  */
-mbuf_t MyClass::
+mbuf_t Voodoo80211Device::
 ieee80211_get_cts_to_self(struct ieee80211com *ic, u_int16_t dur)
 {
 	struct ieee80211_frame_cts *cts;

@@ -55,7 +55,7 @@ struct ieee80211_ccmp_ctx {
  * Initialize software crypto context.  This function can be overridden
  * by drivers doing hardware crypto.
  */
-int MyClass::
+int Voodoo80211Device::
 ieee80211_ccmp_set_key(struct ieee80211com *ic, struct ieee80211_key *k)
 {
 	struct ieee80211_ccmp_ctx *ctx;
@@ -69,7 +69,7 @@ ieee80211_ccmp_set_key(struct ieee80211com *ic, struct ieee80211_key *k)
 	return 0;
 }
 
-void MyClass::
+void Voodoo80211Device::
 ieee80211_ccmp_delete_key(struct ieee80211com *ic, struct ieee80211_key *k)
 {
 	if (k->k_priv != NULL)
@@ -161,7 +161,7 @@ ieee80211_ccmp_phase1(rijndael_ctx *ctx, const struct ieee80211_frame *wh,
 	rijndael_encrypt(ctx, a, s0);
 }
 
-mbuf_t MyClass::
+mbuf_t Voodoo80211Device::
 ieee80211_ccmp_encrypt(struct ieee80211com *ic, mbuf_t m0,
                        struct ieee80211_key *k)
 {
@@ -295,7 +295,7 @@ nospace:
 	return NULL;
 }
 
-mbuf_t MyClass::
+mbuf_t Voodoo80211Device::
 ieee80211_ccmp_decrypt(struct ieee80211com *ic, mbuf_t m0,
                        struct ieee80211_key *k)
 {

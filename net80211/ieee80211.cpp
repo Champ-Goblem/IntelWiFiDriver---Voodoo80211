@@ -71,7 +71,7 @@ int ieee80211_cache_size = IEEE80211_CACHE_SIZE;
 struct ieee80211com_head ieee80211com_head =
 LIST_HEAD_INITIALIZER(ieee80211com_head);
 
-void MyClass::
+void Voodoo80211Device::
 ieee80211_ifattach(struct ieee80211com *ic)
 {
 	// XXX: check this function for completeness
@@ -151,7 +151,7 @@ ieee80211_ifattach(struct ieee80211com *ic)
 	 */
 }
 
-void MyClass::
+void Voodoo80211Device::
 ieee80211_ifdetach(struct ieee80211com *ic)
 {	
 	ieee80211_proto_detach(ic);
@@ -165,7 +165,7 @@ ieee80211_ifdetach(struct ieee80211com *ic)
 /*
  * Convert MHz frequency to IEEE channel number.
  */
-u_int MyClass::
+u_int Voodoo80211Device::
 ieee80211_mhz2ieee(u_int freq, u_int flags)
 {
 	if (flags & IEEE80211_CHAN_2GHZ) {	/* 2GHz band */
@@ -191,11 +191,11 @@ ieee80211_mhz2ieee(u_int freq, u_int flags)
 /*
  * Convert channel to IEEE channel number.
  */
-u_int MyClass::
+u_int Voodoo80211Device::
 ieee80211_chan2ieee(struct ieee80211com *ic, const struct ieee80211_channel *c)
 {
 	if (ic->ic_channels <= c && c <= &ic->ic_channels[IEEE80211_CHAN_MAX])
-		return c - ic->ic_channels;
+		return (u_int) (c - ic->ic_channels);
 	else if (c == IEEE80211_CHAN_ANYC)
 		return IEEE80211_CHAN_ANY;
 	else if (c != NULL) {
@@ -211,7 +211,7 @@ ieee80211_chan2ieee(struct ieee80211com *ic, const struct ieee80211_channel *c)
 /*
  * Convert IEEE channel number to MHz frequency.
  */
-u_int MyClass::
+u_int Voodoo80211Device::
 ieee80211_ieee2mhz(u_int chan, u_int flags)
 {
 	if (flags & IEEE80211_CHAN_2GHZ) {	/* 2GHz band */
@@ -239,7 +239,7 @@ ieee80211_ieee2mhz(u_int chan, u_int flags)
  * rate tables.  This must be called by the driver after
  * ieee80211_attach and before most anything else.
  */
-void MyClass::
+void Voodoo80211Device::
 ieee80211_media_init(struct ieee80211com *ic/*, XXX
 		     ifm_change_cb_t media_change, ifm_stat_cb_t media_stat*/)
 {
@@ -270,9 +270,6 @@ IONetworkMedium::addMedium((_ic)->ic_media, IONetworkMedium::medium(IFM_IEEE8021
 			IFM_IEEE80211_11B,
 			IFM_IEEE80211_11G,
 			IFM_IEEE80211_11A | IFM_IEEE80211_TURBO,
-		};
-		static const u_int mspeeds[] = {
-			0, 54000000, 11000000, 54000000, 108000000
 		};
 		if ((ic->ic_modecaps & (1<<mode)) == 0)
 			continue;
@@ -331,7 +328,7 @@ IONetworkMedium::addMedium((_ic)->ic_media, IONetworkMedium::medium(IFM_IEEE8021
 #undef ADD
 }
 
-int MyClass::
+int Voodoo80211Device::
 ieee80211_findrate(struct ieee80211com *ic, enum ieee80211_phymode mode,
 		   int rate)
 {
@@ -348,7 +345,7 @@ ieee80211_findrate(struct ieee80211com *ic, enum ieee80211_phymode mode,
 /*
  * Handle a media change request.
  */
-int MyClass::
+int Voodoo80211Device::
 ieee80211_media_change(struct ieee80211com *ic)
 {
 #if 0 // pvaibhav: TODO (or not to do?)
@@ -478,7 +475,7 @@ ieee80211_media_change(struct ieee80211com *ic)
 	return 0;
 }
 
-void MyClass::
+void Voodoo80211Device::
 ieee80211_media_status(struct ieee80211com *ic, IONetworkMedium* imr)
 {
 	const struct ieee80211_node *ni = NULL;
@@ -526,11 +523,11 @@ ieee80211_media_status(struct ieee80211com *ic, IONetworkMedium* imr)
 	}
 }
 
-void MyClass::
+void Voodoo80211Device::
 ieee80211_watchdog(struct ieee80211com *ic)
 {	
 	if (ic->ic_mgt_timer && --ic->ic_mgt_timer == 0)
-		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
+		ieee80211_newstate(ic, IEEE80211_S_SCAN, -1);
 	
 	/* TODO: ??
 	if (ic->ic_mgt_timer != 0)
@@ -554,7 +551,7 @@ const struct ieee80211_rateset ieee80211_std_rateset_11g =
  * 11b rates.  There's also a pseudo 11a-mode used to mark only
  * the basic OFDM rates.
  */
-void MyClass::
+void Voodoo80211Device::
 ieee80211_setbasicrates(struct ieee80211com *ic)
 {
 	static const struct ieee80211_rateset basic[] = {
@@ -590,7 +587,7 @@ ieee80211_setbasicrates(struct ieee80211com *ic)
  * select a new default/current channel if the current one is
  * inappropriate for this mode.
  */
-int MyClass::
+int Voodoo80211Device::
 ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 {
 #define	N(a)	(sizeof(a) / sizeof(a[0]))
@@ -682,7 +679,7 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 #undef N
 }
 
-enum ieee80211_phymode MyClass::
+enum ieee80211_phymode Voodoo80211Device::
 ieee80211_next_mode(struct ieee80211com *ic)
 {
 	if (getCurrentMedium()->getType() & IFM_AUTO) {
@@ -722,7 +719,7 @@ ieee80211_next_mode(struct ieee80211com *ic)
  *
  * XXX never returns turbo modes -dcy
  */
-enum ieee80211_phymode MyClass::
+enum ieee80211_phymode Voodoo80211Device::
 ieee80211_chan2mode(struct ieee80211com *ic,
 		    const struct ieee80211_channel *chan)
 {
@@ -752,7 +749,7 @@ ieee80211_chan2mode(struct ieee80211com *ic,
  * convert IEEE80211 rate value to ifmedia subtype.
  * ieee80211 rate is in unit of 0.5Mbps.
  */
-int MyClass::
+int Voodoo80211Device::
 ieee80211_rate2media(struct ieee80211com *ic, int rate,
 		     enum ieee80211_phymode mode)
 {
@@ -813,7 +810,7 @@ ieee80211_rate2media(struct ieee80211com *ic, int rate,
 #undef N
 }
 
-int MyClass::
+int Voodoo80211Device::
 ieee80211_media2rate(int mword)
 {
 #define	N(a)	(sizeof(a) / sizeof(a[0]))
@@ -851,7 +848,7 @@ ieee80211_media2rate(int mword)
 /*
  * Convert bit rate (in 0.5Mbps units) to PLCP signal (R4-R1) and vice versa.
  */
-u_int8_t MyClass::
+u_int8_t Voodoo80211Device::
 ieee80211_rate2plcp(u_int8_t rate, enum ieee80211_phymode mode)
 {
 	rate &= IEEE80211_RATE_VAL;
@@ -886,7 +883,7 @@ ieee80211_rate2plcp(u_int8_t rate, enum ieee80211_phymode mode)
 	return 0;
 }
 
-u_int8_t MyClass::
+u_int8_t Voodoo80211Device::
 ieee80211_plcp2rate(u_int8_t plcp, enum ieee80211_phymode mode)
 {
 	if (mode == IEEE80211_MODE_11B) {
