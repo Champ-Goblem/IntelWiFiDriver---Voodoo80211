@@ -17,6 +17,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifndef __h__if_wpireg
+#define __h__if_wpireg
+
 #define __packed	__attribute__((__packed__))
 
 #define WPI_TX_RING_COUNT	256
@@ -840,3 +843,5 @@ BUS_SPACE_BARRIER_WRITE)
 #define WPI_BARRIER_READ_WRITE(sc)					\
 bus_space_barrier((sc)->sc_st, (sc)->sc_sh, 0, (sc)->sc_sz,	\
 BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE)
+
+#endif

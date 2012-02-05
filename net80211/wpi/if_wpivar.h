@@ -17,6 +17,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifndef __h__if_wpivar
+#define __h__if_wpivar
+
 #include <net80211/VoodooTimeout.h>
 #include <net80211/compat.h>
 
@@ -149,3 +152,4 @@ struct wpi_softc {
 	int			sc_tx_timer;
 	struct workq_task	sc_resume_wqt;
 };
+#endif

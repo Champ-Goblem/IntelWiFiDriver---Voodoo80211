@@ -45,96 +45,10 @@
 #include <netinet/if_ether.h>
 #include <netinet/ip.h>
 
-#include <net80211/ieee80211_var.h>
-#include <net80211/ieee80211_amrr.h>
+#include "VoodooIntel3945.h"
 
 #include "if_wpireg.h"
 #include "if_wpivar.h"
-
-static const struct pci_matchid wpi_devices[] = {
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_3945ABG_1 },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_3945ABG_2 }
-};
-
-int		wpi_match(struct device *, void *, void *);
-void		wpi_attach(struct device *, struct device *, void *);
-#if NBPFILTER > 0
-void		wpi_radiotap_attach(struct wpi_softc *);
-#endif
-int		wpi_detach(struct device *, int);
-int		wpi_activate(struct device *, int);
-void		wpi_resume(void *, void *);
-int		wpi_nic_lock(struct wpi_softc *);
-int		wpi_read_prom_data(struct wpi_softc *, uint32_t, void *, int);
-int		wpi_dma_contig_alloc(bus_dma_tag_t, struct wpi_dma_info *,
-				     void **, bus_size_t, bus_size_t);
-void		wpi_dma_contig_free(struct wpi_dma_info *);
-int		wpi_alloc_shared(struct wpi_softc *);
-void		wpi_free_shared(struct wpi_softc *);
-int		wpi_alloc_fwmem(struct wpi_softc *);
-void		wpi_free_fwmem(struct wpi_softc *);
-int		wpi_alloc_rx_ring(struct wpi_softc *, struct wpi_rx_ring *);
-void		wpi_reset_rx_ring(struct wpi_softc *, struct wpi_rx_ring *);
-void		wpi_free_rx_ring(struct wpi_softc *, struct wpi_rx_ring *);
-int		wpi_alloc_tx_ring(struct wpi_softc *, struct wpi_tx_ring *,
-				  int);
-void		wpi_reset_tx_ring(struct wpi_softc *, struct wpi_tx_ring *);
-void		wpi_free_tx_ring(struct wpi_softc *, struct wpi_tx_ring *);
-int		wpi_read_eeprom(struct wpi_softc *);
-void		wpi_read_eeprom_channels(struct wpi_softc *, int);
-void		wpi_read_eeprom_group(struct wpi_softc *, int);
-struct		ieee80211_node *wpi_node_alloc(struct ieee80211com *);
-void		wpi_newassoc(struct ieee80211com *, struct ieee80211_node *,
-			     int);
-int		wpi_media_change(struct ifnet *);
-int		wpi_newstate(struct ieee80211com *, enum ieee80211_state, int);
-void		wpi_iter_func(void *, struct ieee80211_node *);
-void		wpi_calib_timeout(void *);
-int		wpi_ccmp_decap(struct wpi_softc *, struct mbuf *,
-			       struct ieee80211_key *);
-void		wpi_rx_done(struct wpi_softc *, struct wpi_rx_desc *,
-			    struct wpi_rx_data *);
-void		wpi_tx_done(struct wpi_softc *, struct wpi_rx_desc *);
-void		wpi_cmd_done(struct wpi_softc *, struct wpi_rx_desc *);
-void		wpi_notif_intr(struct wpi_softc *);
-void		wpi_fatal_intr(struct wpi_softc *);
-int		wpi_intr(void *);
-int		wpi_tx(struct wpi_softc *, struct mbuf *,
-		       struct ieee80211_node *);
-void		wpi_start(struct ifnet *);
-void		wpi_watchdog(struct ifnet *);
-int		wpi_ioctl(struct ifnet *, u_long, caddr_t);
-int		wpi_cmd(struct wpi_softc *, int, const void *, int, int);
-int		wpi_mrr_setup(struct wpi_softc *);
-void		wpi_updateedca(struct ieee80211com *);
-void		wpi_set_led(struct wpi_softc *, uint8_t, uint8_t, uint8_t);
-int		wpi_set_timing(struct wpi_softc *, struct ieee80211_node *);
-void		wpi_power_calibration(struct wpi_softc *);
-int		wpi_set_txpower(struct wpi_softc *, int);
-int		wpi_get_power_index(struct wpi_softc *,
-				    struct wpi_power_group *, struct ieee80211_channel *, int);
-int		wpi_set_pslevel(struct wpi_softc *, int, int, int);
-int		wpi_config(struct wpi_softc *);
-int		wpi_scan(struct wpi_softc *, uint16_t);
-int		wpi_auth(struct wpi_softc *);
-int		wpi_run(struct wpi_softc *);
-int		wpi_set_key(struct ieee80211com *, struct ieee80211_node *,
-			    struct ieee80211_key *);
-void		wpi_delete_key(struct ieee80211com *, struct ieee80211_node *,
-			       struct ieee80211_key *);
-int		wpi_post_alive(struct wpi_softc *);
-int		wpi_load_bootcode(struct wpi_softc *, const uint8_t *, int);
-int		wpi_load_firmware(struct wpi_softc *);
-int		wpi_read_firmware(struct wpi_softc *);
-int		wpi_clock_wait(struct wpi_softc *);
-int		wpi_apm_init(struct wpi_softc *);
-void		wpi_apm_stop_master(struct wpi_softc *);
-void		wpi_apm_stop(struct wpi_softc *);
-void		wpi_nic_config(struct wpi_softc *);
-int		wpi_hw_init(struct wpi_softc *);
-void		wpi_hw_stop(struct wpi_softc *);
-int		wpi_init(struct ifnet *);
-void		wpi_stop(struct ifnet *, int);
 
 #ifdef WPI_DEBUG
 #define DPRINTF(x)	do { if (wpi_debug > 0) printf x; } while (0)
@@ -145,6 +59,7 @@ int wpi_debug = 0;
 #define DPRINTFN(n, x)
 #endif
 
+#if 0
 struct cfdriver wpi_cd = {
 	NULL, "wpi", DV_IFNET
 };
@@ -153,20 +68,13 @@ struct cfattach wpi_ca = {
 	sizeof (struct wpi_softc), wpi_match, wpi_attach, wpi_detach,
 	wpi_activate
 };
+#endif
 
-int
-wpi_match(struct device *parent, void *match, void *aux)
-{
-	return pci_matchbyid((struct pci_attach_args *)aux, wpi_devices,
-			     nitems(wpi_devices));
-}
-
-void
+void VoodooIntel3945::
 wpi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wpi_softc *sc = (struct wpi_softc *)self;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
 	struct pci_attach_args *pa = aux;
 	const char *intrstr;
 	pci_intr_handle_t ih;
@@ -295,24 +203,13 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 	
 	if_attach(ifp);
 	ieee80211_ifattach(ifp);
-	ic->ic_node_alloc = wpi_node_alloc;
-	ic->ic_newassoc = wpi_newassoc;
-	ic->ic_updateedca = wpi_updateedca;
-	ic->ic_set_key = wpi_set_key;
-	ic->ic_delete_key = wpi_delete_key;
 	
-	/* Override 802.11 state transition machine. */
-	sc->sc_newstate = ic->ic_newstate;
-	ic->ic_newstate = wpi_newstate;
 	ieee80211_media_init(ifp, wpi_media_change, ieee80211_media_status);
 	
 	sc->amrr.amrr_min_success_threshold =  1;
 	sc->amrr.amrr_max_success_threshold = 15;
 	
-#if NBPFILTER > 0
-	wpi_radiotap_attach(sc);
-#endif
-	timeout_set(&sc->calib_to, wpi_calib_timeout, sc);
+	timeout_set(sc->calib_to, OSMemberFunctionCast(VoodooTimeout::CallbackFunction, this, &VoodooIntel3945::wpi_calib_timeout), sc);
 	return;
 	
 	/* Free allocated memory if something failed during attachment. */
@@ -322,31 +219,10 @@ fail2:	while (--i >= 0)
 fail1:	wpi_free_fwmem(sc);
 }
 
-#if NBPFILTER > 0
-/*
- * Attach the interface to 802.11 radiotap.
- */
-void
-wpi_radiotap_attach(struct wpi_softc *sc)
-{
-	bpfattach(&sc->sc_drvbpf, &sc->sc_ic.ic_if, DLT_IEEE802_11_RADIO,
-		  sizeof (struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN);
-	
-	sc->sc_rxtap_len = sizeof sc->sc_rxtapu;
-	sc->sc_rxtap.wr_ihdr.it_len = htole16(sc->sc_rxtap_len);
-	sc->sc_rxtap.wr_ihdr.it_present = htole32(WPI_RX_RADIOTAP_PRESENT);
-	
-	sc->sc_txtap_len = sizeof sc->sc_txtapu;
-	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
-	sc->sc_txtap.wt_ihdr.it_present = htole32(WPI_TX_RADIOTAP_PRESENT);
-}
-#endif
-
-int
+int VoodooIntel3945::
 wpi_detach(struct device *self, int flags)
 {
 	struct wpi_softc *sc = (struct wpi_softc *)self;
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int qid;
 	
 	timeout_del(&sc->calib_to);
@@ -370,11 +246,10 @@ wpi_detach(struct device *self, int flags)
 	return 0;
 }
 
-int
+int VoodooIntel3945::
 wpi_activate(struct device *self, int act)
 {
 	struct wpi_softc *sc = (struct wpi_softc *)self;
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	
 	switch (act) {
 		case DVACT_SUSPEND:
@@ -390,11 +265,10 @@ wpi_activate(struct device *self, int act)
 	return 0;
 }
 
-void
+void VoodooIntel3945::
 wpi_resume(void *arg1, void *arg2)
 {
 	struct wpi_softc *sc = arg1;
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	pcireg_t reg;
 	int s;
 	
@@ -416,7 +290,7 @@ wpi_resume(void *arg1, void *arg2)
 	splx(s);
 }
 
-int
+int VoodooIntel3945::
 wpi_nic_lock(struct wpi_softc *sc)
 {
 	int ntries;
@@ -501,7 +375,7 @@ wpi_mem_read_region_4(struct wpi_softc *sc, uint32_t addr, uint32_t *data,
 		*data++ = wpi_mem_read(sc, addr);
 }
 
-int
+int VoodooIntel3945::
 wpi_read_prom_data(struct wpi_softc *sc, uint32_t addr, void *data, int count)
 {
 	uint8_t *out = data;
@@ -535,7 +409,7 @@ wpi_read_prom_data(struct wpi_softc *sc, uint32_t addr, void *data, int count)
 	return 0;
 }
 
-int
+int VoodooIntel3945::
 wpi_dma_contig_alloc(bus_dma_tag_t tag, struct wpi_dma_info *dma, void **kvap,
 		     bus_size_t size, bus_size_t alignment)
 {
@@ -576,7 +450,7 @@ fail:	wpi_dma_contig_free(dma);
 	return error;
 }
 
-void
+void VoodooIntel3945::
 wpi_dma_contig_free(struct wpi_dma_info *dma)
 {
 	if (dma->map != NULL) {
@@ -593,7 +467,7 @@ wpi_dma_contig_free(struct wpi_dma_info *dma)
 	}
 }
 
-int
+int VoodooIntel3945::
 wpi_alloc_shared(struct wpi_softc *sc)
 {
 	/* Shared buffer must be aligned on a 4KB boundary. */
@@ -601,13 +475,13 @@ wpi_alloc_shared(struct wpi_softc *sc)
 				    (void **)&sc->shared, sizeof (struct wpi_shared), 4096);
 }
 
-void
+void VoodooIntel3945::
 wpi_free_shared(struct wpi_softc *sc)
 {
 	wpi_dma_contig_free(&sc->shared_dma);
 }
 
-int
+int VoodooIntel3945::
 wpi_alloc_fwmem(struct wpi_softc *sc)
 {
 	/* Allocate enough contiguous space to store text and data. */
@@ -615,13 +489,13 @@ wpi_alloc_fwmem(struct wpi_softc *sc)
 				    WPI_FW_TEXT_MAXSZ + WPI_FW_DATA_MAXSZ, 16);
 }
 
-void
+void VoodooIntel3945::
 wpi_free_fwmem(struct wpi_softc *sc)
 {
 	wpi_dma_contig_free(&sc->fw_dma);
 }
 
-int
+int VoodooIntel3945::
 wpi_alloc_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 {
 	bus_size_t size;
@@ -683,7 +557,7 @@ fail:	wpi_free_rx_ring(sc, ring);
 	return error;
 }
 
-void
+void VoodooIntel3945::
 wpi_reset_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 {
 	int ntries;
@@ -701,7 +575,7 @@ wpi_reset_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 	ring->cur = 0;
 }
 
-void
+void VoodooIntel3945::
 wpi_free_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 {
 	int i;
@@ -722,7 +596,7 @@ wpi_free_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 	}
 }
 
-int
+int VoodooIntel3945::
 wpi_alloc_tx_ring(struct wpi_softc *sc, struct wpi_tx_ring *ring, int qid)
 {
 	bus_addr_t paddr;
@@ -787,7 +661,7 @@ fail:	wpi_free_tx_ring(sc, ring);
 	return error;
 }
 
-void
+void VoodooIntel3945::
 wpi_reset_tx_ring(struct wpi_softc *sc, struct wpi_tx_ring *ring)
 {
 	int i;
@@ -810,7 +684,7 @@ wpi_reset_tx_ring(struct wpi_softc *sc, struct wpi_tx_ring *ring)
 	ring->cur = 0;
 }
 
-void
+void VoodooIntel3945::
 wpi_free_tx_ring(struct wpi_softc *sc, struct wpi_tx_ring *ring)
 {
 	int i;
@@ -832,7 +706,7 @@ wpi_free_tx_ring(struct wpi_softc *sc, struct wpi_tx_ring *ring)
 	}
 }
 
-int
+int VoodooIntel3945::
 wpi_read_eeprom(struct wpi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -872,7 +746,7 @@ wpi_read_eeprom(struct wpi_softc *sc)
 	return 0;
 }
 
-void
+void VoodooIntel3945::
 wpi_read_eeprom_channels(struct wpi_softc *sc, int n)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -925,7 +799,7 @@ wpi_read_eeprom_channels(struct wpi_softc *sc, int n)
 	}
 }
 
-void
+void VoodooIntel3945::
 wpi_read_eeprom_group(struct wpi_softc *sc, int n)
 {
 	struct wpi_power_group *group = &sc->groups[n];
@@ -953,14 +827,14 @@ wpi_read_eeprom_group(struct wpi_softc *sc, int n)
 	}
 }
 
-struct ieee80211_node *
-wpi_node_alloc(struct ieee80211com *ic)
+struct ieee80211_node * VoodooIntel3945::
+ieee80211_node_alloc(struct ieee80211com *ic)
 {
 	return malloc(sizeof (struct wpi_node), M_DEVBUF, M_NOWAIT | M_ZERO);
 }
 
-void
-wpi_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
+void VoodooIntel3945::
+ieee80211_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 {
 	struct wpi_softc *sc = ic->ic_if.if_softc;
 	struct wpi_node *wn = (void *)ni;
@@ -981,7 +855,7 @@ wpi_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 	}
 }
 
-int
+int VoodooIntel3945::
 wpi_media_change(struct ifnet *ifp)
 {
 	struct wpi_softc *sc = ifp->if_softc;
@@ -1011,14 +885,14 @@ wpi_media_change(struct ifnet *ifp)
 	return error;
 }
 
-int
-wpi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
+int VoodooIntel3945::
+ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct ifnet *ifp = &ic->ic_if;
 	struct wpi_softc *sc = ifp->if_softc;
 	int error;
 	
-	timeout_del(&sc->calib_to);
+	timeout_del(sc->calib_to);
 	
 	switch (nstate) {
 		case IEEE80211_S_SCAN:
@@ -1064,7 +938,7 @@ wpi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	return sc->sc_newstate(ic, nstate, arg);
 }
 
-void
+void VoodooIntel3945::
 wpi_iter_func(void *arg, struct ieee80211_node *ni)
 {
 	struct wpi_softc *sc = arg;
@@ -1073,7 +947,7 @@ wpi_iter_func(void *arg, struct ieee80211_node *ni)
 	ieee80211_amrr_choose(&sc->amrr, ni, &wn->amn);
 }
 
-void
+void VoodooIntel3945::
 wpi_calib_timeout(void *arg)
 {
 	struct wpi_softc *sc = arg;
@@ -1100,8 +974,8 @@ wpi_calib_timeout(void *arg)
 	timeout_add_msec(&sc->calib_to, 500);
 }
 
-int
-wpi_ccmp_decap(struct wpi_softc *sc, struct mbuf *m, struct ieee80211_key *k)
+int VoodooIntel3945::
+wpi_ccmp_decap(struct wpi_softc *sc, mbuf_t m, struct ieee80211_key *k)
 {
 	struct ieee80211_frame *wh;
 	uint64_t pn, *prsc;
@@ -1149,12 +1023,11 @@ wpi_ccmp_decap(struct wpi_softc *sc, struct mbuf *m, struct ieee80211_key *k)
 	return 0;
 }
 
-void
+void VoodooIntel3945::
 wpi_rx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	    struct wpi_rx_data *data)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
 	struct wpi_rx_ring *ring = &sc->rxq;
 	struct wpi_rx_stat *stat;
 	struct wpi_rx_head *head;
@@ -1162,7 +1035,7 @@ wpi_rx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	struct ieee80211_frame *wh;
 	struct ieee80211_rxinfo rxi;
 	struct ieee80211_node *ni;
-	struct mbuf *m, *m1;
+	mbuf_t m, *m1;
 	uint32_t flags;
 	int error;
 	
@@ -1267,52 +1140,7 @@ wpi_rx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 		}
 		rxi.rxi_flags |= IEEE80211_RXI_HWDEC;
 	}
-	
-#if NBPFILTER > 0
-	if (sc->sc_drvbpf != NULL) {
-		struct mbuf mb;
-		struct wpi_rx_radiotap_header *tap = &sc->sc_rxtap;
 		
-		tap->wr_flags = 0;
-		if (letoh16(head->flags) & 0x4)
-			tap->wr_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
-		tap->wr_chan_freq =
-		htole16(ic->ic_channels[head->chan].ic_freq);
-		tap->wr_chan_flags =
-		htole16(ic->ic_channels[head->chan].ic_flags);
-		tap->wr_dbm_antsignal = (int8_t)(stat->rssi - WPI_RSSI_OFFSET);
-		tap->wr_dbm_antnoise = (int8_t)letoh16(stat->noise);
-		tap->wr_tsft = tail->tstamp;
-		tap->wr_antenna = (letoh16(head->flags) >> 4) & 0xf;
-		switch (head->rate) {
-				/* CCK rates. */
-			case  10: tap->wr_rate =   2; break;
-			case  20: tap->wr_rate =   4; break;
-			case  55: tap->wr_rate =  11; break;
-			case 110: tap->wr_rate =  22; break;
-				/* OFDM rates. */
-			case 0xd: tap->wr_rate =  12; break;
-			case 0xf: tap->wr_rate =  18; break;
-			case 0x5: tap->wr_rate =  24; break;
-			case 0x7: tap->wr_rate =  36; break;
-			case 0x9: tap->wr_rate =  48; break;
-			case 0xb: tap->wr_rate =  72; break;
-			case 0x1: tap->wr_rate =  96; break;
-			case 0x3: tap->wr_rate = 108; break;
-				/* Unknown rate: should not happen. */
-			default:  tap->wr_rate =   0;
-		}
-		
-		mb.m_data = (caddr_t)tap;
-		mb.m_len = sc->sc_rxtap_len;
-		mb.m_next = m;
-		mb.m_nextpkt = NULL;
-		mb.m_type = 0;
-		mb.m_flags = 0;
-		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
-	}
-#endif
-	
 	/* Send the frame to the 802.11 layer. */
 	rxi.rxi_rssi = stat->rssi;
 	rxi.rxi_tstamp = 0;	/* unused */
@@ -1322,11 +1150,10 @@ wpi_rx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	ieee80211_release_node(ic, ni);
 }
 
-void
+void VoodooIntel3945::
 wpi_tx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
 	struct wpi_tx_ring *ring = &sc->txq[desc->qid & 0x3];
 	struct wpi_tx_data *data = &ring->data[desc->idx];
 	struct wpi_tx_stat *stat = (struct wpi_tx_stat *)(desc + 1);
@@ -1361,7 +1188,7 @@ wpi_tx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc)
 	}
 }
 
-void
+void VoodooIntel3945::
 wpi_cmd_done(struct wpi_softc *sc, struct wpi_rx_desc *desc)
 {
 	struct wpi_tx_ring *ring = &sc->txq[4];
@@ -1383,11 +1210,10 @@ wpi_cmd_done(struct wpi_softc *sc, struct wpi_rx_desc *desc)
 	wakeup(&ring->cmd[desc->idx]);
 }
 
-void
+void VoodooIntel3945::
 wpi_notif_intr(struct wpi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
 	uint32_t hw;
 	
 	bus_dmamap_sync(sc->sc_dmat, sc->shared_dma.map, 0,
@@ -1513,7 +1339,7 @@ wpi_notif_intr(struct wpi_softc *sc)
  * we can't debug the firmware because it is neither open source nor free, it
  * can help us to identify certain classes of problems.
  */
-void
+void VoodooIntel3945::
 wpi_fatal_intr(struct wpi_softc *sc)
 {
 #define N(a)	(sizeof (a) / sizeof ((a)[0]))
@@ -1576,11 +1402,10 @@ wpi_fatal_intr(struct wpi_softc *sc)
 #undef N
 }
 
-int
+int VoodooIntel3945::
 wpi_intr(void *arg)
 {
 	struct wpi_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	uint32_t r1, r2;
 	
 	/* Disable interrupts. */
@@ -1623,8 +1448,8 @@ wpi_intr(void *arg)
 	return 1;
 }
 
-int
-wpi_tx(struct wpi_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
+int VoodooIntel3945::
+wpi_tx(struct wpi_softc *sc, mbuf_t m, struct ieee80211_node *ni)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct wpi_node *wn = (void *)ni;
@@ -1636,7 +1461,7 @@ wpi_tx(struct wpi_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	const struct wpi_rate *rinfo;
 	struct ieee80211_frame *wh;
 	struct ieee80211_key *k = NULL;
-	struct mbuf *m1;
+	mbuf_t m1;
 	enum ieee80211_edca_ac ac;
 	uint32_t flags;
 	uint16_t qos;
@@ -1672,31 +1497,6 @@ wpi_tx(struct wpi_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	} else
 		ridx = wn->ridx[ni->ni_txrate];
 	rinfo = &wpi_rates[ridx];
-	
-#if NBPFILTER > 0
-	if (sc->sc_drvbpf != NULL) {
-		struct mbuf mb;
-		struct wpi_tx_radiotap_header *tap = &sc->sc_txtap;
-		
-		tap->wt_flags = 0;
-		tap->wt_chan_freq = htole16(ni->ni_chan->ic_freq);
-		tap->wt_chan_flags = htole16(ni->ni_chan->ic_flags);
-		tap->wt_rate = rinfo->rate;
-		tap->wt_hwqueue = ac;
-		if ((ic->ic_flags & IEEE80211_F_WEPON) &&
-		    (wh->i_fc[1] & IEEE80211_FC1_PROTECTED))
-			tap->wt_flags |= IEEE80211_RADIOTAP_F_WEP;
-		
-		mb.m_data = (caddr_t)tap;
-		mb.m_len = sc->sc_txtap_len;
-		mb.m_next = m;
-		mb.m_nextpkt = NULL;
-		mb.m_type = 0;
-		mb.m_flags = 0;
-		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
-	}
-#endif
-	
 	totlen = m->m_pkthdr.len;
 	
 	/* Encrypt the frame if need be. */
@@ -1884,13 +1684,11 @@ wpi_tx(struct wpi_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	return 0;
 }
 
-void
-wpi_start(struct ifnet *ifp)
+void VoodooIntel3945::
+wpi_start(struct ieee80211com *ic)
 {
-	struct wpi_softc *sc = ifp->if_softc;
-	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni;
-	struct mbuf *m;
+	mbuf_t m;
 	
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -1913,17 +1711,9 @@ wpi_start(struct ifnet *ifp)
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
-#if NBPFILTER > 0
-		if (ifp->if_bpf != NULL)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
-#endif
 		if ((m = ieee80211_encap(ifp, m, &ni)) == NULL)
 			continue;
 	sendit:
-#if NBPFILTER > 0
-		if (ic->ic_rawbpf != NULL)
-			bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_OUT);
-#endif
 		if (wpi_tx(sc, m, ni) != 0) {
 			ieee80211_release_node(ic, ni);
 			ifp->if_oerrors++;
@@ -1935,8 +1725,8 @@ wpi_start(struct ifnet *ifp)
 	}
 }
 
-void
-wpi_watchdog(struct ifnet *ifp)
+void VoodooIntel3945::
+wpi_watchdog(struct ieee80211com *ifp)
 {
 	struct wpi_softc *sc = ifp->if_softc;
 	
@@ -1956,7 +1746,7 @@ wpi_watchdog(struct ifnet *ifp)
 	ieee80211_watchdog(ifp);
 }
 
-int
+int VoodooIntel3945::
 wpi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct wpi_softc *sc = ifp->if_softc;
@@ -2045,14 +1835,14 @@ wpi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 /*
  * Send a command to the firmware.
  */
-int
+int VoodooIntel3945::
 wpi_cmd(struct wpi_softc *sc, int code, const void *buf, int size, int async)
 {
 	struct wpi_tx_ring *ring = &sc->txq[4];
 	struct wpi_tx_desc *desc;
 	struct wpi_tx_data *data;
 	struct wpi_tx_cmd *cmd;
-	struct mbuf *m;
+	mbuf_t m;
 	bus_addr_t paddr;
 	int totlen, error;
 	
@@ -2120,7 +1910,7 @@ wpi_cmd(struct wpi_softc *sc, int code, const void *buf, int size, int async)
 /*
  * Configure HW multi-rate retries.
  */
-int
+int VoodooIntel3945::
 wpi_mrr_setup(struct wpi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -2169,8 +1959,8 @@ wpi_mrr_setup(struct wpi_softc *sc)
 	return 0;
 }
 
-void
-wpi_updateedca(struct ieee80211com *ic)
+void VoodooIntel3945::
+ieee80211_updateedca(struct ieee80211com *ic)
 {
 #define WPI_EXP2(x)	((1 << (x)) - 1)	/* CWmin = 2^ECWmin - 1 */
 	struct wpi_softc *sc = ic->ic_softc;
@@ -2192,7 +1982,7 @@ wpi_updateedca(struct ieee80211com *ic)
 #undef WPI_EXP2
 }
 
-void
+void VoodooIntel3945::
 wpi_set_led(struct wpi_softc *sc, uint8_t which, uint8_t off, uint8_t on)
 {
 	struct wpi_cmd_led led;
@@ -2204,7 +1994,7 @@ wpi_set_led(struct wpi_softc *sc, uint8_t which, uint8_t off, uint8_t on)
 	(void)wpi_cmd(sc, WPI_CMD_SET_LED, &led, sizeof led, 1);
 }
 
-int
+int VoodooIntel3945::
 wpi_set_timing(struct wpi_softc *sc, struct ieee80211_node *ni)
 {
 	struct wpi_cmd_timing cmd;
@@ -2254,7 +2044,7 @@ wpi_power_calibration(struct wpi_softc *sc)
 /*
  * Set TX power for current channel (each rate has its own power settings).
  */
-int
+int VoodooIntel3945::
 wpi_set_txpower(struct wpi_softc *sc, int async)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -2306,7 +2096,7 @@ wpi_set_txpower(struct wpi_softc *sc, int async)
  * This takes into account the regulatory information from EEPROM and the
  * current temperature.
  */
-int
+int VoodooIntel3945::
 wpi_get_power_index(struct wpi_softc *sc, struct wpi_power_group *group,
 		    struct ieee80211_channel *c, int ridx)
 {
@@ -2379,7 +2169,7 @@ wpi_get_power_index(struct wpi_softc *sc, struct wpi_power_group *group,
  * Set STA mode power saving level (between 0 and 5).
  * Level 0 is CAM (Continuously Aware Mode), 5 is for maximum power saving.
  */
-int
+int VoodooIntel3945::
 wpi_set_pslevel(struct wpi_softc *sc, int dtim, int level, int async)
 {
 	struct wpi_pmgt_cmd cmd;
@@ -2426,11 +2216,10 @@ wpi_set_pslevel(struct wpi_softc *sc, int dtim, int level, int async)
 	return wpi_cmd(sc, WPI_CMD_SET_POWER_MODE, &cmd, sizeof cmd, async);
 }
 
-int
+int VoodooIntel3945::
 wpi_config(struct wpi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
 	struct wpi_bluetooth bluetooth;
 	struct wpi_node_info node;
 	int error;
@@ -2514,7 +2303,7 @@ wpi_config(struct wpi_softc *sc)
 	return 0;
 }
 
-int
+int VoodooIntel3945::
 wpi_scan(struct wpi_softc *sc, uint16_t flags)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -2624,7 +2413,7 @@ wpi_scan(struct wpi_softc *sc, uint16_t flags)
 	return error;
 }
 
-int
+int VoodooIntel3945::
 wpi_auth(struct wpi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -2689,7 +2478,7 @@ wpi_auth(struct wpi_softc *sc)
 	return 0;
 }
 
-int
+int VoodooIntel3945::
 wpi_run(struct wpi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -2767,8 +2556,8 @@ wpi_run(struct wpi_softc *sc)
  * We support CCMP hardware encryption/decryption of unicast frames only.
  * HW support for TKIP really sucks.  We should let TKIP die anyway.
  */
-int
-wpi_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
+int VoodooIntel3945::
+ieee80211_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	    struct ieee80211_key *k)
 {
 	struct wpi_softc *sc = ic->ic_softc;
@@ -2791,8 +2580,8 @@ wpi_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	return wpi_cmd(sc, WPI_CMD_ADD_NODE, &node, sizeof node, 1);
 }
 
-void
-wpi_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
+void VoodooIntel3945::
+ieee80211_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	       struct ieee80211_key *k)
 {
 	struct wpi_softc *sc = ic->ic_softc;
@@ -2816,7 +2605,7 @@ wpi_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	(void)wpi_cmd(sc, WPI_CMD_ADD_NODE, &node, sizeof node, 1);
 }
 
-int
+int VoodooIntel3945::
 wpi_post_alive(struct wpi_softc *sc)
 {
 	int ntries, error;
@@ -2852,7 +2641,7 @@ wpi_post_alive(struct wpi_softc *sc)
  * The firmware boot code is small and is intended to be copied directly into
  * the NIC internal memory (no DMA transfer.)
  */
-int
+int VoodooIntel3945::
 wpi_load_bootcode(struct wpi_softc *sc, const uint8_t *ucode, int size)
 {
 	int error, ntries;
@@ -2894,7 +2683,7 @@ wpi_load_bootcode(struct wpi_softc *sc, const uint8_t *ucode, int size)
 	return 0;
 }
 
-int
+int VoodooIntel3945::
 wpi_load_firmware(struct wpi_softc *sc)
 {
 	struct wpi_fw_info *fw = &sc->fw;
@@ -2960,7 +2749,7 @@ wpi_load_firmware(struct wpi_softc *sc)
 	return 0;
 }
 
-int
+int VoodooIntel3945::
 wpi_read_firmware(struct wpi_softc *sc)
 {
 	struct wpi_fw_info *fw = &sc->fw;
@@ -3020,7 +2809,7 @@ wpi_read_firmware(struct wpi_softc *sc)
 	return 0;
 }
 
-int
+int VoodooIntel3945::
 wpi_clock_wait(struct wpi_softc *sc)
 {
 	int ntries;
@@ -3039,7 +2828,7 @@ wpi_clock_wait(struct wpi_softc *sc)
 	return ETIMEDOUT;
 }
 
-int
+int VoodooIntel3945::
 wpi_apm_init(struct wpi_softc *sc)
 {
 	int error;
@@ -3064,7 +2853,7 @@ wpi_apm_init(struct wpi_softc *sc)
 	return 0;
 }
 
-void
+void VoodooIntel3945::
 wpi_apm_stop_master(struct wpi_softc *sc)
 {
 	int ntries;
@@ -3083,14 +2872,14 @@ wpi_apm_stop_master(struct wpi_softc *sc)
 	printf("%s: timeout waiting for master\n", sc->sc_dev.dv_xname);
 }
 
-void
+void VoodooIntel3945::
 wpi_apm_stop(struct wpi_softc *sc)
 {
 	wpi_apm_stop_master(sc);
 	WPI_SETBITS(sc, WPI_RESET, WPI_RESET_SW);
 }
 
-void
+void VoodooIntel3945::
 wpi_nic_config(struct wpi_softc *sc)
 {
 	pcireg_t reg;
@@ -3116,7 +2905,7 @@ wpi_nic_config(struct wpi_softc *sc)
 		WPI_SETBITS(sc, WPI_HW_IF_CONFIG, WPI_HW_IF_CONFIG_TYPE_B);
 }
 
-int
+int VoodooIntel3945::
 wpi_hw_init(struct wpi_softc *sc)
 {
 	int chnl, ntries, error;
@@ -3223,7 +3012,7 @@ wpi_hw_init(struct wpi_softc *sc)
 	return wpi_post_alive(sc);
 }
 
-void
+void VoodooIntel3945::
 wpi_hw_stop(struct wpi_softc *sc)
 {
 	int chnl, qid, ntries;
@@ -3274,7 +3063,7 @@ wpi_hw_stop(struct wpi_softc *sc)
 	wpi_apm_stop(sc);
 }
 
-int
+int VoodooIntel3945::
 wpi_init(struct ifnet *ifp)
 {
 	struct wpi_softc *sc = ifp->if_softc;
@@ -3326,7 +3115,7 @@ fail:	wpi_stop(ifp, 1);
 	return error;
 }
 
-void
+void VoodooIntel3945::
 wpi_stop(struct ifnet *ifp, int disable)
 {
 	struct wpi_softc *sc = ifp->if_softc;

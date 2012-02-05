@@ -20,4 +20,12 @@ typedef int bus_space_handle_t;
 typedef int pci_chipset_tag_t;
 typedef int pcitag_t;
 
+struct device {
+	int blah;
+};
+
+struct workq_task {
+	int blah;
+};
+
 #endif
