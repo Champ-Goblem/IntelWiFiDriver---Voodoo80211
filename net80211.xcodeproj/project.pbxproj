@@ -61,6 +61,14 @@
 		1FDBAA5D14DC36A40010697E /* IO80211Controller.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDBAA5714DC36A40010697E /* IO80211Controller.h */; settings = {ATTRIBUTES = (); }; };
 		1FDBAA5E14DC36A40010697E /* IO80211Interface.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDBAA5814DC36A40010697E /* IO80211Interface.h */; settings = {ATTRIBUTES = (); }; };
 		1FDBAA5F14DC36A40010697E /* IO80211WorkLoop.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDBAA5914DC36A40010697E /* IO80211WorkLoop.h */; settings = {ATTRIBUTES = (); }; };
+		1FDBAAE514DF0C540010697E /* if_wpireg.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDBAAE414DF0C540010697E /* if_wpireg.h */; };
+		1FDBAAE714DF0C810010697E /* VoodooIntel3945.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDBAAE614DF0C810010697E /* VoodooIntel3945.h */; };
+		1FDBAAE914DF0CBB0010697E /* VoodooIntel3945.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FDBAAE814DF0CBB0010697E /* VoodooIntel3945.cpp */; };
+		1FDBAAEB14DF0D660010697E /* if_wpivar.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDBAAEA14DF0D660010697E /* if_wpivar.h */; };
+		1FDBAAED14DF0F1A0010697E /* if_wpi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FDBAAEC14DF0F1A0010697E /* if_wpi.cpp */; };
+		1FDBAAF114DF0FE70010697E /* compat.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDBAAF014DF0FE60010697E /* compat.h */; };
+		1FDBAAF314DF12020010697E /* ieee80211_amrr.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDBAAF214DF12010010697E /* ieee80211_amrr.h */; };
+		1FDBAAF514DF12320010697E /* ieee80211_amrr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FDBAAF414DF12310010697E /* ieee80211_amrr.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -122,6 +130,14 @@
 		1FDBAA5714DC36A40010697E /* IO80211Controller.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IO80211Controller.h; sourceTree = "<group>"; };
 		1FDBAA5814DC36A40010697E /* IO80211Interface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IO80211Interface.h; sourceTree = "<group>"; };
 		1FDBAA5914DC36A40010697E /* IO80211WorkLoop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IO80211WorkLoop.h; sourceTree = "<group>"; };
+		1FDBAAE414DF0C540010697E /* if_wpireg.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = if_wpireg.h; sourceTree = "<group>"; };
+		1FDBAAE614DF0C810010697E /* VoodooIntel3945.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VoodooIntel3945.h; sourceTree = "<group>"; };
+		1FDBAAE814DF0CBB0010697E /* VoodooIntel3945.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = VoodooIntel3945.cpp; sourceTree = "<group>"; };
+		1FDBAAEA14DF0D660010697E /* if_wpivar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = if_wpivar.h; sourceTree = "<group>"; };
+		1FDBAAEC14DF0F1A0010697E /* if_wpi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = if_wpi.cpp; sourceTree = "<group>"; };
+		1FDBAAF014DF0FE60010697E /* compat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = compat.h; sourceTree = "<group>"; };
+		1FDBAAF214DF12010010697E /* ieee80211_amrr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ieee80211_amrr.h; sourceTree = "<group>"; };
+		1FDBAAF414DF12310010697E /* ieee80211_amrr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ieee80211_amrr.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -174,11 +190,13 @@
 				1FDB514A14CBA53000C16F95 /* apple80211 */,
 				1FDB511014CA3D0C00C16F95 /* crypto */,
 				1FDB512114CA3D0C00C16F95 /* sys */,
-				1F0A493B149FF9E200CDC173 /* Supporting Files */,
+				1FDBAAF014DF0FE60010697E /* compat.h */,
 				1F0A494C149FFCB900CDC173 /* Voodoo80211Device.h */,
 				1F0A494E149FFD5800CDC173 /* Voodoo80211Device.cpp */,
 				1FDB514214CB920800C16F95 /* VoodooTimeout.h */,
 				1F0A495E14A0C22D00CDC173 /* ieee80211.h */,
+				1FDBAAF214DF12010010697E /* ieee80211_amrr.h */,
+				1FDBAAF414DF12310010697E /* ieee80211_amrr.cpp */,
 				1FDB510A14C9C97F00C16F95 /* ieee80211_node.h */,
 				1FDB510C14CA21E300C16F95 /* ieee80211_node.cpp */,
 				1F0A495A14A02B4100CDC173 /* ieee80211_priv.h */,
@@ -192,6 +210,8 @@
 				1FDB516514CBA8A800C16F95 /* ieee80211_input.cpp */,
 				1FDB516714CC412500C16F95 /* ieee80211_output.cpp */,
 				1FDB516F14CC4FDB00C16F95 /* ieee80211.cpp */,
+				1F0A493B149FF9E200CDC173 /* Supporting Files */,
+				1FDBAAE314DF0C530010697E /* wpi */,
 			);
 			path = net80211;
 			sourceTree = "<group>";
@@ -287,6 +307,18 @@
 			path = Lion;
 			sourceTree = "<group>";
 		};
+		1FDBAAE314DF0C530010697E /* wpi */ = {
+			isa = PBXGroup;
+			children = (
+				1FDBAAE414DF0C540010697E /* if_wpireg.h */,
+				1FDBAAEA14DF0D660010697E /* if_wpivar.h */,
+				1FDBAAE614DF0C810010697E /* VoodooIntel3945.h */,
+				1FDBAAE814DF0CBB0010697E /* VoodooIntel3945.cpp */,
+				1FDBAAEC14DF0F1A0010697E /* if_wpi.cpp */,
+			);
+			path = wpi;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -332,6 +364,11 @@
 				1FDBAA5D14DC36A40010697E /* IO80211Controller.h in Headers */,
 				1FDBAA5E14DC36A40010697E /* IO80211Interface.h in Headers */,
 				1FDBAA5F14DC36A40010697E /* IO80211WorkLoop.h in Headers */,
+				1FDBAAE514DF0C540010697E /* if_wpireg.h in Headers */,
+				1FDBAAE714DF0C810010697E /* VoodooIntel3945.h in Headers */,
+				1FDBAAEB14DF0D660010697E /* if_wpivar.h in Headers */,
+				1FDBAAF114DF0FE70010697E /* compat.h in Headers */,
+				1FDBAAF314DF12020010697E /* ieee80211_amrr.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -423,6 +460,9 @@
 				1FDB516614CBA8A800C16F95 /* ieee80211_input.cpp in Sources */,
 				1FDB516814CC412600C16F95 /* ieee80211_output.cpp in Sources */,
 				1FDB517014CC4FDB00C16F95 /* ieee80211.cpp in Sources */,
+				1FDBAAE914DF0CBB0010697E /* VoodooIntel3945.cpp in Sources */,
+				1FDBAAED14DF0F1A0010697E /* if_wpi.cpp in Sources */,
+				1FDBAAF514DF12320010697E /* ieee80211_amrr.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

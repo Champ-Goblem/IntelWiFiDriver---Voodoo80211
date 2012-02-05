@@ -14,7 +14,7 @@
 #include <kern/assert.h>
 
 // pvaibhav: common definitions
-#define __packed        __attribute__((__packed__))
+#define __packed	__attribute__((__packed__))
 #define mtod(m, t)      (t) mbuf_data(m)
 #define M_DEVBUF        2
 
@@ -27,11 +27,18 @@
 #include "ieee80211.h"
 #include "ieee80211_priv.h"
 #include "ieee80211_var.h"
+#include "ieee80211_amrr.h"
 #include "VoodooTimeout.h"
 
 #include "apple80211/Lion/IO80211Controller.h"
 #include "apple80211/Lion/IO80211Interface.h"
 #include "apple80211/Lion/IO80211WorkLoop.h"
+
+struct ExtraMbufParams {
+	bool	is80211ManagementFrame;
+};
+
+const ExtraMbufParams ieee80211_is_mgmt_frame = { true };
 
 class Voodoo80211Device : public IO80211Controller
 {
@@ -65,6 +72,10 @@ protected:
 	void	timeout_add_sec(VoodooTimeout*, const unsigned int sec);
 	void	timeout_add_usec(VoodooTimeout*, const unsigned int usec);
 	void	timeout_del(VoodooTimeout* t);
+	
+#pragma mark ieee80211_amrr.h
+	void	ieee80211_amrr_node_init(const struct ieee80211_amrr *, struct ieee80211_amrr_node *);
+	void	ieee80211_amrr_choose(struct ieee80211_amrr *, struct ieee80211_node *, struct ieee80211_amrr_node *);
 	
 #pragma mark ieee80211_var.h
 	// Overloadable functions from ieee80211com*

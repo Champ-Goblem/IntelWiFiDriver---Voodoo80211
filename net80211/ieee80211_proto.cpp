@@ -102,8 +102,8 @@ ieee80211_proto_attach(struct ieee80211com *ic)
 void Voodoo80211Device::
 ieee80211_proto_detach(struct ieee80211com *ic)
 {
-	ic->ic_mgtq->flush();
-	ic->ic_pwrsaveq->flush();
+	//TODO ic->ic_mgtq->flush();
+	//TODO ic->ic_pwrsaveq->flush();
 }
 
 void Voodoo80211Device::
@@ -563,8 +563,8 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 				case IEEE80211_S_SCAN:
 				justcleanup:
 					ic->ic_mgt_timer = 0;
-					ic->ic_mgtq->flush();
-					ic->ic_pwrsaveq->flush();
+					//TODO ic->ic_mgtq->flush();
+					//TODO ic->ic_pwrsaveq->flush();
 					ieee80211_free_allnodes(ic);
 					break;
 			}

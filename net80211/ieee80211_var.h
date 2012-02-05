@@ -195,8 +195,8 @@ struct ieee80211com {
 	u_char			ic_chan_avail[howmany(IEEE80211_CHAN_MAX,NBBY)];
 	u_char			ic_chan_active[howmany(IEEE80211_CHAN_MAX, NBBY)];
 	u_char			ic_chan_scan[howmany(IEEE80211_CHAN_MAX,NBBY)];
-	IOPacketQueue*		ic_mgtq;
-	IOPacketQueue*		ic_pwrsaveq;
+	//IOPacketQueue*		ic_mgtq;
+	//IOPacketQueue*		ic_pwrsaveq;
 	u_int			ic_scan_lock;	/* user-initiated scan */
 	u_int8_t		ic_scan_count;	/* count scans */
 	u_int32_t		ic_flags;	/* state flags */

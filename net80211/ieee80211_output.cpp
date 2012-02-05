@@ -226,8 +226,8 @@ ieee80211_mgmt_output(struct ieee80211com *ic, struct ieee80211_node *ni,
 	}
 #endif // debug
 	// TODO: ic->ic_mgtq->enqueue(m); (enqueue on management queue?)
-	getOutputQueue()->enqueue(m, 0);
-	getOutputQueue()->start();
+	getOutputQueue()->enqueue(m, (void*) &ieee80211_is_mgmt_frame);
+	//getOutputQueue()->start();
 	return 0;
 }
 
