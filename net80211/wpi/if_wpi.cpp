@@ -220,7 +220,7 @@ wpi_detach(struct device *self, int flags)
 	struct wpi_softc *sc = (struct wpi_softc *)self;
 	int qid;
 	
-	timeout_del(&sc->calib_to);
+	timeout_del(sc->calib_to);
 	
 	/* Uninstall interrupt handler. */
 	if (sc->sc_ih != NULL)
@@ -299,7 +299,7 @@ wpi_nic_lock(struct wpi_softc *sc)
 		     (WPI_GP_CNTRL_MAC_ACCESS_ENA | WPI_GP_CNTRL_SLEEP)) ==
 		    WPI_GP_CNTRL_MAC_ACCESS_ENA)
 			return 0;
-		DELAY(10);
+		IOSleep(10);
 	}
 	return ETIMEDOUT;
 }
@@ -373,7 +373,7 @@ wpi_mem_read_region_4(struct wpi_softc *sc, uint32_t addr, uint32_t *data,
 int VoodooIntel3945::
 wpi_read_prom_data(struct wpi_softc *sc, uint32_t addr, void *data, int count)
 {
-	uint8_t *out = data;
+	uint8_t *out = (uint8_t*)data;
 	uint32_t val;
 	int error, ntries;
 	
@@ -388,7 +388,7 @@ wpi_read_prom_data(struct wpi_softc *sc, uint32_t addr, void *data, int count)
 			val = WPI_READ(sc, WPI_EEPROM);
 			if (val & WPI_EEPROM_READ_VALID)
 				break;
-			DELAY(5);
+			IOSleep(5);
 		}
 		if (ntries == 10) {
 			printf("%s: could not read EEPROM\n",
@@ -563,7 +563,7 @@ wpi_reset_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 			if (WPI_READ(sc, WPI_FH_RX_STATUS) &
 			    WPI_FH_RX_STATUS_IDLE)
 				break;
-			DELAY(10);
+			IOSleep(10);
 		}
 		wpi_nic_unlock(sc);
 	}
@@ -2621,7 +2621,7 @@ wpi_post_alive(struct wpi_softc *sc)
 	for (ntries = 0; ntries < 1000; ntries++) {
 		if ((sc->temp = (int)WPI_READ(sc, WPI_UCODE_GP2)) != 0)
 			break;
-		DELAY(10);
+		IOSleep(10);
 	}
 	if (ntries == 1000) {
 		printf("%s: timeout waiting for thermal sensor calibration\n",
@@ -2662,7 +2662,7 @@ wpi_load_bootcode(struct wpi_softc *sc, const uint8_t *ucode, int size)
 		if (!(wpi_prph_read(sc, WPI_BSM_WR_CTRL) &
 		      WPI_BSM_WR_CTRL_START))
 			break;
-		DELAY(10);
+		IOSleep(10);
 	}
 	if (ntries == 1000) {
 		printf("%s: could not load boot firmware\n",
@@ -2816,7 +2816,7 @@ wpi_clock_wait(struct wpi_softc *sc)
 	for (ntries = 0; ntries < 25000; ntries++) {
 		if (WPI_READ(sc, WPI_GP_CNTRL) & WPI_GP_CNTRL_MAC_CLOCK_READY)
 			return 0;
-		DELAY(100);
+		IOSleep(100);
 	}
 	printf("%s: timeout waiting for clock stabilization\n",
 	       sc->sc_dev.dv_xname);
@@ -2840,7 +2840,7 @@ wpi_apm_init(struct wpi_softc *sc)
 	/* Enable DMA. */
 	wpi_prph_write(sc, WPI_APMG_CLK_ENA,
 		       WPI_APMG_CLK_DMA_CLK_RQT | WPI_APMG_CLK_BSM_CLK_RQT);
-	DELAY(20);
+	IOSleep(20);
 	/* Disable L1. */
 	wpi_prph_setbits(sc, WPI_APMG_PCI_STT, WPI_APMG_PCI_STT_L1A_DIS);
 	wpi_nic_unlock(sc);
@@ -2862,7 +2862,7 @@ wpi_apm_stop_master(struct wpi_softc *sc)
 	for (ntries = 0; ntries < 100; ntries++) {
 		if (WPI_READ(sc, WPI_RESET) & WPI_RESET_MASTER_DISABLED)
 			return;
-		DELAY(10);
+		IOSleep(10);
 	}
 	printf("%s: timeout waiting for master\n", sc->sc_dev.dv_xname);
 }
@@ -2923,7 +2923,7 @@ wpi_hw_init(struct wpi_softc *sc)
 	for (ntries = 0; ntries < 5000; ntries++) {
 		if (WPI_READ(sc, WPI_GPIO_IN) & WPI_GPIO_IN_VMAIN)
 			break;
-		DELAY(10);
+		IOSleep(10);
 	}
 	if (ntries == 5000) {
 		printf("%s: timeout selecting power source\n",
@@ -3036,7 +3036,7 @@ wpi_hw_stop(struct wpi_softc *sc)
 				if ((tmp & WPI_FH_TX_STATUS_IDLE(chnl)) ==
 				    WPI_FH_TX_STATUS_IDLE(chnl))
 					break;
-				DELAY(10);
+				IOSleep(10);
 			}
 		}
 		wpi_nic_unlock(sc);
@@ -3053,7 +3053,7 @@ wpi_hw_stop(struct wpi_softc *sc)
 		wpi_prph_write(sc, WPI_APMG_CLK_DIS, WPI_APMG_CLK_DMA_CLK_RQT);
 		wpi_nic_unlock(sc);
 	}
-	DELAY(5);
+	IOSleep(5);
 	/* Power OFF adapter. */
 	wpi_apm_stop(sc);
 }

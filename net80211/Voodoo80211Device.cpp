@@ -52,26 +52,36 @@ void Voodoo80211Device::free(void* addr) {
 
 void Voodoo80211Device::timeout_set(VoodooTimeout* t, VoodooTimeout::CallbackFunction fn, void* arg) {
 	t = new VoodooTimeout();
-	t->timer = IOTimerEventSource::timerEventSource(t, OSMemberFunctionCast(IOTimerEventSource::Action, t, &Voodoo80211Device::voodooTimeoutOccurred));
+	t->fn = fn;
 	t->arg = arg;
 }
 
 void Voodoo80211Device::voodooTimeoutOccurred(OSObject* owner, IOTimerEventSource* timer) {
-	VoodooTimeout* t = (VoodooTimeout*) owner;
+	VoodooTimeout* t = OSDynamicCast(VoodooTimeout, owner);
 	t->fn(t->arg);
 }
 
 void Voodoo80211Device::timeout_add_sec(VoodooTimeout* t, const unsigned int sec) {
+	t->timer = IOTimerEventSource::timerEventSource(t, OSMemberFunctionCast(IOTimerEventSource::Action, t, &Voodoo80211Device::voodooTimeoutOccurred));
+	if (t->timer == 0)
+		return;
 	fWorkloop->addEventSource(t->timer);
+	t->timer->enable();
 	t->timer->setTimeoutMS(sec * 1000);
 }
 
 void Voodoo80211Device::timeout_add_usec(VoodooTimeout* t, const unsigned int usec) {
+	t->timer = IOTimerEventSource::timerEventSource(t, OSMemberFunctionCast(IOTimerEventSource::Action, t, &Voodoo80211Device::voodooTimeoutOccurred));
+	if (t->timer == 0)
+		return;
 	fWorkloop->addEventSource(t->timer);
+	t->timer->enable();
 	t->timer->setTimeoutUS(usec);
 }
 
 void Voodoo80211Device::timeout_del(VoodooTimeout* t) {
 	t->timer->cancelTimeout();
 	fWorkloop->removeEventSource(t->timer);
+	t->timer->release();
+	t->timer = 0;
 }

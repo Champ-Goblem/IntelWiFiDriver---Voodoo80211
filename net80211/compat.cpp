@@ -41,10 +41,12 @@ int pci_mapreg_map(const struct pci_attach_args *pa, int reg, pcireg_t type, int
 	if (map == 0)
 		return kIOReturnError;
 	
+	*handlep = reinterpret_cast<caddr_t>(map->getVirtualAddress());
+	
 	if (tagp)
 		*tagp = map;
 	if (basep)
-		*basep = reinterpret_cast<caddr_t>(map->getVirtualAddress());
+		*basep = *handlep;
 	if (sizep)
 		*sizep = map->getSize();
 	
@@ -92,6 +94,38 @@ void* pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level, 
 	
 	ih->intr->enable();
 	return ih;
+}
+
+void pci_intr_disestablish(pci_chipset_tag_t pc, void *ih) {
+	pci_intr_handle_t intr = (pci_intr_handle_t) ih;
+	
+	intr->workloop->removeEventSource(intr->intr);
+	
+	intr->intr->release();
+	intr->intr = 0;
+	
+	intr->dev->release();
+	intr->dev = 0;
+	
+	intr->workloop->release();
+	intr->workloop = 0;
+	
+	intr->arg = 0;
+	intr->release();
+	intr = 0;
+	ih = 0;
+}
+
+inline uint32_t bus_space_read_4(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset) {
+	return *((uint32_t*)handle);
+}
+
+inline void bus_space_write_4(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset, uint32_t value) {
+	*((uint32_t*)handle) = value;
+}
+
+void bus_space_barrier(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset, bus_size_t length, int flags) {
+	return; // In OSX device memory access is always uncached and serialized (afaik!)
 }
 
 

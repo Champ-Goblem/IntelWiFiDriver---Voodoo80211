@@ -18,11 +18,14 @@
 #define PCI_CAP_PCIEXPRESS	kIOPCIPCIExpressCapability
 #define PCI_MAPREG_START	kIOPCIConfigBaseAddress0
 #define IPL_NET			0 // XXX not used
+// the following isn't actually used
+#define BUS_SPACE_BARRIER_READ	0
+#define BUS_SPACE_BARRIER_WRITE	0
 
 typedef int		bus_dma_tag_t;
 typedef int		bus_dmamap_t;
 typedef int		bus_dma_segment_t;
-typedef int		bus_space_handle_t;
+typedef caddr_t		bus_space_handle_t; // pointer to device memory
 typedef int		pci_chipset_tag_t;
 typedef caddr_t		bus_addr_t;
 typedef mach_vm_size_t	bus_size_t;
@@ -65,5 +68,10 @@ int		pci_mapreg_map(const struct pci_attach_args *pa, int reg, pcireg_t type, in
 int		pci_intr_map_msi(struct pci_attach_args *paa, pci_intr_handle_t *ih);
 int		pci_intr_map(struct pci_attach_args *paa, pci_intr_handle_t *ih);
 void*		pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level, int (*handler)(void *), void *arg);
+void		pci_intr_disestablish(pci_chipset_tag_t pc, void *ih);
+
+uint32_t	bus_space_read_4(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset);
+void		bus_space_write_4(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset, uint32_t value);
+void		bus_space_barrier(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset, bus_size_t length, int flags);
 
 #endif
