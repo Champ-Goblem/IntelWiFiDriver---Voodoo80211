@@ -13,6 +13,8 @@
 #include <IOKit/pci/IOPCIDevice.h>
 #include <IOKit/IOWorkLoop.h>
 #include <IOKit/IOInterruptEventSource.h>
+#include <IOKit/IOBufferMemoryDescriptor.h>
+#include <IOKit/network/IOMbufMemoryCursor.h>
 #include "Voodoo80211Device.h"
 
 #define PCI_CAP_PCIEXPRESS	kIOPCIPCIExpressCapability
@@ -21,10 +23,13 @@
 // the following isn't actually used
 #define BUS_SPACE_BARRIER_READ	0
 #define BUS_SPACE_BARRIER_WRITE	0
+#define BUS_DMA_NOWAIT		0
+#define BUS_DMA_ZERO		0
+#define BUS_DMA_COHERENT	0
 
 typedef int		bus_dma_tag_t;
-typedef int		bus_dmamap_t;
-typedef int		bus_dma_segment_t;
+typedef IONaturalMemoryCursor*		bus_dmamap_t;
+typedef IOBufferMemoryDescriptor*	bus_dma_segment_t;
 typedef caddr_t		bus_space_handle_t; // pointer to device memory
 typedef int		pci_chipset_tag_t;
 typedef caddr_t		bus_addr_t;
@@ -73,5 +78,9 @@ void		pci_intr_disestablish(pci_chipset_tag_t pc, void *ih);
 uint32_t	bus_space_read_4(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset);
 void		bus_space_write_4(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset, uint32_t value);
 void		bus_space_barrier(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset, bus_size_t length, int flags);
+
+int		bus_dmamap_create(bus_dma_tag_t tag, bus_size_t size, int nsegments, bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamp);
+int		bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size, bus_size_t alignment, bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags);
+int		bus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs, size_t size, void **kvap, int flags);
 
 #endif

@@ -423,7 +423,7 @@ wpi_dma_contig_alloc(bus_dma_tag_t tag, struct wpi_dma_info *dma, void **kvap,
 	if (error != 0)
 		goto fail;
 	
-	error = bus_dmamem_map(tag, &dma->seg, 1, size, &dma->vaddr,
+	error = bus_dmamem_map(tag, &dma->seg, 1, size, (void**)&dma->vaddr,
 			       BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
 	if (error != 0)
 		goto fail;
@@ -930,7 +930,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg
 			break;
 	}
 	
-	return sc->sc_newstate(ic, nstate, arg);
+	return Voodoo80211Device::ieee80211_newstate(ic, nstate, arg);
 }
 
 void VoodooIntel3945::
@@ -1012,9 +1012,9 @@ wpi_ccmp_decap(struct wpi_softc *sc, mbuf_t m, struct ieee80211_key *k)
 	/* Clear Protected bit and strip IV. */
 	wh->i_fc[1] &= ~IEEE80211_FC1_PROTECTED;
 	ovbcopy(wh, mtod(m, caddr_t) + IEEE80211_CCMP_HDRLEN, hdrlen);
-	m_adj(m, IEEE80211_CCMP_HDRLEN);
+	mbuf_adj(m, IEEE80211_CCMP_HDRLEN);
 	/* Strip MIC. */
-	m_adj(m, -IEEE80211_CCMP_MICLEN);
+	mbuf_adj(m, -IEEE80211_CCMP_MICLEN);
 	return 0;
 }
 

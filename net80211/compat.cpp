@@ -128,4 +128,81 @@ void bus_space_barrier(bus_space_tag_t space, bus_space_handle_t handle, bus_siz
 	return; // In OSX device memory access is always uncached and serialized (afaik!)
 }
 
+int bus_dmamap_create(bus_dma_tag_t tag, bus_size_t size, int nsegments, bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamp) {
+	if (dmamp == 0)
+		return 1;
+	*dmamp = IONaturalMemoryCursor::withSpecification(maxsegsz, nsegments);
+	if (dmamp == 0)
+		return 1;
+	else
+		return 0;
+}
+
+IOBufferMemoryDescriptor* alloc_dma_memory(size_t size, mach_vm_address_t alignment, void** vaddr, mach_vm_address_t* paddr, IOOptionBits opts);
+IOBufferMemoryDescriptor* alloc_dma_memory(size_t size, mach_vm_address_t alignment, void** vaddr, mach_vm_address_t* paddr, IOOptionBits opts = kIOMemoryPhysicallyContiguous)
+{
+	size_t		reqsize;
+	uint64_t	phymask;
+	int		i;
+	
+	if (alignment <= PAGE_SIZE) {
+		reqsize = size;
+		phymask = 0x00000000ffffffffull & (~(alignment - 1));
+	} else {
+		reqsize = size + alignment;
+		phymask = 0x00000000fffff000ull; /* page-aligned */
+	}
+	
+	IOBufferMemoryDescriptor* mem = 0;
+	mem = IOBufferMemoryDescriptor::inTaskWithPhysicalMask(kernel_task, opts, reqsize, phymask);
+	if (!mem)
+		return 0;
+
+	mem->prepare();
+	if (paddr)
+		*paddr = mem->getPhysicalAddress();
+	if (vaddr)
+		*vaddr = mem->getBytesNoCopy();
+	
+	/*
+	 * Check the alignment and increment by 4096 until we get the
+	 * requested alignment. Fail if can't obtain the alignment
+	 * we requested.
+	 */
+	if ((*paddr & (alignment - 1)) != 0) {
+		for (i = 0; i < alignment / 4096; i++) {
+			if ((*paddr & (alignment - 1 )) == 0)
+				break;
+			*paddr += 4096;
+			*vaddr = ((uint8_t*) *vaddr) + 4096;
+		}
+		if (i == alignment / 4096) {
+			mem->complete();
+			mem->release();
+			return 0;
+		}
+	}
+	return mem;
+}
+
+
+int bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size, bus_size_t alignment, bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags) {
+	// Ignore flags and don't pass in the number of segments, it's not used in the driver (always 1 anyway)
+	if (segs == 0)
+		return 1;
+	*segs = alloc_dma_memory(size, alignment, 0, 0, kIOMemoryPhysicallyContiguous | kIOMapInhibitCache);
+	if (*segs == 0)
+		return 1;
+	(*segs)->prepare();
+	return 0;
+}
+
+int bus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs, size_t size, void **kvap, int flags) {
+	// ignore flags, the memory is already mapped as one segment by the call to bus_dmamem_alloc so just return the virtual address
+	if (*segs == 0 || kvap == 0)
+		return 1;
+	*kvap = (*segs)->getBytesNoCopy();
+	return 0;
+}
+
 
