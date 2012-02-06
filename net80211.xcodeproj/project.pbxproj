@@ -69,6 +69,7 @@
 		1FDBAAF114DF0FE70010697E /* compat.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDBAAF014DF0FE60010697E /* compat.h */; };
 		1FDBAAF314DF12020010697E /* ieee80211_amrr.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDBAAF214DF12010010697E /* ieee80211_amrr.h */; };
 		1FDBAAF514DF12320010697E /* ieee80211_amrr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FDBAAF414DF12310010697E /* ieee80211_amrr.cpp */; };
+		1FDBAAF714DF2D6B0010697E /* compat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FDBAAF614DF2D6A0010697E /* compat.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -138,6 +139,7 @@
 		1FDBAAF014DF0FE60010697E /* compat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = compat.h; sourceTree = "<group>"; };
 		1FDBAAF214DF12010010697E /* ieee80211_amrr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ieee80211_amrr.h; sourceTree = "<group>"; };
 		1FDBAAF414DF12310010697E /* ieee80211_amrr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ieee80211_amrr.cpp; sourceTree = "<group>"; };
+		1FDBAAF614DF2D6A0010697E /* compat.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = compat.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -191,6 +193,7 @@
 				1FDB511014CA3D0C00C16F95 /* crypto */,
 				1FDB512114CA3D0C00C16F95 /* sys */,
 				1FDBAAF014DF0FE60010697E /* compat.h */,
+				1FDBAAF614DF2D6A0010697E /* compat.cpp */,
 				1F0A494C149FFCB900CDC173 /* Voodoo80211Device.h */,
 				1F0A494E149FFD5800CDC173 /* Voodoo80211Device.cpp */,
 				1FDB514214CB920800C16F95 /* VoodooTimeout.h */,
@@ -312,9 +315,9 @@
 			children = (
 				1FDBAAE414DF0C540010697E /* if_wpireg.h */,
 				1FDBAAEA14DF0D660010697E /* if_wpivar.h */,
+				1FDBAAEC14DF0F1A0010697E /* if_wpi.cpp */,
 				1FDBAAE614DF0C810010697E /* VoodooIntel3945.h */,
 				1FDBAAE814DF0CBB0010697E /* VoodooIntel3945.cpp */,
-				1FDBAAEC14DF0F1A0010697E /* if_wpi.cpp */,
 			);
 			path = wpi;
 			sourceTree = "<group>";
@@ -463,6 +466,7 @@
 				1FDBAAE914DF0CBB0010697E /* VoodooIntel3945.cpp in Sources */,
 				1FDBAAED14DF0F1A0010697E /* if_wpi.cpp in Sources */,
 				1FDBAAF514DF12320010697E /* ieee80211_amrr.cpp in Sources */,
+				1FDBAAF714DF2D6B0010697E /* compat.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

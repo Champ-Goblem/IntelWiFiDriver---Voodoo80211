@@ -75,8 +75,7 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wpi_softc *sc = (struct wpi_softc *)self;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct pci_attach_args *pa = aux;
-	const char *intrstr;
+	struct pci_attach_args *pa = (struct pci_attach_args*)aux;
 	pci_intr_handle_t ih;
 	pcireg_t memtype, reg;
 	int i, error;
@@ -114,17 +113,13 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(sc->sc_pct, ih);
-	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, wpi_intr, sc,
-				       sc->sc_dev.dv_xname);
+
+	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, OSMemberFunctionCast(int (*)(void *), this, &VoodooIntel3945::wpi_intr), sc);
 	if (sc->sc_ih == NULL) {
 		printf(": can't establish interrupt");
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf(": %s", intrstr);
 	
 	/* Power ON adapter. */
 	if ((error = wpi_apm_init(sc)) != 0) {
