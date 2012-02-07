@@ -66,7 +66,7 @@ void Voodoo80211Device::voodooTimeoutOccurred(OSObject* owner, IOTimerEventSourc
 }
 
 void Voodoo80211Device::timeout_add_sec(VoodooTimeout* t, const unsigned int sec) {
-	timeout_add_ms(t, sec * 1000);
+	timeout_add_msec(t, sec * 1000);
 }
 
 void Voodoo80211Device::timeout_add_msec(VoodooTimeout* t, const unsigned int ms) {

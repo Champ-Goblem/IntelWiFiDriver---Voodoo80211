@@ -198,10 +198,9 @@ wpi_attach(void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(getInterface()->getBSDName(), sc->sc_dev.dv_xname, IFNAMSIZ);
 	
-	if_attach(ifp);
-	ieee80211_ifattach(ifp);
+	ieee80211_ifattach(&sc->sc_ic);
 	
-	ieee80211_media_init(ifp, wpi_media_change, ieee80211_media_status);
+	ieee80211_media_init(&sc->sc_ic); // TODO: define media_change and media_status overloaded functions
 	
 	sc->amrr.amrr_min_success_threshold =  1;
 	sc->amrr.amrr_max_success_threshold = 15;
@@ -237,8 +236,7 @@ wpi_detach(int flags)
 	
 	// XXX not needed bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_sz);
 	
-	ieee80211_ifdetach(ifp);
-	if_detach(ifp);
+	ieee80211_ifdetach(&sc->sc_ic);
 	
 	return 0;
 }
@@ -250,8 +248,8 @@ wpi_activate(int act)
 	
 	switch (act) {
 		case DVACT_SUSPEND:
-			if (ifp->if_flags & IFF_RUNNING)
-				wpi_stop(ifp, 0);
+			if (getInterface()->linkState() == kIO80211NetworkLinkUp)
+				wpi_stop(0);
 			break;
 		case DVACT_RESUME:
 			workq_queue_task(NULL, &sc->sc_resume_wqt, 0,
@@ -279,8 +277,8 @@ wpi_resume()
 		tsleep(&sc->sc_flags, 0, "wpipwr", 0);
 	sc->sc_flags |= WPI_FLAG_BUSY;
 	
-	if (ifp->if_flags & IFF_UP)
-		wpi_init(ifp);
+	if (getInterface()->getFlags() & IFF_UP)
+		wpi_init();
 	
 	sc->sc_flags &= ~WPI_FLAG_BUSY;
 	wakeup(&sc->sc_flags);
@@ -839,7 +837,7 @@ ieee80211_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew
 }
 
 int VoodooIntel3945::
-wpi_media_change(struct ieee80211com *ic)
+wpi_media_change()
 {
 	struct wpi_softc *sc = &fSelfData;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -860,10 +858,9 @@ wpi_media_change(struct ieee80211com *ic)
 		sc->fixed_ridx = ridx;
 	}
 	
-	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
-	    (IFF_UP | IFF_RUNNING)) {
-		wpi_stop(ifp, 0);
-		error = wpi_init(ifp);
+	if (getInterface()->linkState() == kIO80211NetworkLinkUp) {
+		wpi_stop(0);
+		error = wpi_init();
 	}
 	return error;
 }
@@ -955,7 +952,7 @@ wpi_calib_timeout(void *arg)
 	splx(s);
 	
 	/* Automatic rate control triggered every 500ms. */
-	timeout_add_msec(&sc->calib_to, 500);
+	timeout_add_msec(sc->calib_to, 500);
 }
 
 int VoodooIntel3945::
@@ -1030,7 +1027,7 @@ wpi_rx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	if (stat->len > WPI_STAT_MAXLEN) {
 		printf("%s: invalid RX statistic header\n",
 		       sc->sc_dev.dv_xname);
-		ifp->if_ierrors++;
+		// TODO ifp->if_ierrors++;
 		return;
 	}
 	head = (struct wpi_rx_head *)((caddr_t)(stat + 1) + stat->len);
@@ -1040,21 +1037,21 @@ wpi_rx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	/* Discard frames with a bad FCS early. */
 	if ((flags & WPI_RX_NOERROR) != WPI_RX_NOERROR) {
 		DPRINTFN(2, ("rx tail flags error %x\n", flags));
-		ifp->if_ierrors++;
+		// TODO ifp->if_ierrors++;
 		return;
 	}
 	/* Discard frames that are too short. */
 	if (letoh16(head->len) < sizeof (*wh)) {
 		DPRINTF(("frame too short: %d\n", letoh16(head->len)));
 		ic->ic_stats.is_rx_tooshort++;
-		ifp->if_ierrors++;
+		// TODO ifp->if_ierrors++;
 		return;
 	}
 	
-	m1 = MCLGETI(NULL, M_DONTWAIT, NULL, WPI_RBUF_SIZE);
+	mbuf_getcluster(MBUF_DONTWAIT, MT_DATA, WPI_RBUF_SIZE, &m1);
 	if (m1 == NULL) {
 		ic->ic_stats.is_rx_nombuf++;
-		ifp->if_ierrors++;
+		// TODO ifp->if_ierrors++;
 		return;
 	}
 	
@@ -1073,7 +1070,7 @@ wpi_rx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 		bus_dmamap_sync(sc->sc_dmat, ring->desc_dma.map,
 				ring->cur * sizeof (uint32_t), sizeof (uint32_t),
 				BUS_DMASYNC_PREWRITE);
-		ifp->if_ierrors++;
+		// TODO ifp->if_ierrors++;
 		return;
 	}
 	
@@ -1101,7 +1098,7 @@ wpi_rx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	    ni->ni_pairwise_key.k_cipher == IEEE80211_CIPHER_CCMP) {
 		if ((flags & WPI_RX_CIPHER_MASK) != WPI_RX_CIPHER_CCMP) {
 			ic->ic_stats.is_ccmp_dec_errs++;
-			ifp->if_ierrors++;
+			// TODO ifp->if_ierrors++;
 			mbuf_freem(m);
 			return;
 		}
@@ -1109,12 +1106,12 @@ wpi_rx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 		if ((flags & WPI_RX_DECRYPT_MASK) != WPI_RX_DECRYPT_OK) {
 			DPRINTF(("CCMP decryption failed 0x%x\n", flags));
 			ic->ic_stats.is_ccmp_dec_errs++;
-			ifp->if_ierrors++;
+			// TODO ifp->if_ierrors++;
 			mbuf_freem(m);
 			return;
 		}
 		if (wpi_ccmp_decap(sc, m, &ni->ni_pairwise_key) != 0) {
-			ifp->if_ierrors++;
+			// TODO ifp->if_ierrors++;
 			mbuf_freem(m);
 			return;
 		}
@@ -1144,11 +1141,12 @@ wpi_tx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc)
 	if (stat->retrycnt > 0)
 		wn->amn.amn_retrycnt++;
 	
+	/*
 	if ((letoh32(stat->status) & 0xff) != 1)
-		ifp->if_oerrors++;
+		// TODO ifp->if_oerrors++;
 	else
-		ifp->if_opackets++;
-	
+		// TODO ifp->if_opackets++;
+	*/
 	/* Unmap and free mbuf. */
 	mbuf_freem(data->m);
 	data->m = NULL;
@@ -1158,9 +1156,9 @@ wpi_tx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc)
 	sc->sc_tx_timer = 0;
 	if (--ring->queued < WPI_TX_RING_LOMARK) {
 		sc->qfullmsk &= ~(1 << ring->qid);
-		if (sc->qfullmsk == 0 && (ifp->if_flags & IFF_OACTIVE)) {
-			ifp->if_flags &= ~IFF_OACTIVE;
-			(*ifp->if_start)(ifp);
+		if (sc->qfullmsk == 0 && (getInterface()->getFlags() & IFF_OACTIVE)) {
+			getInterface()->setFlags(getInterface()->getFlags() & ~IFF_OACTIVE);
+			// FIXME (*ifp->if_start)(ifp);
 		}
 	}
 }
@@ -1256,8 +1254,9 @@ wpi_notif_intr(struct wpi_softc *sc)
 					printf("%s: Radio transmitter is off\n",
 					       sc->sc_dev.dv_xname);
 					/* Turn the interface down. */
-					ifp->if_flags &= ~IFF_UP;
-					wpi_stop(ifp, 1);
+					// XXX ifp->if_flags &= ~IFF_UP;
+					getInterface()->setLinkState(kIO80211NetworkLinkDown, 0);
+					wpi_stop(1);
 					return;	/* No further processing. */
 				}
 				break;
@@ -1389,7 +1388,7 @@ wpi_intr(void *arg)
 	r2 = WPI_READ(sc, WPI_FH_INT);
 	
 	if (r1 == 0 && r2 == 0) {
-		if (ifp->if_flags & IFF_UP)
+		if (getInterface()->getFlags() & IFF_UP)
 			WPI_WRITE(sc, WPI_MASK, WPI_INT_MASK);
 		return 0;	/* Interrupt not for us. */
 	}
@@ -1404,8 +1403,8 @@ wpi_intr(void *arg)
 		printf("%s: fatal firmware error\n", sc->sc_dev.dv_xname);
 		/* Dump firmware error log and stop. */
 		wpi_fatal_intr(sc);
-		ifp->if_flags &= ~IFF_UP;
-		wpi_stop(ifp, 1);
+		getInterface()->setLinkState(kIO80211NetworkLinkDown, 0);
+		wpi_stop(1);
 		return 1;
 	}
 	if ((r1 & (WPI_INT_FH_RX | WPI_INT_SW_RX)) ||
@@ -1416,7 +1415,7 @@ wpi_intr(void *arg)
 		wakeup(sc);	/* Firmware is alive. */
 	
 	/* Re-enable interrupts. */
-	if (ifp->if_flags & IFF_UP)
+	if (getInterface()->getFlags() & IFF_UP)
 		WPI_WRITE(sc, WPI_MASK, WPI_INT_MASK);
 	
 	return 1;
@@ -1658,12 +1657,12 @@ wpi_tx(struct wpi_softc *sc, mbuf_t m, struct ieee80211_node *ni)
 }
 
 void VoodooIntel3945::
-wpi_start(struct ieee80211com *ic)
+wpi_start()
 {
 	struct ieee80211_node *ni;
 	mbuf_t m;
 	
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (getInterface()->linkState() != kIO80211NetworkLinkUp)
 		return;
 	
 	for (;;) {
@@ -1689,7 +1688,7 @@ wpi_start(struct ieee80211com *ic)
 	sendit:
 		if (wpi_tx(sc, m, ni) != 0) {
 			ieee80211_release_node(ic, ni);
-			ifp->if_oerrors++;
+			// TODO ifp->if_oerrors++;
 			continue;
 		}
 		
@@ -1699,7 +1698,7 @@ wpi_start(struct ieee80211com *ic)
 }
 
 void VoodooIntel3945::
-wpi_watchdog(struct ieee80211com *ic)
+wpi_watchdog()
 {
 	struct wpi_softc *sc = &fSelfData;
 	
@@ -1708,9 +1707,9 @@ wpi_watchdog(struct ieee80211com *ic)
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
 			printf("%s: device timeout\n", sc->sc_dev.dv_xname);
-			ifp->if_flags &= ~IFF_UP;
-			wpi_stop(ifp, 1);
-			ifp->if_oerrors++;
+			getInterface()->setLinkState(kIO80211NetworkLinkDown, 0);
+			wpi_stop(1);
+			// TODO ifp->if_oerrors++;
 			return;
 		}
 		ifp->if_timer = 1;
@@ -1744,19 +1743,20 @@ wpi_ioctl(struct ieee80211com *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 		case SIOCSIFADDR:
 			ifa = (struct ifaddr *)data;
-			ifp->if_flags |= IFF_UP;
+			getInterface()->setLinkState(kIO80211NetworkLinkUndefined, 0);
 #ifdef INET
 			if (ifa->ifa_addr->sa_family == AF_INET)
 				arp_ifinit(&ic->ic_ac, ifa);
 #endif
 			/* FALLTHROUGH */
 		case SIOCSIFFLAGS:
-			if (ifp->if_flags & IFF_UP) {
-				if (!(ifp->if_flags & IFF_RUNNING))
-					error = wpi_init(ifp);
+			// XXX make sure this is going to work or whether we need to use kIO80211...
+			if (getInterface()->getFlags() & IFF_UP) {
+				if (!(getInterface()->getFlags() & IFF_RUNNING))
+					error = wpi_init();
 			} else {
-				if (ifp->if_flags & IFF_RUNNING)
-					wpi_stop(ifp, 1);
+				if (getInterface()->getFlags() & IFF_RUNNING)
+					wpi_stop(1);
 			}
 			break;
 			
@@ -1792,10 +1792,9 @@ wpi_ioctl(struct ieee80211com *ifp, u_long cmd, caddr_t data)
 	
 	if (error == ENETRESET) {
 		error = 0;
-		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
-		    (IFF_UP | IFF_RUNNING)) {
-			wpi_stop(ifp, 0);
-			error = wpi_init(ifp);
+		if (getInterface()->linkState() == kIO80211NetworkLinkUp) {
+			wpi_stop(0);
+			error = wpi_init();
 		}
 	}
 	
@@ -3035,7 +3034,7 @@ wpi_hw_stop(struct wpi_softc *sc)
 }
 
 int VoodooIntel3945::
-wpi_init(struct ifnet *ifp)
+wpi_init()
 {
 	struct wpi_softc *sc = &fSelfData;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -3072,8 +3071,7 @@ wpi_init(struct ifnet *ifp)
 		goto fail;
 	}
 	
-	ifp->if_flags &= ~IFF_OACTIVE;
-	ifp->if_flags |= IFF_RUNNING;
+	getInterface()->setLinkState(kIO80211NetworkLinkUndefined, 0);
 	
 	if (ic->ic_opmode != IEEE80211_M_MONITOR)
 		ieee80211_begin_scan(ic);
@@ -3087,13 +3085,13 @@ fail:	wpi_stop(ifp, 1);
 }
 
 void VoodooIntel3945::
-wpi_stop(struct ifnet *ifp, int disable)
+wpi_stop(int disable)
 {
 	struct wpi_softc *sc = &fSelfData;
 	struct ieee80211com *ic = &sc->sc_ic;
 	
-	ifp->if_timer = sc->sc_tx_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	sc->sc_tx_timer = 0;
+	getInterface()->setLinkState(kIO80211NetworkLinkDown, 0);
 	
 	/* In case we were scanning, release the scan "lock". */
 	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;

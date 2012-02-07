@@ -49,7 +49,7 @@ private:
 	int		wpi_read_eeprom(struct wpi_softc *);
 	void		wpi_read_eeprom_channels(struct wpi_softc *, int);
 	void		wpi_read_eeprom_group(struct wpi_softc *, int);
-	int		wpi_media_change(struct ieee80211com *);
+	int		wpi_media_change();
 	void		wpi_iter_func(void *, struct ieee80211_node *);
 	void		wpi_calib_timeout(void *);
 	int		wpi_ccmp_decap(struct wpi_softc *, mbuf_t, struct ieee80211_key *);
@@ -60,8 +60,8 @@ private:
 	void		wpi_fatal_intr(struct wpi_softc *);
 	int		wpi_intr(void *);
 	int		wpi_tx(struct wpi_softc *, mbuf_t, struct ieee80211_node *);
-	void		wpi_start(struct ieee80211com *);
-	void		wpi_watchdog(struct ieee80211com *);
+	void		wpi_start();
+	void		wpi_watchdog();
 	int		wpi_ioctl(struct ieee80211com *, u_long, caddr_t);
 	int		wpi_cmd(struct wpi_softc *, int, const void *, int, int);
 	int		wpi_mrr_setup(struct wpi_softc *);
@@ -86,8 +86,8 @@ private:
 	void		wpi_nic_config(struct wpi_softc *);
 	int		wpi_hw_init(struct wpi_softc *);
 	void		wpi_hw_stop(struct wpi_softc *);
-	int		wpi_init(struct ieee80211com *);
-	void		wpi_stop(struct ieee80211com *, int);
+	int		wpi_init();
+	void		wpi_stop(int);
 };
 
 #endif
