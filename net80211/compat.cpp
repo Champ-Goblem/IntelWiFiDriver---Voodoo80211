@@ -46,7 +46,7 @@ int pci_mapreg_map(const struct pci_attach_args *pa, int reg, pcireg_t type, int
 	if (tagp)
 		*tagp = map;
 	if (basep)
-		*basep = *handlep;
+		*basep = map->getVirtualAddress();
 	if (sizep)
 		*sizep = map->getSize();
 	
@@ -117,11 +117,11 @@ void pci_intr_disestablish(pci_chipset_tag_t pc, void *ih) {
 }
 
 inline uint32_t bus_space_read_4(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset) {
-	return *((uint32_t*)handle);
+	return *((uint32_t*)(handle + offset));
 }
 
 inline void bus_space_write_4(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset, uint32_t value) {
-	*((uint32_t*)handle) = value;
+	*((uint32_t*)(handle + offset)) = value;
 }
 
 void bus_space_barrier(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset, bus_size_t length, int flags) {
@@ -129,17 +129,15 @@ void bus_space_barrier(bus_space_tag_t space, bus_space_handle_t handle, bus_siz
 }
 
 int bus_dmamap_create(bus_dma_tag_t tag, bus_size_t size, int nsegments, bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamp) {
-	if (dmamp == 0)
-		return 1;
-	*dmamp = IONaturalMemoryCursor::withSpecification(maxsegsz, nsegments);
-	if (dmamp == 0)
+	*dmamp = IOMbufLittleMemoryCursor::withSpecification(maxsegsz, nsegments);
+	if (*dmamp == 0)
 		return 1;
 	else
 		return 0;
 }
 
 IOBufferMemoryDescriptor* alloc_dma_memory(size_t size, mach_vm_address_t alignment, void** vaddr, mach_vm_address_t* paddr, IOOptionBits opts);
-IOBufferMemoryDescriptor* alloc_dma_memory(size_t size, mach_vm_address_t alignment, void** vaddr, mach_vm_address_t* paddr, IOOptionBits opts = kIOMemoryPhysicallyContiguous)
+IOBufferMemoryDescriptor* alloc_dma_memory(size_t size, mach_vm_address_t alignment, void** vaddr, mach_vm_address_t* paddr, IOOptionBits opts = kIOMemoryPhysicallyContiguous | kIOMapInhibitCache)
 {
 	size_t		reqsize;
 	uint64_t	phymask;
@@ -190,7 +188,7 @@ int bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size, bus_size_t alignment, b
 	// Ignore flags and don't pass in the number of segments, it's not used in the driver (always 1 anyway)
 	if (segs == 0)
 		return 1;
-	*segs = alloc_dma_memory(size, alignment, 0, 0, kIOMemoryPhysicallyContiguous | kIOMapInhibitCache);
+	*segs = alloc_dma_memory(size, alignment, 0, 0);
 	if (*segs == 0)
 		return 1;
 	(*segs)->prepare();
@@ -205,4 +203,27 @@ int bus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs, size_t
 	return 0;
 }
 
+bus_addr_t bus_dmamap_get_paddr(bus_dma_segment_t seg) {
+	if (seg == 0)
+		return 0;
+	else
+		return seg->getPhysicalAddress();
+}
 
+void bus_dmamap_sync(bus_dma_tag_t tag, bus_dmamap_t dmam, bus_addr_t offset, bus_size_t len, int ops) {
+	return; // no syncing, we mapped the memory with cache inhibition so pray it works
+}
+
+void bus_dmamem_unmap(bus_dma_segment_t seg) {
+	seg->complete();
+}
+
+void bus_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs) {
+	(*segs)->release();
+	*segs = 0;
+}
+
+void bus_dmamap_destroy(bus_dma_tag_t tag, bus_dmamap_t dmam) {
+	dmam->release();
+	dmam = 0;
+}

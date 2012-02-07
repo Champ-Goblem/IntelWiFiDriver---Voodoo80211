@@ -428,14 +428,12 @@ wpi_dma_contig_alloc(bus_dma_tag_t tag, struct wpi_dma_info *dma, void **kvap,
 	if (error != 0)
 		goto fail;
 	
-	error = bus_dmamap_load_raw(tag, dma->map, &dma->seg, 1, size,
-				    BUS_DMA_NOWAIT);
-	if (error != 0)
+	dma->paddr = bus_dmamap_get_paddr(dma->seg);
+	if (dma->paddr == 0)
 		goto fail;
 	
 	bus_dmamap_sync(tag, dma->map, 0, size, BUS_DMASYNC_PREWRITE);
 	
-	dma->paddr = dma->map->dm_segs[0].ds_addr;
 	if (kvap != NULL)
 		*kvap = dma->vaddr;
 	
@@ -448,18 +446,17 @@ fail:	wpi_dma_contig_free(dma);
 void VoodooIntel3945::
 wpi_dma_contig_free(struct wpi_dma_info *dma)
 {
-	if (dma->map != NULL) {
+	//if (dma->map != NULL) {
 		if (dma->vaddr != NULL) {
 			bus_dmamap_sync(dma->tag, dma->map, 0, dma->size,
 					BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-			bus_dmamap_unload(dma->tag, dma->map);
-			bus_dmamem_unmap(dma->tag, dma->vaddr, dma->size);
+			bus_dmamem_unmap(dma->seg);
 			bus_dmamem_free(dma->tag, &dma->seg, 1);
 			dma->vaddr = NULL;
 		}
 		bus_dmamap_destroy(dma->tag, dma->map);
 		dma->map = NULL;
-	}
+	//}
 }
 
 int VoodooIntel3945::
@@ -522,7 +519,7 @@ wpi_alloc_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 			goto fail;
 		}
 		
-		data->m = MCLGETI(NULL, M_DONTWAIT, NULL, WPI_RBUF_SIZE);
+		data->m = allocatePacket(WPI_RBUF_SIZE);
 		if (data->m == NULL) {
 			printf("%s: could not allocate RX mbuf\n",
 			       sc->sc_dev.dv_xname);
@@ -531,7 +528,7 @@ wpi_alloc_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 		}
 		
 		error = bus_dmamap_load(sc->sc_dmat, data->map,
-					mtod(data->m, void *), WPI_RBUF_SIZE, NULL,
+					m, WPI_RBUF_SIZE, NULL,
 					BUS_DMA_NOWAIT | BUS_DMA_READ);
 		if (error != 0) {
 			printf("%s: can't map mbuf (error %d)\n",

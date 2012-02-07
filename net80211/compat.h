@@ -27,16 +27,23 @@
 #define BUS_DMA_ZERO		0
 #define BUS_DMA_COHERENT	0
 
-typedef int		bus_dma_tag_t;
-typedef IONaturalMemoryCursor*		bus_dmamap_t;
+enum {
+	BUS_DMASYNC_PREREAD,
+	BUS_DMASYNC_PREWRITE,
+	BUS_DMASYNC_POSTREAD,
+	BUS_DMASYNC_POSTWRITE
+};
+
+typedef int				bus_dma_tag_t;
+typedef IOMbufLittleMemoryCursor*	bus_dmamap_t;
 typedef IOBufferMemoryDescriptor*	bus_dma_segment_t;
-typedef caddr_t		bus_space_handle_t; // pointer to device memory
-typedef int		pci_chipset_tag_t;
-typedef caddr_t		bus_addr_t;
-typedef mach_vm_size_t	bus_size_t;
-typedef IOMemoryMap*	bus_space_tag_t;
-typedef IOPCIDevice*	pcitag_t;
-typedef uint32_t	pcireg_t;
+typedef caddr_t				bus_space_handle_t; // pointer to device memory
+typedef int				pci_chipset_tag_t;
+typedef mach_vm_address_t		bus_addr_t;
+typedef uint32_t			bus_size_t;
+typedef IOMemoryMap*			bus_space_tag_t;
+typedef IOPCIDevice*			pcitag_t;
+typedef uint32_t			pcireg_t;
 
 class pci_intr_handle : public OSObject {
 	OSDeclareDefaultStructors(pci_intr_handle)
@@ -82,5 +89,10 @@ void		bus_space_barrier(bus_space_tag_t space, bus_space_handle_t handle, bus_si
 int		bus_dmamap_create(bus_dma_tag_t tag, bus_size_t size, int nsegments, bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamp);
 int		bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size, bus_size_t alignment, bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags);
 int		bus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs, size_t size, void **kvap, int flags);
+bus_addr_t	bus_dmamap_get_paddr(bus_dma_segment_t seg); // XXX new
+void		bus_dmamap_sync(bus_dma_tag_t tag, bus_dmamap_t dmam, bus_addr_t offset, bus_size_t len, int ops);
+void		bus_dmamem_unmap(bus_dma_segment_t seg); // XXX changed args
+void		bus_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs);
+void		bus_dmamap_destroy(bus_dma_tag_t tag, bus_dmamap_t dmam);
 
 #endif
