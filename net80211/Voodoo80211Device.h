@@ -71,6 +71,7 @@ protected:
 	void	voodooTimeoutOccurred(OSObject* owner, IOTimerEventSource* timer);
 	void	timeout_set(VoodooTimeout*, void (*func)(void *), void* arg);
 	void	timeout_add_sec(VoodooTimeout*, const unsigned int sec);
+	void	timeout_add_msec(VoodooTimeout*, const unsigned int ms);
 	void	timeout_add_usec(VoodooTimeout*, const unsigned int usec);
 	void	timeout_del(VoodooTimeout* t);
 	

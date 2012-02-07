@@ -19,6 +19,9 @@
 
 #define PCI_CAP_PCIEXPRESS	kIOPCIPCIExpressCapability
 #define PCI_MAPREG_START	kIOPCIConfigBaseAddress0
+#define PCI_PCIE_LCSR		0x10		// from BSD
+#define PCI_PCIE_LCSR_ASPM_L0S	0x00000001	// from BSD
+
 #define IPL_NET			0 // XXX not used
 // the following isn't actually used
 #define BUS_SPACE_BARRIER_READ	0
@@ -101,5 +104,6 @@ void		bus_dmamem_unmap(bus_dma_segment_t seg); // XXX changed args
 void		bus_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs);
 void		bus_dmamap_destroy(bus_dma_tag_t tag, bus_dmamap_t dmam);
 int		bus_dmamap_load(bus_dmamap_t map, mbuf_t m);
+#define bus_dmamap_load_mbuf bus_dmamap_load
 
 #endif

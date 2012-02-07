@@ -59,6 +59,8 @@ int wpi_debug = 0;
 #define DPRINTFN(n, x)
 #endif
 
+#define abs(x)	(x) < 0 ? (0 - (x)) : (x)
+
 #if 0
 struct cfdriver wpi_cd = {
 	NULL, "wpi", DV_IFNET
@@ -71,9 +73,9 @@ struct cfattach wpi_ca = {
 #endif
 
 void VoodooIntel3945::
-wpi_attach(struct device *parent, struct device *self, void *aux)
+wpi_attach(void *aux)
 {
-	struct wpi_softc *sc = (struct wpi_softc *)self;
+	struct wpi_softc *sc = &fSelfData;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct pci_attach_args *pa = (struct pci_attach_args*)aux;
 	pci_intr_handle_t ih;
@@ -215,9 +217,9 @@ fail1:	wpi_free_fwmem(sc);
 }
 
 int VoodooIntel3945::
-wpi_detach(struct device *self, int flags)
+wpi_detach(int flags)
 {
-	struct wpi_softc *sc = (struct wpi_softc *)self;
+	struct wpi_softc *sc = &fSelfData;
 	int qid;
 	
 	timeout_del(sc->calib_to);
@@ -233,7 +235,7 @@ wpi_detach(struct device *self, int flags)
 	wpi_free_shared(sc);
 	wpi_free_fwmem(sc);
 	
-	bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_sz);
+	// XXX not needed bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_sz);
 	
 	ieee80211_ifdetach(ifp);
 	if_detach(ifp);
@@ -242,9 +244,9 @@ wpi_detach(struct device *self, int flags)
 }
 
 int VoodooIntel3945::
-wpi_activate(struct device *self, int act)
+wpi_activate(int act)
 {
-	struct wpi_softc *sc = (struct wpi_softc *)self;
+	struct wpi_softc *sc = &fSelfData;
 	
 	switch (act) {
 		case DVACT_SUSPEND:
@@ -261,9 +263,9 @@ wpi_activate(struct device *self, int act)
 }
 
 void VoodooIntel3945::
-wpi_resume(void *arg1, void *arg2)
+wpi_resume()
 {
-	struct wpi_softc *sc = arg1;
+	struct wpi_softc *sc = &fSelfData;
 	pcireg_t reg;
 	int s;
 	
@@ -811,14 +813,14 @@ wpi_read_eeprom_group(struct wpi_softc *sc, int n)
 struct ieee80211_node * VoodooIntel3945::
 ieee80211_node_alloc(struct ieee80211com *ic)
 {
-	return malloc(sizeof (struct wpi_node), M_DEVBUF, M_NOWAIT | M_ZERO);
+	return (struct ieee80211_node*) malloc(sizeof (struct wpi_node), M_DEVBUF, M_NOWAIT | M_ZERO);
 }
 
 void VoodooIntel3945::
 ieee80211_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 {
-	struct wpi_softc *sc = ic->ic_if.if_softc;
-	struct wpi_node *wn = (void *)ni;
+	struct wpi_softc *sc = &fSelfData;
+	struct wpi_node *wn = (struct wpi_node *)ni;
 	uint8_t rate;
 	int ridx, i;
 	
@@ -837,14 +839,14 @@ ieee80211_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew
 }
 
 int VoodooIntel3945::
-wpi_media_change(struct ifnet *ifp)
+wpi_media_change(struct ieee80211com *ic)
 {
-	struct wpi_softc *sc = ifp->if_softc;
+	struct wpi_softc *sc = &fSelfData;
 	struct ieee80211com *ic = &sc->sc_ic;
 	uint8_t rate, ridx;
 	int error;
 	
-	error = ieee80211_media_change(ifp);
+	error = ieee80211_media_change(ic);
 	if (error != ENETRESET)
 		return error;
 	
@@ -869,8 +871,7 @@ wpi_media_change(struct ifnet *ifp)
 int VoodooIntel3945::
 ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
-	struct ifnet *ifp = &ic->ic_if;
-	struct wpi_softc *sc = ifp->if_softc;
+	struct wpi_softc *sc = &fSelfData;
 	int error;
 	
 	timeout_del(sc->calib_to);
@@ -1056,16 +1057,13 @@ wpi_rx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 		ifp->if_ierrors++;
 		return;
 	}
-	bus_dmamap_unload(sc->sc_dmat, data->map);
 	
 	error = bus_dmamap_load(data->map, m1);
 	if (error != 0) {
 		mbuf_freem(m1);
 		
 		/* Try to reload the old mbuf. */
-		error = bus_dmamap_load(sc->sc_dmat, data->map,
-					data->m, WPI_RBUF_SIZE, NULL,
-					BUS_DMA_NOWAIT | BUS_DMA_READ);
+		error = bus_dmamap_load(data->map, data->m);
 		if (error != 0) {
 			panic("%s: could not load old RX mbuf",
 			      sc->sc_dev.dv_xname);
@@ -1082,15 +1080,15 @@ wpi_rx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	m = data->m;
 	data->m = m1;
 	/* Update RX descriptor. */
-	ring->desc[ring->cur] = htole32(data->map->dm_segs[0].ds_addr);
+	ring->desc[ring->cur] = htole32(data->map->dm_segs[0].location);
 	bus_dmamap_sync(sc->sc_dmat, ring->desc_dma.map,
 			ring->cur * sizeof (uint32_t), sizeof (uint32_t),
 			BUS_DMASYNC_PREWRITE);
 	
 	/* Finalize mbuf. */
-	m->m_pkthdr.rcvif = ifp;
-	m->m_data = (caddr_t)(head + 1);
-	m->m_pkthdr.len = m->m_len = letoh16(head->len);
+	mbuf_setdata(m, (caddr_t)(head + 1), letoh16(head->len));
+	mbuf_pkthdr_setlen(m, letoh16(head->len));
+	mbuf_setlen(m,  letoh16(head->len));
 	
 	/* Grab a reference to the source node. */
 	wh = mtod(m, struct ieee80211_frame *);
@@ -1104,7 +1102,7 @@ wpi_rx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 		if ((flags & WPI_RX_CIPHER_MASK) != WPI_RX_CIPHER_CCMP) {
 			ic->ic_stats.is_ccmp_dec_errs++;
 			ifp->if_ierrors++;
-			m_freem(m);
+			mbuf_freem(m);
 			return;
 		}
 		/* Check whether decryption was successful or not. */
@@ -1112,12 +1110,12 @@ wpi_rx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 			DPRINTF(("CCMP decryption failed 0x%x\n", flags));
 			ic->ic_stats.is_ccmp_dec_errs++;
 			ifp->if_ierrors++;
-			m_freem(m);
+			mbuf_freem(m);
 			return;
 		}
 		if (wpi_ccmp_decap(sc, m, &ni->ni_pairwise_key) != 0) {
 			ifp->if_ierrors++;
-			m_freem(m);
+			mbuf_freem(m);
 			return;
 		}
 		rxi.rxi_flags |= IEEE80211_RXI_HWDEC;
@@ -1126,7 +1124,7 @@ wpi_rx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	/* Send the frame to the 802.11 layer. */
 	rxi.rxi_rssi = stat->rssi;
 	rxi.rxi_tstamp = 0;	/* unused */
-	ieee80211_input(ifp, m, ni, &rxi);
+	ieee80211_input(ic, m, ni, &rxi);
 	
 	/* Node is no longer needed. */
 	ieee80211_release_node(ic, ni);
@@ -1152,10 +1150,7 @@ wpi_tx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc)
 		ifp->if_opackets++;
 	
 	/* Unmap and free mbuf. */
-	bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,
-			BUS_DMASYNC_POSTWRITE);
-	bus_dmamap_unload(sc->sc_dmat, data->map);
-	m_freem(data->m);
+	mbuf_freem(data->m);
 	data->m = NULL;
 	ieee80211_release_node(ic, data->ni);
 	data->ni = NULL;
@@ -1183,10 +1178,7 @@ wpi_cmd_done(struct wpi_softc *sc, struct wpi_rx_desc *desc)
 	
 	/* If the command was mapped in an mbuf, free it. */
 	if (data->m != NULL) {
-		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
-				data->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
-		bus_dmamap_unload(sc->sc_dmat, data->map);
-		m_freem(data->m);
+		mbuf_freem(data->m);
 		data->m = NULL;
 	}
 	wakeup(&ring->cmd[desc->idx]);
@@ -1303,7 +1295,7 @@ wpi_notif_intr(struct wpi_softc *sc)
 					if (wpi_scan(sc, IEEE80211_CHAN_5GHZ) == 0)
 						break;
 				}
-				ieee80211_end_scan(ifp);
+				ieee80211_end_scan(ic);
 				break;
 			}
 		}
@@ -1479,7 +1471,7 @@ wpi_tx(struct wpi_softc *sc, mbuf_t m, struct ieee80211_node *ni)
 	} else
 		ridx = wn->ridx[ni->ni_txrate];
 	rinfo = &wpi_rates[ridx];
-	totlen = m->m_pkthdr.len;
+	totlen = mbuf_pkthdr_len(m);
 	
 	/* Encrypt the frame if need be. */
 	if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
@@ -1491,7 +1483,7 @@ wpi_tx(struct wpi_softc *sc, mbuf_t m, struct ieee80211_node *ni)
 				return ENOBUFS;
 			/* 802.11 header may have moved. */
 			wh = mtod(m, struct ieee80211_frame *);
-			totlen = m->m_pkthdr.len;
+			totlen = mbuf_pkthdr_len(m);
 			
 		} else	/* HW appends CCMP MIC. */
 			totlen += IEEE80211_CCMP_HDRLEN;
@@ -1565,7 +1557,7 @@ wpi_tx(struct wpi_softc *sc, mbuf_t m, struct ieee80211_node *ni)
 	
 	if (k != NULL && k->k_cipher == IEEE80211_CIPHER_CCMP) {
 		/* Trim 802.11 header and prepend CCMP IV. */
-		m_adj(m, hdrlen - IEEE80211_CCMP_HDRLEN);
+		mbuf_adj(m, hdrlen - IEEE80211_CCMP_HDRLEN);
 		ivp = mtod(m, uint8_t *);
 		k->k_tsc++;
 		ivp[0] = k->k_tsc;
@@ -1581,45 +1573,44 @@ wpi_tx(struct wpi_softc *sc, mbuf_t m, struct ieee80211_node *ni)
 		memcpy(tx->key, k->k_key, k->k_len);
 	} else {
 		/* Trim 802.11 header. */
-		m_adj(m, hdrlen);
+		mbuf_adj(m, hdrlen);
 		tx->security = 0;
 	}
 	tx->flags = htole32(flags);
 	
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
-				     BUS_DMA_NOWAIT | BUS_DMA_WRITE);
+	error = bus_dmamap_load_mbuf(data->map, m);
 	if (error != 0 && error != EFBIG) {
 		printf("%s: can't map mbuf (error %d)\n",
 		       sc->sc_dev.dv_xname, error);
-		m_freem(m);
+		mbuf_freem(m);
 		return error;
 	}
 	if (error != 0) {
 		/* Too many DMA segments, linearize mbuf. */
-		MGETHDR(m1, M_DONTWAIT, MT_DATA);
+		mbuf_gethdr(MBUF_DONTWAIT, MT_DATA, &m1);
 		if (m1 == NULL) {
-			m_freem(m);
+			mbuf_freem(m);
 			return ENOBUFS;
 		}
-		if (m->m_pkthdr.len > MHLEN) {
-			MCLGET(m1, M_DONTWAIT);
-			if (!(m1->m_flags & M_EXT)) {
-				m_freem(m);
-				m_freem(m1);
+		if (mbuf_pkthdr_len(m) > mbuf_get_mhlen()) {
+			mbuf_getcluster(MBUF_DONTWAIT, MT_DATA, MCLBYTES, &m1);
+			if (!(mbuf_flags(m1) & MBUF_EXT)) {
+				mbuf_freem(m);
+				mbuf_freem(m1);
 				return ENOBUFS;
 			}
 		}
-		m_copydata(m, 0, m->m_pkthdr.len, mtod(m1, caddr_t));
-		m1->m_pkthdr.len = m1->m_len = m->m_pkthdr.len;
-		m_freem(m);
+		mbuf_copydata(m, 0, mbuf_pkthdr_len(m), mtod(m1, caddr_t));
+		mbuf_pkthdr_setlen(m1, mbuf_pkthdr_len(m));
+		mbuf_setlen(m1, mbuf_pkthdr_len(m));
+		mbuf_freem(m);
 		m = m1;
 		
-		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
-					     BUS_DMA_NOWAIT | BUS_DMA_WRITE);
+		error = bus_dmamap_load_mbuf(data->map, m);
 		if (error != 0) {
 			printf("%s: can't map mbuf (error %d)\n",
 			       sc->sc_dev.dv_xname, error);
-			m_freem(m);
+			mbuf_freem(m);
 			return error;
 		}
 	}
@@ -1628,10 +1619,10 @@ wpi_tx(struct wpi_softc *sc, mbuf_t m, struct ieee80211_node *ni)
 	data->ni = ni;
 	
 	DPRINTFN(4, ("sending data: qid=%d idx=%d len=%d nsegs=%d\n",
-		     ring->qid, ring->cur, m->m_pkthdr.len, data->map->dm_nsegs));
+		     ring->qid, ring->cur, mbuf_pkthdr_len(m), data->map->dm_nsegs));
 	
 	/* Fill TX descriptor. */
-	desc->flags = htole32(WPI_PAD32(m->m_pkthdr.len) << 28 |
+	desc->flags = htole32(WPI_PAD32(mbuf_pkthdr_len(m)) << 28 |
 			      (1 + data->map->dm_nsegs) << 24);
 	/* First DMA segment is used by the TX command. */
 	desc->segs[0].addr = htole32(ring->cmd_dma.paddr +
@@ -1683,7 +1674,7 @@ wpi_start(struct ieee80211com *ic)
 		/* Send pending management frames first. */
 		IF_DEQUEUE(&ic->ic_mgtq, m);
 		if (m != NULL) {
-			ni = (void *)m->m_pkthdr.rcvif;
+			ni = (struct ieee80211_node *)mbuf_pkthdr_rcvif(m);
 			goto sendit;
 		}
 		if (ic->ic_state != IEEE80211_S_RUN)
@@ -1708,9 +1699,9 @@ wpi_start(struct ieee80211com *ic)
 }
 
 void VoodooIntel3945::
-wpi_watchdog(struct ieee80211com *ifp)
+wpi_watchdog(struct ieee80211com *ic)
 {
-	struct wpi_softc *sc = ifp->if_softc;
+	struct wpi_softc *sc = &fSelfData;
 	
 	ifp->if_timer = 0;
 	
@@ -1729,9 +1720,9 @@ wpi_watchdog(struct ieee80211com *ifp)
 }
 
 int VoodooIntel3945::
-wpi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+wpi_ioctl(struct ieee80211com *ifp, u_long cmd, caddr_t data)
 {
-	struct wpi_softc *sc = ifp->if_softc;
+	struct wpi_softc *sc = &fSelfData;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifaddr *ifa;
 	struct ifreq *ifr;
@@ -1836,25 +1827,24 @@ wpi_cmd(struct wpi_softc *sc, int code, const void *buf, int size, int async)
 		/* Command is too large to fit in a descriptor. */
 		if (totlen > MCLBYTES)
 			return EINVAL;
-		MGETHDR(m, M_DONTWAIT, MT_DATA);
+		mbuf_gethdr(MBUF_DONTWAIT, MT_DATA, &m);
 		if (m == NULL)
 			return ENOMEM;
-		if (totlen > MHLEN) {
-			MCLGET(m, M_DONTWAIT);
-			if (!(m->m_flags & M_EXT)) {
-				m_freem(m);
+		if (totlen > mbuf_get_mhlen()) {
+			mbuf_getcluster(MBUF_DONTWAIT, MT_DATA, MCLBYTES, &m);
+			if (!(mbuf_flags(m) & MBUF_EXT)) {
+				mbuf_freem(m);
 				return ENOMEM;
 			}
 		}
 		cmd = mtod(m, struct wpi_tx_cmd *);
-		error = bus_dmamap_load(sc->sc_dmat, data->map, cmd, totlen,
-					NULL, BUS_DMA_NOWAIT | BUS_DMA_WRITE);
+		error = bus_dmamap_load(data->map, m);
 		if (error != 0) {
-			m_freem(m);
+			mbuf_freem(m);
 			return error;
 		}
 		data->m = m;
-		paddr = data->map->dm_segs[0].ds_addr;
+		paddr = data->map->dm_segs[0].location;
 	} else {
 		cmd = &ring->cmd[ring->cur];
 		paddr = data->cmd_paddr;
@@ -1945,7 +1935,7 @@ void VoodooIntel3945::
 ieee80211_updateedca(struct ieee80211com *ic)
 {
 #define WPI_EXP2(x)	((1 << (x)) - 1)	/* CWmin = 2^ECWmin - 1 */
-	struct wpi_softc *sc = ic->ic_softc;
+	struct wpi_softc *sc = &fSelfData;
 	struct wpi_edca_params cmd;
 	int aci;
 	
@@ -2002,7 +1992,7 @@ wpi_set_timing(struct wpi_softc *sc, struct ieee80211_node *ni)
  * This function is called periodically (every minute) to adjust TX power
  * based on temperature variation.
  */
-void
+void VoodooIntel3945::
 wpi_power_calibration(struct wpi_softc *sc)
 {
 	int temp;
@@ -2299,7 +2289,7 @@ wpi_scan(struct wpi_softc *sc, uint16_t flags)
 	uint8_t *buf, *frm;
 	int buflen, error;
 	
-	buf = malloc(WPI_SCAN_MAXSZ, M_DEVBUF, M_NOWAIT | M_ZERO);
+	buf = (uint8_t*)malloc(WPI_SCAN_MAXSZ, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (buf == NULL) {
 		printf("%s: could not allocate buffer for scan command\n",
 		       sc->sc_dev.dv_xname);
@@ -2391,7 +2381,7 @@ wpi_scan(struct wpi_softc *sc, uint16_t flags)
 	
 	DPRINTF(("sending scan command nchan=%d\n", hdr->nchan));
 	error = wpi_cmd(sc, WPI_CMD_SCAN, buf, buflen, 1);
-	free(buf, M_DEVBUF);
+	free(buf);
 	return error;
 }
 
@@ -2503,7 +2493,7 @@ wpi_run(struct wpi_softc *sc)
 	
 	/* Fake a join to init the TX rate. */
 	((struct wpi_node *)ni)->id = WPI_ID_BSS;
-	wpi_newassoc(ic, ni, 1);
+	ieee80211_newassoc(ic, ni, 1);
 	
 	/* Add BSS node. */
 	memset(&node, 0, sizeof node);
@@ -2522,7 +2512,7 @@ wpi_run(struct wpi_softc *sc)
 	
 	/* Start periodic calibration timer. */
 	sc->calib_cnt = 0;
-	timeout_add(&sc->calib_to, hz / 2);
+	timeout_add_ms(&sc->calib_to, 500);
 	
 	/* Link LED always on while associated. */
 	wpi_set_led(sc, WPI_LED_LINK, 0, 1);
@@ -2542,7 +2532,7 @@ int VoodooIntel3945::
 ieee80211_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	    struct ieee80211_key *k)
 {
-	struct wpi_softc *sc = ic->ic_softc;
+	struct wpi_softc *sc = &fSelfData;
 	struct wpi_node *wn = (void *)ni;
 	struct wpi_node_info node;
 	uint16_t kflags;
@@ -2566,8 +2556,8 @@ void VoodooIntel3945::
 ieee80211_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	       struct ieee80211_key *k)
 {
-	struct wpi_softc *sc = ic->ic_softc;
-	struct wpi_node *wn = (void *)ni;
+	struct wpi_softc *sc = &fSelfData;
+	struct wpi_node *wn = (struct wpi_node *)ni;
 	struct wpi_node_info node;
 	
 	if ((k->k_flags & IEEE80211_KEY_GROUP) ||
@@ -2748,7 +2738,7 @@ wpi_read_firmware(struct wpi_softc *sc)
 	if (size < sizeof (*hdr)) {
 		printf("%s: truncated firmware header: %d bytes\n",
 		       sc->sc_dev.dv_xname, size);
-		free(fw->data, M_DEVBUF);
+		free(fw->data);
 		return EINVAL;
 	}
 	/* Extract firmware header information. */
@@ -2768,7 +2758,7 @@ wpi_read_firmware(struct wpi_softc *sc)
 	    fw->boot.textsz > WPI_FW_BOOT_TEXT_MAXSZ ||
 	    (fw->boot.textsz & 3) != 0) {
 		printf("%s: invalid firmware header\n", sc->sc_dev.dv_xname);
-		free(fw->data, M_DEVBUF);
+		free(fw->data);
 		return EINVAL;
 	}
 	
@@ -2777,7 +2767,7 @@ wpi_read_firmware(struct wpi_softc *sc)
 	    fw->init.textsz + fw->init.datasz + fw->boot.textsz) {
 		printf("%s: firmware file too short: %d bytes\n",
 		       sc->sc_dev.dv_xname, size);
-		free(fw->data, M_DEVBUF);
+		free(fw->data);
 		return EINVAL;
 	}
 	
@@ -2864,12 +2854,11 @@ wpi_apm_stop(struct wpi_softc *sc)
 void VoodooIntel3945::
 wpi_nic_config(struct wpi_softc *sc)
 {
-	pcireg_t reg;
 	uint8_t rev;
 	
 	/* Voodoo from the reference driver. */
-	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag, PCI_CLASS_REG);
-	rev = PCI_REVISION(reg);
+	// XXX not needed reg = sc->sc_pcitag->configRead16(kIOPCIConfigClassCode); // FIXME pci_conf_read(sc->sc_pct, sc->sc_pcitag, PCI_CLASS_REG);
+	rev = sc->sc_pcitag->configRead8(kIOPCIConfigRevisionID); // FIXME PCI_REVISION(reg);
 	if ((rev & 0xc0) == 0x40)
 		WPI_SETBITS(sc, WPI_HW_IF_CONFIG, WPI_HW_IF_CONFIG_ALM_MB);
 	else if (!(rev & 0x80))
@@ -3048,7 +3037,7 @@ wpi_hw_stop(struct wpi_softc *sc)
 int VoodooIntel3945::
 wpi_init(struct ifnet *ifp)
 {
-	struct wpi_softc *sc = ifp->if_softc;
+	struct wpi_softc *sc = &fSelfData;
 	struct ieee80211com *ic = &sc->sc_ic;
 	int error;
 	
@@ -3069,7 +3058,7 @@ wpi_init(struct ifnet *ifp)
 	
 	/* Initialize hardware and upload firmware. */
 	error = wpi_hw_init(sc);
-	free(sc->fw.data, M_DEVBUF);
+	free(sc->fw.data);
 	if (error != 0) {
 		printf("%s: could not initialize hardware\n",
 		       sc->sc_dev.dv_xname);
@@ -3087,10 +3076,10 @@ wpi_init(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING;
 	
 	if (ic->ic_opmode != IEEE80211_M_MONITOR)
-		ieee80211_begin_scan(ifp);
-	else
-		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
-	
+		ieee80211_begin_scan(ic);
+	 else
+		ieee80211_newstate(ic, IEEE80211_S_RUN, -1);
+
 	return 0;
 	
 fail:	wpi_stop(ifp, 1);
@@ -3100,7 +3089,7 @@ fail:	wpi_stop(ifp, 1);
 void VoodooIntel3945::
 wpi_stop(struct ifnet *ifp, int disable)
 {
-	struct wpi_softc *sc = ifp->if_softc;
+	struct wpi_softc *sc = &fSelfData;
 	struct ieee80211com *ic = &sc->sc_ic;
 	
 	ifp->if_timer = sc->sc_tx_timer = 0;
@@ -3109,7 +3098,7 @@ wpi_stop(struct ifnet *ifp, int disable)
 	/* In case we were scanning, release the scan "lock". */
 	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
 	
-	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
+	ieee80211_newstate(ic, IEEE80211_S_INIT, -1);
 	
 	/* Power OFF hardware. */
 	wpi_hw_stop(sc);

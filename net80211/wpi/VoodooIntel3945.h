@@ -27,10 +27,11 @@ protected:
 	virtual void	ieee80211_delete_key(struct ieee80211com *, struct ieee80211_node *, struct ieee80211_key *);
 	
 private:
-	void		wpi_attach(struct device *, struct device *, void *);
-	int		wpi_detach(struct device *, int);
-	int		wpi_activate(struct device *, int);
-	void		wpi_resume(void *, void *);
+	wpi_softc	fSelfData;
+	void		wpi_attach(void *);
+	int		wpi_detach(int);
+	int		wpi_activate(int);
+	void		wpi_resume();
 	int		wpi_nic_lock(struct wpi_softc *);
 	int		wpi_read_prom_data(struct wpi_softc *, uint32_t, void *, int);
 	int		wpi_dma_contig_alloc(bus_dma_tag_t, struct wpi_dma_info *, void **, bus_size_t, bus_size_t);
