@@ -9,6 +9,10 @@
 
 OSDefineMetaClassAndStructors(pci_intr_handle, OSObject)
 
+int tsleep(void *ident, int priority, const char *wmesg, int timo) {
+	return msleep(ident, priority, 0 /* no mutex */, wmesg, timo);
+}
+
 int pci_get_capability(pci_chipset_tag_t chipsettag, pcitag_t pcitag, int capid, int *offsetp, pcireg_t *valuep) {
 	uint8_t offset;
 	UInt32 value = pcitag->findPCICapability(capid, &offset);
@@ -233,7 +237,10 @@ void bus_dmamap_destroy(bus_dma_tag_t tag, bus_dmamap_t dmam) {
 }
 
 int bus_dmamap_load(bus_dmamap_t map, mbuf_t mb) {
-	if (map->cursor->getPhysicalSegmentsWithCoalesce(mb, map->dm_segs) == 0)
+	if (map == 0 || mb == 0)
+		return 1;
+	map->dm_nsegs = map->cursor->getPhysicalSegmentsWithCoalesce(mb, map->dm_segs);
+	if (map->dm_nsegs == 0)
 		return 1;
 	else
 		return 0;

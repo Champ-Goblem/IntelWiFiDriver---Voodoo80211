@@ -46,6 +46,7 @@
 #include <netinet/ip.h>
 
 #include "VoodooIntel3945.h"
+#include "Firmware.h"
 
 #include "if_wpireg.h"
 #include "if_wpivar.h"
@@ -190,8 +191,6 @@ wpi_attach(void *aux)
 	/* IBSS channel undefined for now. */
 	ic->ic_ibss_chan = &ic->ic_channels[0];
 	
-	ifp->if_softc = sc;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = wpi_ioctl;
 	ifp->if_start = wpi_start;
 	ifp->if_watchdog = wpi_watchdog;
@@ -1659,6 +1658,7 @@ wpi_tx(struct wpi_softc *sc, mbuf_t m, struct ieee80211_node *ni)
 void VoodooIntel3945::
 wpi_start()
 {
+	struct wpi_softc* sc = &fSelfData;
 	struct ieee80211_node *ni;
 	mbuf_t m;
 	
@@ -1702,8 +1702,6 @@ wpi_watchdog()
 {
 	struct wpi_softc *sc = &fSelfData;
 	
-	ifp->if_timer = 0;
-	
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
 			printf("%s: device timeout\n", sc->sc_dev.dv_xname);
@@ -1712,10 +1710,9 @@ wpi_watchdog()
 			// TODO ifp->if_oerrors++;
 			return;
 		}
-		ifp->if_timer = 1;
 	}
 	
-	ieee80211_watchdog(ifp);
+	ieee80211_watchdog(&sc->sc_ic);
 }
 
 int VoodooIntel3945::
@@ -2216,7 +2213,7 @@ wpi_config(struct wpi_softc *sc)
 	
 	/* Configure adapter. */
 	memset(&sc->rxon, 0, sizeof (struct wpi_rxon));
-	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
+	//IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl)); // XXX FIXME
 	IEEE80211_ADDR_COPY(sc->rxon.myaddr, ic->ic_myaddr);
 	/* Set default channel. */
 	sc->rxon.chan = ieee80211_chan2ieee(ic, ic->ic_ibss_chan);
@@ -2511,7 +2508,7 @@ wpi_run(struct wpi_softc *sc)
 	
 	/* Start periodic calibration timer. */
 	sc->calib_cnt = 0;
-	timeout_add_ms(&sc->calib_to, 500);
+	timeout_add_msec(sc->calib_to, 500);
 	
 	/* Link LED always on while associated. */
 	wpi_set_led(sc, WPI_LED_LINK, 0, 1);
@@ -2532,7 +2529,7 @@ ieee80211_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	    struct ieee80211_key *k)
 {
 	struct wpi_softc *sc = &fSelfData;
-	struct wpi_node *wn = (void *)ni;
+	struct wpi_node *wn = (struct wpi_node *)ni;
 	struct wpi_node_info node;
 	uint16_t kflags;
 	
@@ -2726,17 +2723,21 @@ wpi_read_firmware(struct wpi_softc *sc)
 	struct wpi_fw_info *fw = &sc->fw;
 	const struct wpi_firmware_hdr *hdr;
 	size_t size;
-	int error;
+	//int error;
 	
 	/* Read firmware image from filesystem. */
+	// pvaibhav
+	bcopy(Intel3945FirmwareImage, fw->data, Intel3945FirmwareImage_len);
+	size = Intel3945FirmwareImage_len;
+	/* TODO Not needed for now
 	if ((error = loadfirmware("wpi-3945abg", &fw->data, &size)) != 0) {
 		printf("%s: error, %d, could not read firmware %s\n",
 		       sc->sc_dev.dv_xname, error, "wpi-3945abg");
 		return error;
-	}
+	} */
 	if (size < sizeof (*hdr)) {
 		printf("%s: truncated firmware header: %d bytes\n",
-		       sc->sc_dev.dv_xname, size);
+		       sc->sc_dev.dv_xname, (int)size);
 		free(fw->data);
 		return EINVAL;
 	}
@@ -2765,7 +2766,7 @@ wpi_read_firmware(struct wpi_softc *sc)
 	if (size < sizeof (*hdr) + fw->main.textsz + fw->main.datasz +
 	    fw->init.textsz + fw->init.datasz + fw->boot.textsz) {
 		printf("%s: firmware file too short: %d bytes\n",
-		       sc->sc_dev.dv_xname, size);
+		       sc->sc_dev.dv_xname, (int)size);
 		free(fw->data);
 		return EINVAL;
 	}
@@ -3080,7 +3081,7 @@ wpi_init()
 
 	return 0;
 	
-fail:	wpi_stop(ifp, 1);
+fail:	wpi_stop(1);
 	return error;
 }
 

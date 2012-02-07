@@ -76,9 +76,12 @@ struct pci_attach_args {
 
 struct bus_dmamap {
 	IOMbufLittleMemoryCursor*	cursor;
+	int				dm_nsegs;
 	IOPhysicalSegment		dm_segs[8]; // reserve space for 8 segments
 };
 typedef struct bus_dmamap* bus_dmamap_t;
+
+int		tsleep(void *ident, int priority, const char *wmesg, int timo);
 
 int		pci_get_capability(pci_chipset_tag_t chipsettag, pcitag_t pcitag, int capid, int *offsetp, pcireg_t *valuep);
 pcireg_t	pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg);
