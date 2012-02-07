@@ -26,6 +26,7 @@
 #define BUS_DMA_NOWAIT		0
 #define BUS_DMA_ZERO		0
 #define BUS_DMA_COHERENT	0
+#define BUS_DMA_READ		0
 
 enum {
 	BUS_DMASYNC_PREREAD,
@@ -35,7 +36,6 @@ enum {
 };
 
 typedef int				bus_dma_tag_t;
-typedef IOMbufLittleMemoryCursor*	bus_dmamap_t;
 typedef IOBufferMemoryDescriptor*	bus_dma_segment_t;
 typedef caddr_t				bus_space_handle_t; // pointer to device memory
 typedef int				pci_chipset_tag_t;
@@ -57,7 +57,7 @@ public:
 typedef pci_intr_handle* pci_intr_handle_t;
 
 struct device {
-	int blah;
+	char dv_xname[IFNAMSIZ];
 };
 
 struct workq_task {
@@ -70,6 +70,12 @@ struct pci_attach_args {
 	pcitag_t		pa_tag;
 	bus_dma_tag_t		pa_dmat;
 };
+
+struct bus_dmamap {
+	IOMbufLittleMemoryCursor*	cursor;
+	IOPhysicalSegment		dm_segs[8]; // reserve space for 8 segments
+};
+typedef struct bus_dmamap* bus_dmamap_t;
 
 int		pci_get_capability(pci_chipset_tag_t chipsettag, pcitag_t pcitag, int capid, int *offsetp, pcireg_t *valuep);
 pcireg_t	pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg);
@@ -94,5 +100,6 @@ void		bus_dmamap_sync(bus_dma_tag_t tag, bus_dmamap_t dmam, bus_addr_t offset, b
 void		bus_dmamem_unmap(bus_dma_segment_t seg); // XXX changed args
 void		bus_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs);
 void		bus_dmamap_destroy(bus_dma_tag_t tag, bus_dmamap_t dmam);
+int		bus_dmamap_load(bus_dmamap_t map, mbuf_t m);
 
 #endif

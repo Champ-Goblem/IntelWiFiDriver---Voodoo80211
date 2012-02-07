@@ -61,7 +61,8 @@ private:
 protected:
 #pragma mark Protected data
 	ieee80211com*	fPriv;
-	
+	IO80211Interface* getInterface();
+
 #pragma mark Compatibility functions
 	void*	malloc(vm_size_t len, int type, int how);
 	void	free(void* addr);

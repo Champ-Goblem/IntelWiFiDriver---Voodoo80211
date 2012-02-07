@@ -129,8 +129,11 @@ void bus_space_barrier(bus_space_tag_t space, bus_space_handle_t handle, bus_siz
 }
 
 int bus_dmamap_create(bus_dma_tag_t tag, bus_size_t size, int nsegments, bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamp) {
-	*dmamp = IOMbufLittleMemoryCursor::withSpecification(maxsegsz, nsegments);
-	if (*dmamp == 0)
+	if (dmamp == 0)
+		return 1;
+	*dmamp = new bus_dmamap;
+	(*dmamp)->cursor = IOMbufLittleMemoryCursor::withSpecification(maxsegsz, nsegments);
+	if ((*dmamp)->cursor == 0)
 		return 1;
 	else
 		return 0;
@@ -224,6 +227,14 @@ void bus_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs) {
 }
 
 void bus_dmamap_destroy(bus_dma_tag_t tag, bus_dmamap_t dmam) {
-	dmam->release();
-	dmam = 0;
+	dmam->cursor->release();
+	dmam->cursor = 0;
+	delete dmam;
+}
+
+int bus_dmamap_load(bus_dmamap_t map, mbuf_t mb) {
+	if (map->cursor->getPhysicalSegmentsWithCoalesce(mb, map->dm_segs) == 0)
+		return 1;
+	else
+		return 0;
 }

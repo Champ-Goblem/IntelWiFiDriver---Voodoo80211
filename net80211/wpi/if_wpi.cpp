@@ -194,7 +194,7 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = wpi_start;
 	ifp->if_watchdog = wpi_watchdog;
 	IFQ_SET_READY(&ifp->if_snd);
-	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	bcopy(getInterface()->getBSDName(), sc->sc_dev.dv_xname, IFNAMSIZ);
 	
 	if_attach(ifp);
 	ieee80211_ifattach(ifp);
@@ -527,9 +527,7 @@ wpi_alloc_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 			goto fail;
 		}
 		
-		error = bus_dmamap_load(sc->sc_dmat, data->map,
-					m, WPI_RBUF_SIZE, NULL,
-					BUS_DMA_NOWAIT | BUS_DMA_READ);
+		error = bus_dmamap_load(data->map, data->m);
 		if (error != 0) {
 			printf("%s: can't map mbuf (error %d)\n",
 			       sc->sc_dev.dv_xname, error);
@@ -537,7 +535,7 @@ wpi_alloc_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 		}
 		
 		/* Set physical address of RX buffer. */
-		ring->desc[i] = htole32(data->map->dm_segs[0].ds_addr);
+		ring->desc[i] = htole32(data->map->dm_segs[0].location);
 	}
 	
 	bus_dmamap_sync(sc->sc_dmat, ring->desc_dma.map, 0, size,
@@ -578,10 +576,7 @@ wpi_free_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 		struct wpi_rx_data *data = &ring->data[i];
 		
 		if (data->m != NULL) {
-			bus_dmamap_sync(sc->sc_dmat, data->map, 0,
-					data->map->dm_mapsize, BUS_DMASYNC_POSTREAD);
-			bus_dmamap_unload(sc->sc_dmat, data->map);
-			m_freem(data->m);
+			mbuf_freem(data->m);
 		}
 		if (data->map != NULL)
 			bus_dmamap_destroy(sc->sc_dmat, data->map);
@@ -662,10 +657,7 @@ wpi_reset_tx_ring(struct wpi_softc *sc, struct wpi_tx_ring *ring)
 		struct wpi_tx_data *data = &ring->data[i];
 		
 		if (data->m != NULL) {
-			bus_dmamap_sync(sc->sc_dmat, data->map, 0,
-					data->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
-			bus_dmamap_unload(sc->sc_dmat, data->map);
-			m_freem(data->m);
+			mbuf_freem(data->m);
 			data->m = NULL;
 		}
 	}
@@ -688,10 +680,7 @@ wpi_free_tx_ring(struct wpi_softc *sc, struct wpi_tx_ring *ring)
 		struct wpi_tx_data *data = &ring->data[i];
 		
 		if (data->m != NULL) {
-			bus_dmamap_sync(sc->sc_dmat, data->map, 0,
-					data->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
-			bus_dmamap_unload(sc->sc_dmat, data->map);
-			m_freem(data->m);
+			mbuf_freem(data->m);
 		}
 		if (data->map != NULL)
 			bus_dmamap_destroy(sc->sc_dmat, data->map);
@@ -725,7 +714,7 @@ wpi_read_eeprom(struct wpi_softc *sc)
 	
 	/* Read and print MAC address. */
 	wpi_read_prom_data(sc, WPI_EEPROM_MAC, ic->ic_myaddr, 6);
-	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
+	// TODO printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
 	
 	/* Read the list of authorized channels. */
 	for (i = 0; i < WPI_CHAN_BANDS_COUNT; i++)
@@ -933,7 +922,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg
 void VoodooIntel3945::
 wpi_iter_func(void *arg, struct ieee80211_node *ni)
 {
-	struct wpi_softc *sc = arg;
+	struct wpi_softc *sc = (struct wpi_softc *)arg;
 	struct wpi_node *wn = (struct wpi_node *)ni;
 	
 	ieee80211_amrr_choose(&sc->amrr, ni, &wn->amn);
@@ -942,7 +931,7 @@ wpi_iter_func(void *arg, struct ieee80211_node *ni)
 void VoodooIntel3945::
 wpi_calib_timeout(void *arg)
 {
-	struct wpi_softc *sc = arg;
+	struct wpi_softc *sc = (struct wpi_softc *)arg;
 	struct ieee80211com *ic = &sc->sc_ic;
 	int s;
 	
@@ -951,8 +940,10 @@ wpi_calib_timeout(void *arg)
 	if (ic->ic_fixed_rate == -1) {
 		if (ic->ic_opmode == IEEE80211_M_STA)
 			wpi_iter_func(sc, ic->ic_bss);
-		else
+		/*else
+			XXX we only have monitor mode
 			ieee80211_iterate_nodes(ic, wpi_iter_func, sc);
+		 */
 	}
 	
 	/* Force automatic TX power calibration every 60 secs. */
@@ -1027,7 +1018,7 @@ wpi_rx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	struct ieee80211_frame *wh;
 	struct ieee80211_rxinfo rxi;
 	struct ieee80211_node *ni;
-	mbuf_t m, *m1;
+	mbuf_t m, m1;
 	uint32_t flags;
 	int error;
 	
@@ -1067,21 +1058,20 @@ wpi_rx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	}
 	bus_dmamap_unload(sc->sc_dmat, data->map);
 	
-	error = bus_dmamap_load(sc->sc_dmat, data->map, mtod(m1, void *),
-				WPI_RBUF_SIZE, NULL, BUS_DMA_NOWAIT | BUS_DMA_READ);
+	error = bus_dmamap_load(data->map, m1);
 	if (error != 0) {
-		m_freem(m1);
+		mbuf_freem(m1);
 		
 		/* Try to reload the old mbuf. */
 		error = bus_dmamap_load(sc->sc_dmat, data->map,
-					mtod(data->m, void *), WPI_RBUF_SIZE, NULL,
+					data->m, WPI_RBUF_SIZE, NULL,
 					BUS_DMA_NOWAIT | BUS_DMA_READ);
 		if (error != 0) {
 			panic("%s: could not load old RX mbuf",
 			      sc->sc_dev.dv_xname);
 		}
 		/* Physical address may have changed. */
-		ring->desc[ring->cur] = htole32(data->map->dm_segs[0].ds_addr);
+		ring->desc[ring->cur] = htole32(data->map->dm_segs[0].location);
 		bus_dmamap_sync(sc->sc_dmat, ring->desc_dma.map,
 				ring->cur * sizeof (uint32_t), sizeof (uint32_t),
 				BUS_DMASYNC_PREWRITE);
@@ -1397,7 +1387,7 @@ wpi_fatal_intr(struct wpi_softc *sc)
 int VoodooIntel3945::
 wpi_intr(void *arg)
 {
-	struct wpi_softc *sc = arg;
+	struct wpi_softc *sc = (struct wpi_softc *)arg;
 	uint32_t r1, r2;
 	
 	/* Disable interrupts. */
@@ -1444,7 +1434,7 @@ int VoodooIntel3945::
 wpi_tx(struct wpi_softc *sc, mbuf_t m, struct ieee80211_node *ni)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct wpi_node *wn = (void *)ni;
+	struct wpi_node *wn = (struct wpi_node *)ni;
 	struct wpi_tx_ring *ring;
 	struct wpi_tx_desc *desc;
 	struct wpi_tx_data *data;
@@ -1651,12 +1641,12 @@ wpi_tx(struct wpi_softc *sc, mbuf_t m, struct ieee80211_node *ni)
 	/* Other DMA segments are for data payload. */
 	for (i = 1; i <= data->map->dm_nsegs; i++) {
 		desc->segs[i].addr =
-		htole32(data->map->dm_segs[i - 1].ds_addr);
+		htole32(data->map->dm_segs[i - 1].location);
 		desc->segs[i].len  =
-		htole32(data->map->dm_segs[i - 1].ds_len);
+		htole32(data->map->dm_segs[i - 1].length);
 	}
 	
-	bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, data->map, 0, 0,
 			BUS_DMASYNC_PREWRITE);
 	bus_dmamap_sync(sc->sc_dmat, ring->cmd_dma.map,
 			(caddr_t)cmd - ring->cmd_dma.vaddr, sizeof (*cmd),

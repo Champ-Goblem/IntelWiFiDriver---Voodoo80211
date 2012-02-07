@@ -50,6 +50,10 @@ void Voodoo80211Device::free(void* addr) {
 	IOFree(actual_addr, len + sizeof(vm_size_t)); // free the whole thing
 }
 
+IO80211Interface* Voodoo80211Device::getInterface() {
+	return fInterface;
+}
+
 void Voodoo80211Device::timeout_set(VoodooTimeout* t, VoodooTimeout::CallbackFunction fn, void* arg) {
 	t = new VoodooTimeout();
 	t->fn = fn;
