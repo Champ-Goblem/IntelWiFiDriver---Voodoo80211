@@ -13,7 +13,7 @@ int tsleep(void *ident, int priority, const char *wmesg, int timo) {
 	// implementation should be copied from http://fxr.watson.org/fxr/source/bsd/kern/kern_synch.c?v=xnu-1699.24.8;im=10#L363
 	// for now just do an IOSleep, where timo is the time in ms.
 	// not ideal, I know, but dont want to have to deal with multithreading vs. workloop stuff right now
-	if (time == 0)
+	if (timo == 0)
 		timo = 2000; // default to 2 second of waiting (?)
 	IOSleep(timo);
 }

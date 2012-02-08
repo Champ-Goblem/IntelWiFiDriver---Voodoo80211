@@ -14,6 +14,7 @@
 #include <IOKit/IOWorkLoop.h>
 #include <IOKit/IOInterruptEventSource.h>
 #include <IOKit/IOBufferMemoryDescriptor.h>
+#include <sys/kpi_mbuf.h>
 #include <IOKit/network/IOMbufMemoryCursor.h>
 #include "Voodoo80211Device.h"
 

@@ -1156,7 +1156,7 @@ wpi_tx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc)
 	if (--ring->queued < WPI_TX_RING_LOMARK) {
 		sc->qfullmsk &= ~(1 << ring->qid);
 		if (sc->qfullmsk == 0 && (getInterface()->getFlags() & IFF_OACTIVE)) {
-			getInterface()->setFlags(getInterface()->getFlags() & ~IFF_OACTIVE);
+			// TODO: signal queue is full
 			// FIXME (*ifp->if_start)(ifp);
 		}
 	}
@@ -2688,7 +2688,7 @@ wpi_load_firmware(struct wpi_softc *sc)
 	WPI_WRITE(sc, WPI_RESET, 0);
 	
 	/* Wait at most one second for first alive notification. */
-	if ((error = tsleep(sc, PCATCH, "wpiinit", hz)) != 0) {
+	if ((error = tsleep(sc, PCATCH, "wpiinit", 1000)) != 0) {
 		printf("%s: timeout waiting for adapter to initialize\n",
 		       sc->sc_dev.dv_xname);
 		return error;
@@ -2974,7 +2974,7 @@ wpi_hw_init(struct wpi_softc *sc)
 		return error;
 	}
 	/* Wait at most one second for firmware alive notification. */
-	if ((error = tsleep(sc, PCATCH, "wpiinit", hz)) != 0) {
+	if ((error = tsleep(sc, PCATCH, "wpiinit", 1000)) != 0) {
 		printf("%s: timeout waiting for adapter to initialize\n",
 		       sc->sc_dev.dv_xname);
 		return error;
