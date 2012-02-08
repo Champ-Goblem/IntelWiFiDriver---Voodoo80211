@@ -75,7 +75,7 @@ int pci_intr_map_msi(struct pci_attach_args *paa, pci_intr_handle_t *ih) {
 	(*ih)->dev = paa->pa_tag;  // pci device reference
 	(*ih)->dev->retain();
 	
-	(*ih)->workloop = paa->owner->getWorkLoop();
+	(*ih)->workloop = paa->workloop;
 	(*ih)->workloop->retain();
 	
 	return 0; // XXX not required on OS X

@@ -16,14 +16,35 @@ OSDefineMetaClassAndStructors(VoodooTimeout, OSObject)
 bool Voodoo80211Device::start(IOService* provider) {
 	if (!IO80211Controller::start(provider))
 		return false;
+	
+	IOPCIDevice* dev = OSDynamicCast(IOPCIDevice, provider);
+	if (dev == 0) {
+		IOLog("PCI device cannot be cast\n");
+		return false;
+	}
+	
+	dev->retain();
+	dev->open(this);
+	
+	fAttachArgs.workloop = getWorkLoop();
+	fAttachArgs.workloop->retain();
+	fAttachArgs.pa_tag = dev;
+	
+	if (device_attach(&fAttachArgs) == false)
+		return false;
+	
 	registerService();
 	IOLog("Starting\n");
 	return true;
 }
 
 void Voodoo80211Device::stop(IOService* provider) {
-    IOLog("Stopping\n");
-    IO80211Controller::stop(provider);
+	IOLog("Stopping\n");
+	fAttachArgs.workloop->release();
+	fAttachArgs.workloop = 0;
+	fAttachArgs.pa_tag->release();
+	fAttachArgs.pa_tag = 0;
+	IO80211Controller::stop(provider);
 }
 
 SInt32 Voodoo80211Device::apple80211Request( UInt32 req, int type, IO80211Interface * intf, void * data ) {
@@ -102,6 +123,28 @@ IOReturn Voodoo80211Device::registerWithPolicyMaker
 	};
 	return policyMaker->registerPowerDriver( this, powerStateArray, 2 );
 }
+
+IOReturn Voodoo80211Device::enable ( IONetworkInterface* aNetif )
+{
+	return kIOReturnSuccess;
+}
+
+IOReturn Voodoo80211Device::disable( IONetworkInterface* aNetif ) {
+	return kIOReturnSuccess;
+}
+
+IOOutputQueue* Voodoo80211Device::createOutputQueue( ) {
+	if (fOutputQueue == 0) {
+		fOutputQueue = IOGatedOutputQueue::withTarget(this, getWorkLoop());
+	}
+	return fOutputQueue;
+}
+
+UInt32 Voodoo80211Device::outputPacket( mbuf_t m, void* param ) {
+	freePacket(m);
+	return kIOReturnOutputDropped;
+}
+
 
 
 //*********************************************************************************************************************

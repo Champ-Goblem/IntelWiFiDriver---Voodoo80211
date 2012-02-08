@@ -998,7 +998,7 @@ wpi_ccmp_decap(struct wpi_softc *sc, mbuf_t m, struct ieee80211_key *k)
 	
 	/* Clear Protected bit and strip IV. */
 	wh->i_fc[1] &= ~IEEE80211_FC1_PROTECTED;
-	ovbcopy(wh, mtod(m, caddr_t) + IEEE80211_CCMP_HDRLEN, hdrlen);
+	bcopy(wh, mtod(m, caddr_t) + IEEE80211_CCMP_HDRLEN, hdrlen);
 	mbuf_adj(m, IEEE80211_CCMP_HDRLEN);
 	/* Strip MIC. */
 	mbuf_adj(m, -IEEE80211_CCMP_MICLEN);

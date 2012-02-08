@@ -16,7 +16,6 @@
 #include <IOKit/IOBufferMemoryDescriptor.h>
 #include <sys/kpi_mbuf.h>
 #include <IOKit/network/IOMbufMemoryCursor.h>
-#include "Voodoo80211Device.h"
 
 #define PCI_CAP_PCIEXPRESS	kIOPCIPCIExpressCapability
 #define PCI_MAPREG_START	kIOPCIConfigBaseAddress0
@@ -61,7 +60,7 @@ public:
 typedef pci_intr_handle* pci_intr_handle_t;
 
 struct device {
-	char dv_xname[IFNAMSIZ];
+	char dv_xname[16];
 };
 
 struct workq_task {
@@ -69,7 +68,7 @@ struct workq_task {
 };
 
 struct pci_attach_args {
-	Voodoo80211Device*	owner;
+	IOWorkLoop*		workloop;
 	pci_chipset_tag_t	pa_pc;
 	pcitag_t		pa_tag;
 	bus_dma_tag_t		pa_dmat;

@@ -35,6 +35,8 @@ enum { DVACT_SUSPEND, DVACT_RESUME };
 #include "apple80211/Lion/IO80211Interface.h"
 #include "apple80211/Lion/IO80211WorkLoop.h"
 
+#include "compat.h"
+
 struct ExtraMbufParams {
 	bool	is80211ManagementFrame;
 };
@@ -72,6 +74,7 @@ private:
 	IO80211WorkLoop*	fWorkloop;
 	IOTimerEventSource*     fTimer;
 	IOGatedOutputQueue*	fOutputQueue;
+	struct pci_attach_args	fAttachArgs;
 
 protected:
 #pragma mark Protected data
@@ -90,7 +93,7 @@ protected:
 	void	timeout_del(VoodooTimeout* t);
 	
 #pragma mark Device routines to be implemented
-	virtual bool	device_attach(void *);
+	virtual bool	device_attach(void *) { return false; }
 	virtual int	device_detach(int);
 	virtual int	device_activate(int);
 	

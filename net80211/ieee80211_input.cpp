@@ -733,7 +733,7 @@ ieee80211_amsdu_decap(struct ieee80211com *ic, mbuf_t m,
 			/* convert to Ethernet II header */
 			eh->ether_type = llc->llc_snap.ether_type;
 			/* strip LLC+SNAP headers */
-			ovbcopy(eh, (u_int8_t *)eh + LLC_SNAPFRAMELEN, ETHER_HDR_LEN);
+			bcopy(eh, (u_int8_t *)eh + LLC_SNAPFRAMELEN, ETHER_HDR_LEN);
 			mbuf_adj(m, LLC_SNAPFRAMELEN);
 			len -= LLC_SNAPFRAMELEN;
 		}
