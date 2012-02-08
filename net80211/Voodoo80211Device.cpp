@@ -7,6 +7,7 @@
 //
 
 #include "Voodoo80211Device.h"
+#include <libkern/c++/OSString.h>
 #include <IOKit/IOLib.h>
 
 OSDefineMetaClassAndStructors(Voodoo80211Device, IO80211Controller)
@@ -15,19 +16,14 @@ OSDefineMetaClassAndStructors(VoodooTimeout, OSObject)
 bool Voodoo80211Device::start(IOService* provider) {
 	if (!IO80211Controller::start(provider))
 		return false;
-    registerService();
-    IOLog("Starting\n");
-    return true;
+	registerService();
+	IOLog("Starting\n");
+	return true;
 }
 
 void Voodoo80211Device::stop(IOService* provider) {
     IOLog("Stopping\n");
     IO80211Controller::stop(provider);
-}
-
-IOReturn Voodoo80211Device::getHardwareAddress(IOEthernetAddress * addrP) {
-	bcopy(fPriv->ic_myaddr, addrP, ETHER_ADDR_LEN);
-	return kIOReturnSuccess;
 }
 
 SInt32 Voodoo80211Device::apple80211Request( UInt32 req, int type, IO80211Interface * intf, void * data ) {
@@ -92,4 +88,57 @@ void Voodoo80211Device::timeout_del(VoodooTimeout* t) {
 	fWorkloop->removeEventSource(t->timer);
 	t->timer->release();
 	t->timer = 0;
+}
+
+#pragma mark IOKit functionality
+
+// Power Management
+IOReturn Voodoo80211Device::registerWithPolicyMaker
+( IOService* policyMaker )
+{
+	static IOPMPowerState powerStateArray[ 2 ] = {
+		{ 1,0,0,0,0,0,0,0,0,0,0,0 },
+		{ 1,kIOPMDeviceUsable,kIOPMPowerOn,kIOPMPowerOn,0,0,0,0,0,0,0,0 }
+	};
+	return policyMaker->registerPowerDriver( this, powerStateArray, 2 );
+}
+
+
+//*********************************************************************************************************************
+// Following functions are dummy implementations but they must succeed for the network driver to work
+#pragma mark Dummy functions
+//*********************************************************************************************************************
+IOReturn	Voodoo80211Device::setPromiscuousMode	( IOEnetPromiscuousMode mode )		{ return kIOReturnSuccess; }
+IOReturn	Voodoo80211Device::setMulticastMode	( IOEnetMulticastMode mode )		{ return kIOReturnSuccess; }
+IOReturn	Voodoo80211Device::setMulticastList	( IOEthernetAddress* addr, UInt32 len )	{ return kIOReturnSuccess; }
+SInt32		Voodoo80211Device::monitorModeSetEnabled	( IO80211Interface * interface,
+						 bool enabled, UInt32 dlt )		{ return kIOReturnSuccess; }
+//*********************************************************************************************************************
+#pragma mark Quick implementation of tiny functions
+//*********************************************************************************************************************
+const OSString*	Voodoo80211Device::newVendorString	( ) const	{ return OSString::withCString("Voodoo(R)"); }
+const OSString*	Voodoo80211Device::newModelString		( ) const	{ return OSString::withCString("Wireless Device(TM)"); }
+const OSString*	Voodoo80211Device::newRevisionString	( ) const	{ return OSString::withCString("1.0"); }
+
+IOReturn
+Voodoo80211Device::getHardwareAddress
+( IOEthernetAddress* addr )
+{
+	bcopy(getIeee80211com()->ic_myaddr, addr->bytes, 6);
+	return kIOReturnSuccess;
+}
+
+IOReturn
+Voodoo80211Device::getHardwareAddressForInterface
+( IO80211Interface* netif, IOEthernetAddress* addr )
+{
+	return getHardwareAddress(addr);
+}
+
+IOReturn
+Voodoo80211Device::getMaxPacketSize
+( UInt32 *maxSize ) const
+{
+	*maxSize = 1500; // FIXME !!!!
+	return kIOReturnSuccess;
 }

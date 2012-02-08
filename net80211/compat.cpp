@@ -14,8 +14,9 @@ int tsleep(void *ident, int priority, const char *wmesg, int timo) {
 	// for now just do an IOSleep, where timo is the time in ms.
 	// not ideal, I know, but dont want to have to deal with multithreading vs. workloop stuff right now
 	if (timo == 0)
-		timo = 2000; // default to 2 second of waiting (?)
+		timo = 100; // default time of waiting (?) it's in a while loop in driver code
 	IOSleep(timo);
+	return 0;
 }
 
 int pci_get_capability(pci_chipset_tag_t chipsettag, pcitag_t pcitag, int capid, int *offsetp, pcireg_t *valuep) {

@@ -73,8 +73,8 @@ struct cfattach wpi_ca = {
 };
 #endif
 
-void VoodooIntel3945::
-wpi_attach(void *aux)
+bool VoodooIntel3945::
+device_attach(void *aux)
 {
 	struct wpi_softc *sc = &fSelfData;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -95,7 +95,7 @@ wpi_attach(void *aux)
 				   PCI_CAP_PCIEXPRESS, &sc->sc_cap_off, NULL);
 	if (error == 0) {
 		printf(": PCIe capability structure not found!\n");
-		return;
+		return false;
 	}
 	
 	/* Clear device-specific "PCI retry timeout" register (41h). */
@@ -108,38 +108,38 @@ wpi_attach(void *aux)
 			       &sc->sc_sh, NULL, &sc->sc_sz, 0);
 	if (error != 0) {
 		printf(": can't map mem space\n");
-		return;
+		return false;
 	}
 	
 	/* Install interrupt handler. */
 	if (pci_intr_map_msi(pa, &ih) != 0 && pci_intr_map(pa, &ih) != 0) {
 		printf(": can't map interrupt\n");
-		return;
+		return false;
 	}
 
 	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, OSMemberFunctionCast(int (*)(void *), this, &VoodooIntel3945::wpi_intr), sc);
 	if (sc->sc_ih == NULL) {
 		printf(": can't establish interrupt");
 		printf("\n");
-		return;
+		return false;
 	}
 	
 	/* Power ON adapter. */
 	if ((error = wpi_apm_init(sc)) != 0) {
 		printf(": could not power ON adapter\n");
-		return;
+		return false;
 	}
 	
 	/* Read MAC address, channels, etc from EEPROM. */
 	if ((error = wpi_read_eeprom(sc)) != 0) {
 		printf(": could not read EEPROM\n");
-		return;
+		return false;
 	}
 	
 	/* Allocate DMA memory for firmware transfers. */
 	if ((error = wpi_alloc_fwmem(sc)) != 0) {
 		printf(": could not allocate memory for firmware\n");
-		return;
+		return false;
 	}
 	
 	/* Allocate shared area. */
@@ -191,10 +191,12 @@ wpi_attach(void *aux)
 	/* IBSS channel undefined for now. */
 	ic->ic_ibss_chan = &ic->ic_channels[0];
 	
+	/* TODO
 	ifp->if_ioctl = wpi_ioctl;
 	ifp->if_start = wpi_start;
 	ifp->if_watchdog = wpi_watchdog;
 	IFQ_SET_READY(&ifp->if_snd);
+	 */
 	bcopy(getInterface()->getBSDName(), sc->sc_dev.dv_xname, IFNAMSIZ);
 	
 	ieee80211_ifattach(&sc->sc_ic);
@@ -205,17 +207,18 @@ wpi_attach(void *aux)
 	sc->amrr.amrr_max_success_threshold = 15;
 	
 	timeout_set(sc->calib_to, OSMemberFunctionCast(VoodooTimeout::CallbackFunction, this, &VoodooIntel3945::wpi_calib_timeout), sc);
-	return;
+	return true;
 	
 	/* Free allocated memory if something failed during attachment. */
 fail2:	while (--i >= 0)
 	wpi_free_tx_ring(sc, &sc->txq[i]);
 	wpi_free_shared(sc);
 fail1:	wpi_free_fwmem(sc);
+	return false;
 }
 
 int VoodooIntel3945::
-wpi_detach(int flags)
+device_detach(int flags)
 {
 	struct wpi_softc *sc = &fSelfData;
 	int qid;
@@ -241,9 +244,9 @@ wpi_detach(int flags)
 }
 
 int VoodooIntel3945::
-wpi_activate(int act)
+device_activate(int act)
 {
-	struct wpi_softc *sc = &fSelfData;
+	//struct wpi_softc *sc = &fSelfData;
 	
 	switch (act) {
 		case DVACT_SUSPEND:
@@ -251,8 +254,7 @@ wpi_activate(int act)
 				wpi_stop(0);
 			break;
 		case DVACT_RESUME:
-			workq_queue_task(NULL, &sc->sc_resume_wqt, 0,
-					 wpi_resume, sc, NULL);
+			wpi_resume();
 			break;
 	}
 	
@@ -1658,6 +1660,8 @@ wpi_tx(struct wpi_softc *sc, mbuf_t m, struct ieee80211_node *ni)
 void VoodooIntel3945::
 wpi_start()
 {
+	return;
+#if 0 // TODO !!!!!!!!!!!!!!!!!!!
 	struct wpi_softc* sc = &fSelfData;
 	struct ieee80211_node *ni;
 	mbuf_t m;
@@ -1693,8 +1697,8 @@ wpi_start()
 		}
 		
 		sc->sc_tx_timer = 5;
-		ifp->if_timer = 1;
 	}
+#endif
 }
 
 void VoodooIntel3945::
@@ -1718,6 +1722,8 @@ wpi_watchdog()
 int VoodooIntel3945::
 wpi_ioctl(struct ieee80211com *ifp, u_long cmd, caddr_t data)
 {
+	return 0;
+#if 0 // TODO !!!!!!!!
 	struct wpi_softc *sc = &fSelfData;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifaddr *ifa;
@@ -1799,6 +1805,7 @@ wpi_ioctl(struct ieee80211com *ifp, u_long cmd, caddr_t data)
 	wakeup(&sc->sc_flags);
 	splx(s);
 	return error;
+#endif
 }
 
 /*
@@ -3073,6 +3080,7 @@ wpi_init()
 	}
 	
 	getInterface()->setLinkState(kIO80211NetworkLinkUndefined, 0);
+	setLinkStatus(kIONetworkLinkValid);
 	
 	if (ic->ic_opmode != IEEE80211_M_MONITOR)
 		ieee80211_begin_scan(ic);

@@ -25,12 +25,13 @@ protected:
 	virtual void	ieee80211_updateedca(struct ieee80211com *);
 	virtual int	ieee80211_set_key(struct ieee80211com *, struct ieee80211_node *, struct ieee80211_key *);
 	virtual void	ieee80211_delete_key(struct ieee80211com *, struct ieee80211_node *, struct ieee80211_key *);
+	virtual bool	device_attach(void *);
+	virtual int	device_detach(int);
+	virtual int	device_activate(int);
+	virtual struct ieee80211com* getIeee80211com();
 	
 private:
 	wpi_softc	fSelfData;
-	void		wpi_attach(void *);
-	int		wpi_detach(int);
-	int		wpi_activate(int);
 	void		wpi_resume();
 	int		wpi_nic_lock(struct wpi_softc *);
 	int		wpi_read_prom_data(struct wpi_softc *, uint32_t, void *, int);

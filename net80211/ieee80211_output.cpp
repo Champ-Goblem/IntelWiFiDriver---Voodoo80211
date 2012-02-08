@@ -84,8 +84,7 @@ ieee80211_output(struct ieee80211com *ic, mbuf_t m, struct sockaddr *dst,
 	int error;
 	
 	/* Interface has to be up and running */
-	if ((fInterface->getFlags() & (IFF_UP | IFF_RUNNING)) !=
-	    (IFF_UP | IFF_RUNNING)) {
+	if (fInterface->linkState() != kIO80211NetworkLinkUp) {
 		error = ENETDOWN;
 		goto bad;
 	}
@@ -138,7 +137,8 @@ ieee80211_output(struct ieee80211com *ic, mbuf_t m, struct sockaddr *dst,
 	}
 #endif // 0
 fallback:
-	return getOutputQueue()->enqueue(m, 0);
+	getOutputQueue()->enqueue(m, 0);
+	return getOutputQueue()->start();
 	
 bad:
 	if (m)
@@ -227,7 +227,7 @@ ieee80211_mgmt_output(struct ieee80211com *ic, struct ieee80211_node *ni,
 #endif // debug
 	// TODO: ic->ic_mgtq->enqueue(m); (enqueue on management queue?)
 	getOutputQueue()->enqueue(m, (void*) &ieee80211_is_mgmt_frame);
-	//getOutputQueue()->start();
+	getOutputQueue()->start();
 	return 0;
 }
 

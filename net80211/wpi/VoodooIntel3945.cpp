@@ -8,3 +8,7 @@
 #include "VoodooIntel3945.h"
 
 OSDefineMetaClassAndStructors(VoodooIntel3945, Voodoo80211Device)
+
+struct ieee80211com* VoodooIntel3945::getIeee80211com() {
+	return &fSelfData.sc_ic;
+}

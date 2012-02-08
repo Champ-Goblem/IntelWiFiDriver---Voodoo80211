@@ -17,6 +17,7 @@
 #define __packed	__attribute__((__packed__))
 #define mtod(m, t)      (t) mbuf_data(m)
 #define M_DEVBUF        2
+enum { DVACT_SUSPEND, DVACT_RESUME };
 
 #include <IOKit/IOService.h>
 #include <IOKit/network/IOEthernetInterface.h>
@@ -46,10 +47,24 @@ class Voodoo80211Device : public IO80211Controller
 	
 public:
 #pragma mark I/O Kit specific
-	virtual bool start(IOService* provider);
-	virtual void stop(IOService* provider);
-	IOReturn getHardwareAddress(IOEthernetAddress * addrP);
-	SInt32 apple80211Request( UInt32 req, int type, IO80211Interface * intf, void * data );
+	bool			start(IOService* provider);
+	void			stop(IOService* provider);
+	IOReturn		registerWithPolicyMaker	( IOService* policyMaker );
+	SInt32			apple80211Request	( UInt32 request_type, int request_number, IO80211Interface* interface, void* data );
+	IOReturn		enable			( IONetworkInterface* aNetif );
+	IOReturn		disable			( IONetworkInterface* aNetif );
+	IOOutputQueue*		createOutputQueue	( );
+	UInt32			outputPacket		( mbuf_t m, void* param );
+	IOReturn		getMaxPacketSize	( UInt32 *maxSize ) const;
+	const OSString*		newVendorString		( ) const;
+	const OSString*		newModelString		( ) const;
+	const OSString*		newRevisionString	( ) const;
+	IOReturn		getHardwareAddressForInterface( IO80211Interface* netif, IOEthernetAddress* addr );
+	IOReturn		getHardwareAddress	( IOEthernetAddress* addr );
+	virtual IOReturn	setPromiscuousMode	( IOEnetPromiscuousMode mode );
+	virtual IOReturn	setMulticastMode	( IOEnetMulticastMode mode );
+	virtual IOReturn	setMulticastList	( IOEthernetAddress* addr, UInt32 len );
+	virtual SInt32		monitorModeSetEnabled	( IO80211Interface * interface, bool enabled, UInt32 dlt );
 	
 private:
 #pragma mark Private data
@@ -60,7 +75,6 @@ private:
 
 protected:
 #pragma mark Protected data
-	ieee80211com*	fPriv;
 	IO80211Interface* getInterface();
 
 #pragma mark Compatibility functions
@@ -75,12 +89,18 @@ protected:
 	void	timeout_add_usec(VoodooTimeout*, const unsigned int usec);
 	void	timeout_del(VoodooTimeout* t);
 	
+#pragma mark Device routines to be implemented
+	virtual bool	device_attach(void *);
+	virtual int	device_detach(int);
+	virtual int	device_activate(int);
+	
 #pragma mark ieee80211_amrr.h
 	void	ieee80211_amrr_node_init(const struct ieee80211_amrr *, struct ieee80211_amrr_node *);
 	void	ieee80211_amrr_choose(struct ieee80211_amrr *, struct ieee80211_node *, struct ieee80211_amrr_node *);
 	
 #pragma mark ieee80211_var.h
 	// Overloadable functions from ieee80211com*
+	virtual struct ieee80211com* getIeee80211com() { return 0; }
 	virtual void	ieee80211_newassoc(struct ieee80211com *, struct ieee80211_node *, int) {}
 	virtual void	ieee80211_updateslot(struct ieee80211com *) {}
 	virtual void	ieee80211_updateedca(struct ieee80211com *) {}
