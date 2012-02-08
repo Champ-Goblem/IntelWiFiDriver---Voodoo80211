@@ -10,7 +10,12 @@
 OSDefineMetaClassAndStructors(pci_intr_handle, OSObject)
 
 int tsleep(void *ident, int priority, const char *wmesg, int timo) {
-	return msleep(ident, priority, 0 /* no mutex */, wmesg, timo);
+	// implementation should be copied from http://fxr.watson.org/fxr/source/bsd/kern/kern_synch.c?v=xnu-1699.24.8;im=10#L363
+	// for now just do an IOSleep, where timo is the time in ms.
+	// not ideal, I know, but dont want to have to deal with multithreading vs. workloop stuff right now
+	if (time == 0)
+		timo = 2000; // default to 2 second of waiting (?)
+	IOSleep(timo);
 }
 
 int pci_get_capability(pci_chipset_tag_t chipsettag, pcitag_t pcitag, int capid, int *offsetp, pcireg_t *valuep) {
