@@ -82,6 +82,8 @@ struct bus_dmamap {
 typedef struct bus_dmamap* bus_dmamap_t;
 
 int		tsleep(void *ident, int priority, const char *wmesg, int timo);
+u_int32_t	arc4random();
+void		arc4random_buf(void *buf, size_t n);
 
 int		pci_get_capability(pci_chipset_tag_t chipsettag, pcitag_t pcitag, int capid, int *offsetp, pcireg_t *valuep);
 pcireg_t	pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg);

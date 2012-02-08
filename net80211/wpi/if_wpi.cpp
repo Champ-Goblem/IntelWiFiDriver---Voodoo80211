@@ -175,7 +175,7 @@ device_attach(void *aux)
 	ic->ic_caps =
 	IEEE80211_C_WEP |		/* WEP */
 	IEEE80211_C_RSN |		/* WPA/RSN */
-	IEEE80211_C_MONITOR |	/* monitor mode supported */
+	/*IEEE80211_C_MONITOR |	 monitor mode supported */
 	IEEE80211_C_SHSLOT |	/* short slot time supported */
 	IEEE80211_C_SHPREAMBLE |	/* short preamble supported */
 	IEEE80211_C_PMGT;		/* power saving supported */

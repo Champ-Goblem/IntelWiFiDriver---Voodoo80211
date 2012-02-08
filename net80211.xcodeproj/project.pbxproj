@@ -13,6 +13,8 @@
 		1F0A495C14A02B4100CDC173 /* ieee80211_priv.h in Headers */ = {isa = PBXBuildFile; fileRef = 1F0A495A14A02B4100CDC173 /* ieee80211_priv.h */; settings = {ATTRIBUTES = (); }; };
 		1F0A495D14A02B4100CDC173 /* ieee80211_var.h in Headers */ = {isa = PBXBuildFile; fileRef = 1F0A495B14A02B4100CDC173 /* ieee80211_var.h */; settings = {ATTRIBUTES = (); }; };
 		1F0A495F14A0C22D00CDC173 /* ieee80211.h in Headers */ = {isa = PBXBuildFile; fileRef = 1F0A495E14A0C22D00CDC173 /* ieee80211.h */; settings = {ATTRIBUTES = (); }; };
+		1FA4953214E2BDF100F0B43A /* ieee80211_pae_input.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FA4953114E2BDF100F0B43A /* ieee80211_pae_input.cpp */; };
+		1FA4953414E2C2AB00F0B43A /* ieee80211_pae_output.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FA4953314E2C2AB00F0B43A /* ieee80211_pae_output.cpp */; };
 		1FDB50D614C9007F00C16F95 /* ieee80211_crypto.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDB50D514C9007F00C16F95 /* ieee80211_crypto.h */; settings = {ATTRIBUTES = (); }; };
 		1FDB50DC14C9AFBE00C16F95 /* ieee80211_crypto.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FDB50DB14C9AFBE00C16F95 /* ieee80211_crypto.cpp */; };
 		1FDB510814C9BA6800C16F95 /* ieee80211_crypto_ccmp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FDB510714C9BA6700C16F95 /* ieee80211_crypto_ccmp.cpp */; };
@@ -84,6 +86,8 @@
 		1F0A495A14A02B4100CDC173 /* ieee80211_priv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ieee80211_priv.h; sourceTree = "<group>"; };
 		1F0A495B14A02B4100CDC173 /* ieee80211_var.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ieee80211_var.h; sourceTree = "<group>"; };
 		1F0A495E14A0C22D00CDC173 /* ieee80211.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ieee80211.h; sourceTree = "<group>"; };
+		1FA4953114E2BDF100F0B43A /* ieee80211_pae_input.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ieee80211_pae_input.cpp; sourceTree = "<group>"; };
+		1FA4953314E2C2AB00F0B43A /* ieee80211_pae_output.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ieee80211_pae_output.cpp; sourceTree = "<group>"; };
 		1FDB50D514C9007F00C16F95 /* ieee80211_crypto.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ieee80211_crypto.h; sourceTree = "<group>"; };
 		1FDB50DB14C9AFBE00C16F95 /* ieee80211_crypto.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ieee80211_crypto.cpp; sourceTree = "<group>"; };
 		1FDB510714C9BA6700C16F95 /* ieee80211_crypto_ccmp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ieee80211_crypto_ccmp.cpp; sourceTree = "<group>"; };
@@ -214,6 +218,8 @@
 				1FDB513614CA3EDF00C16F95 /* ieee80211_ioctl.h */,
 				1FDB516514CBA8A800C16F95 /* ieee80211_input.cpp */,
 				1FDB516714CC412500C16F95 /* ieee80211_output.cpp */,
+				1FA4953114E2BDF100F0B43A /* ieee80211_pae_input.cpp */,
+				1FA4953314E2C2AB00F0B43A /* ieee80211_pae_output.cpp */,
 				1FDB516F14CC4FDB00C16F95 /* ieee80211.cpp */,
 				1F0A493B149FF9E200CDC173 /* Supporting Files */,
 				1FDBAAE314DF0C530010697E /* wpi */,
@@ -471,6 +477,8 @@
 				1FDBAAED14DF0F1A0010697E /* if_wpi.cpp in Sources */,
 				1FDBAAF514DF12320010697E /* ieee80211_amrr.cpp in Sources */,
 				1FDBAAF714DF2D6B0010697E /* compat.cpp in Sources */,
+				1FA4953214E2BDF100F0B43A /* ieee80211_pae_input.cpp in Sources */,
+				1FA4953414E2C2AB00F0B43A /* ieee80211_pae_output.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

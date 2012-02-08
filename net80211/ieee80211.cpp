@@ -244,7 +244,7 @@ ieee80211_media_init(struct ieee80211com *ic/*, XXX
 		     ifm_change_cb_t media_change, ifm_stat_cb_t media_stat*/)
 {
 #define	ADD(_ic, _s, _o) \
-IONetworkMedium::addMedium((_ic)->ic_media, IONetworkMedium::medium(IFM_IEEE80211 & (_s) & (_o), ieee80211_media2rate(_s) * 500000, kIOMediumOptionHalfDuplex))
+IONetworkMedium::addMedium((_ic)->ic_media, IONetworkMedium::medium(IFM_IEEE80211 | (_s) | (_o), ieee80211_media2rate(_s) * 500000, kIOMediumOptionHalfDuplex))
 	//struct ifmediareq imr;
 	int i, j, mode, rate, maxrate, mword, mopt, r;
 	const struct ieee80211_rateset *rs;
@@ -348,6 +348,8 @@ ieee80211_findrate(struct ieee80211com *ic, enum ieee80211_phymode mode,
 int Voodoo80211Device::
 ieee80211_media_change(struct ieee80211com *ic)
 {
+	ieee80211_setmode(ic, IEEE80211_MODE_AUTO);
+	return ENETRESET;
 #if 0 // pvaibhav: TODO (or not to do?)
 	struct ieee80211com *ic = (void *)ifp;
 	struct ifmedia_entry *ime;
@@ -472,7 +474,6 @@ ieee80211_media_change(struct ieee80211com *ic)
 #endif
 	return error;
 #endif // TODO
-	return 0;
 }
 
 void Voodoo80211Device::

@@ -705,6 +705,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 						 * NB: When RSN is enabled, we defer setting
 						 * the link up until the port is valid.
 						 */
+						fInterface->postMessage(APPLE80211_M_ASSOC_DONE);
 						ieee80211_set_link_state(ic, kIO80211NetworkLinkUp);
 					}
 					ic->ic_mgt_timer = 0;

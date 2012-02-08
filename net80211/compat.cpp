@@ -6,8 +6,19 @@
 //
 
 #include "compat.h"
+#include <sys/random.h>
 
 OSDefineMetaClassAndStructors(pci_intr_handle, OSObject)
+
+u_int32_t arc4random() {
+	u_int32_t r;
+	read_random(&r, sizeof(r));
+	return r;
+}
+
+void arc4random_buf(void *buf, size_t n) {
+	read_random(buf, (u_int)n);
+}
 
 int tsleep(void *ident, int priority, const char *wmesg, int timo) {
 	// implementation should be copied from http://fxr.watson.org/fxr/source/bsd/kern/kern_synch.c?v=xnu-1699.24.8;im=10#L363
@@ -126,11 +137,11 @@ void pci_intr_disestablish(pci_chipset_tag_t pc, void *ih) {
 	ih = 0;
 }
 
-inline uint32_t bus_space_read_4(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset) {
+uint32_t bus_space_read_4(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset) {
 	return *((uint32_t*)(handle + offset));
 }
 
-inline void bus_space_write_4(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset, uint32_t value) {
+void bus_space_write_4(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset, uint32_t value) {
 	*((uint32_t*)(handle + offset)) = value;
 }
 

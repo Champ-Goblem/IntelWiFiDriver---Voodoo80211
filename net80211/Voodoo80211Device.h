@@ -94,8 +94,8 @@ protected:
 	
 #pragma mark Device routines to be implemented
 	virtual bool	device_attach(void *) { return false; }
-	virtual int	device_detach(int);
-	virtual int	device_activate(int);
+	virtual int	device_detach(int) { return 1; }
+	virtual int	device_activate(int) { return 1; }
 	
 #pragma mark ieee80211_amrr.h
 	void	ieee80211_amrr_node_init(const struct ieee80211_amrr *, struct ieee80211_amrr_node *);
@@ -166,7 +166,7 @@ protected:
 	int     ieee80211_setup_rates(struct ieee80211com *, struct ieee80211_node *, const u_int8_t *, const u_int8_t *, int);
 	int     ieee80211_iserp_sta(const struct ieee80211_node *);
 	virtual void ieee80211_node_join(struct ieee80211com *, struct ieee80211_node *, int) {}
-	virtual void ieee80211_node_leave(struct ieee80211com *, struct ieee80211_node *);
+	virtual void ieee80211_node_leave(struct ieee80211com *, struct ieee80211_node *) {}
 	int     ieee80211_match_bss(struct ieee80211com *, struct ieee80211_node *);
 	void    ieee80211_create_ibss(struct ieee80211com*, struct ieee80211_channel *);
 	void    ieee80211_notify_dtim(struct ieee80211com *);
@@ -193,24 +193,24 @@ protected:
 	struct	ieee80211_pmk *ieee80211_pmksa_find(struct ieee80211com *, struct ieee80211_node *, const u_int8_t *);
 	void	ieee80211_derive_ptk(enum ieee80211_akm, const u_int8_t *, const u_int8_t *, const u_int8_t *, const u_int8_t *, const u_int8_t *, struct ieee80211_ptk *);
 	int     ieee80211_cipher_keylen(enum ieee80211_cipher);
-	int     ieee80211_wep_set_key(struct ieee80211com *, struct ieee80211_key *);
-	void	ieee80211_wep_delete_key(struct ieee80211com *, struct ieee80211_key *);
-	mbuf_t	ieee80211_wep_encrypt(struct ieee80211com *, mbuf_t, struct ieee80211_key *);
-	mbuf_t	ieee80211_wep_decrypt(struct ieee80211com *, mbuf_t, struct ieee80211_key *);
-	int     ieee80211_tkip_set_key(struct ieee80211com *, struct ieee80211_key *);
-	void	ieee80211_tkip_delete_key(struct ieee80211com *, struct ieee80211_key *);
-	mbuf_t	ieee80211_tkip_encrypt(struct ieee80211com *, mbuf_t, struct ieee80211_key *);
-	mbuf_t	ieee80211_tkip_decrypt(struct ieee80211com *, mbuf_t, struct ieee80211_key *);
-	void	ieee80211_tkip_mic(mbuf_t, int, const u_int8_t *, u_int8_t[IEEE80211_TKIP_MICLEN]);
-	void	ieee80211_michael_mic_failure(struct ieee80211com *, u_int64_t);
+	int     ieee80211_wep_set_key(struct ieee80211com *, struct ieee80211_key *) { return 1; }
+	void	ieee80211_wep_delete_key(struct ieee80211com *, struct ieee80211_key *) { return; }
+	mbuf_t	ieee80211_wep_encrypt(struct ieee80211com *, mbuf_t, struct ieee80211_key *) { return 0; }
+	mbuf_t	ieee80211_wep_decrypt(struct ieee80211com *, mbuf_t, struct ieee80211_key *) { return 0; }
+	int     ieee80211_tkip_set_key(struct ieee80211com *, struct ieee80211_key *) { return 1; }
+	void	ieee80211_tkip_delete_key(struct ieee80211com *, struct ieee80211_key *) { return; }
+	mbuf_t	ieee80211_tkip_encrypt(struct ieee80211com *, mbuf_t, struct ieee80211_key *) { return 0; }
+	mbuf_t	ieee80211_tkip_decrypt(struct ieee80211com *, mbuf_t, struct ieee80211_key *) { return 0; }
+	void	ieee80211_tkip_mic(mbuf_t, int, const u_int8_t *, u_int8_t[IEEE80211_TKIP_MICLEN]) { return; }
+	void	ieee80211_michael_mic_failure(struct ieee80211com *, u_int64_t) { return; }
 	int     ieee80211_ccmp_set_key(struct ieee80211com *, struct ieee80211_key *);
 	void	ieee80211_ccmp_delete_key(struct ieee80211com *, struct ieee80211_key *);
 	mbuf_t	ieee80211_ccmp_encrypt(struct ieee80211com *, mbuf_t, struct ieee80211_key *);
 	mbuf_t	ieee80211_ccmp_decrypt(struct ieee80211com *, mbuf_t, struct ieee80211_key *);
-	int     ieee80211_bip_set_key(struct ieee80211com *, struct ieee80211_key *);
-	void	ieee80211_bip_delete_key(struct ieee80211com *, struct ieee80211_key *);
-	mbuf_t	ieee80211_bip_encap(struct ieee80211com *, mbuf_t, struct ieee80211_key *);
-	mbuf_t	ieee80211_bip_decap(struct ieee80211com *, mbuf_t, struct ieee80211_key *);  
+	int     ieee80211_bip_set_key(struct ieee80211com *, struct ieee80211_key *) { return 1; }
+	void	ieee80211_bip_delete_key(struct ieee80211com *, struct ieee80211_key *) { return; }
+	mbuf_t	ieee80211_bip_encap(struct ieee80211com *, mbuf_t, struct ieee80211_key *) { return 0; }
+	mbuf_t	ieee80211_bip_decap(struct ieee80211com *, mbuf_t, struct ieee80211_key *) { return 0; }
 
 #pragma mark ieee80211.cpp
 	// cpp file
@@ -339,6 +339,16 @@ protected:
 #endif
 	// cpp file
 	virtual int ieee80211_newstate(struct ieee80211com *, enum ieee80211_state, int);
+	
+#pragma mark ieee80211_pae_input.cpp
+	void	ieee80211_recv_4way_msg1(struct ieee80211com *, struct ieee80211_eapol_key *, struct ieee80211_node *);
+	void	ieee80211_recv_4way_msg3(struct ieee80211com *, struct ieee80211_eapol_key *, struct ieee80211_node *);
+	void	ieee80211_recv_rsn_group_msg1(struct ieee80211com *, struct ieee80211_eapol_key *, struct ieee80211_node *);
+	void	ieee80211_recv_wpa_group_msg1(struct ieee80211com *, struct ieee80211_eapol_key *, struct ieee80211_node *);
+	
+#pragma mark ieee80211_pae_output.cpp
+	int	ieee80211_send_eapol_key(struct ieee80211com *, mbuf_t, struct ieee80211_node *, const struct ieee80211_ptk *);
+	mbuf_t	ieee80211_get_eapol_key(int, int, u_int);
 };
 
 #endif

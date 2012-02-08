@@ -27,7 +27,8 @@ bool Voodoo80211Device::start(IOService* provider) {
 	dev->open(this);
 	
 	fAttachArgs.workloop = getWorkLoop();
-	fAttachArgs.workloop->retain();
+	fWorkloop = OSDynamicCast(IO80211WorkLoop, fAttachArgs.workloop);
+	fWorkloop->retain();
 	fAttachArgs.pa_tag = dev;
 	
 	if (device_attach(&fAttachArgs) == false)
@@ -40,7 +41,9 @@ bool Voodoo80211Device::start(IOService* provider) {
 
 void Voodoo80211Device::stop(IOService* provider) {
 	IOLog("Stopping\n");
-	fAttachArgs.workloop->release();
+	device_detach(0);
+	fWorkloop->release();
+	fWorkloop = 0;
 	fAttachArgs.workloop = 0;
 	fAttachArgs.pa_tag->release();
 	fAttachArgs.pa_tag = 0;
@@ -126,10 +129,17 @@ IOReturn Voodoo80211Device::registerWithPolicyMaker
 
 IOReturn Voodoo80211Device::enable ( IONetworkInterface* aNetif )
 {
+	device_activate(DVACT_RESUME);
+	fInterface->postMessage(APPLE80211_M_POWER_CHANGED);
+	fOutputQueue->setCapacity(200); // FIXME !!!!
 	return kIOReturnSuccess;
 }
 
 IOReturn Voodoo80211Device::disable( IONetworkInterface* aNetif ) {
+	fOutputQueue->setCapacity(0);
+	fOutputQueue->flush();
+	device_activate(DVACT_SUSPEND);
+	fInterface->postMessage(APPLE80211_M_POWER_CHANGED);
 	return kIOReturnSuccess;
 }
 
@@ -162,6 +172,13 @@ SInt32		Voodoo80211Device::monitorModeSetEnabled	( IO80211Interface * interface,
 const OSString*	Voodoo80211Device::newVendorString	( ) const	{ return OSString::withCString("Voodoo(R)"); }
 const OSString*	Voodoo80211Device::newModelString		( ) const	{ return OSString::withCString("Wireless Device(TM)"); }
 const OSString*	Voodoo80211Device::newRevisionString	( ) const	{ return OSString::withCString("1.0"); }
+
+int Voodoo80211Device::splnet() {
+	return 0; // FIXME use an iolock!
+}
+void Voodoo80211Device::splx(int) {
+	return;
+}
 
 IOReturn
 Voodoo80211Device::getHardwareAddress
