@@ -20,6 +20,13 @@ void arc4random_buf(void *buf, size_t n) {
 	read_random(buf, (u_int)n);
 }
 
+char* ether_sprintf(const u_char *ap)
+{
+         static char etherbuf[18];
+         snprintf(etherbuf, sizeof (etherbuf), "%6D", ap, ":");
+         return (etherbuf);
+}
+
 int tsleep(void *ident, int priority, const char *wmesg, int timo) {
 	// implementation should be copied from http://fxr.watson.org/fxr/source/bsd/kern/kern_synch.c?v=xnu-1699.24.8;im=10#L363
 	// for now just do an IOSleep, where timo is the time in ms.

@@ -32,6 +32,7 @@ protected:
 	
 private:
 	wpi_softc	fSelfData;
+	IOInterruptEventSource* fInterrupt;
 	void		wpi_resume();
 	int		wpi_nic_lock(struct wpi_softc *);
 	int		wpi_read_prom_data(struct wpi_softc *, uint32_t, void *, int);
@@ -59,7 +60,7 @@ private:
 	void		wpi_cmd_done(struct wpi_softc *, struct wpi_rx_desc *);
 	void		wpi_notif_intr(struct wpi_softc *);
 	void		wpi_fatal_intr(struct wpi_softc *);
-	int		wpi_intr(void *);
+	int		wpi_intr(OSObject *ih, IOInterruptEventSource *, int count);
 	int		wpi_tx(struct wpi_softc *, mbuf_t, struct ieee80211_node *);
 	void		wpi_start();
 	void		wpi_watchdog();

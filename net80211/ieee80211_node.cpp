@@ -294,6 +294,7 @@ ieee80211_match_bss(struct ieee80211com *ic, struct ieee80211_node *ni)
 	}
     
 #ifdef IEEE80211_DEBUG
+	/*
 	if (ic->ic_if.if_flags & IFF_DEBUG) {
 		printf(" %c %s", fail ? '-' : '+',
                ether_sprintf(ni->ni_macaddr));
@@ -319,7 +320,7 @@ ieee80211_match_bss(struct ieee80211com *ic, struct ieee80211_node *ni)
                fail & 0x40 ? '!' : ' ');
 		ieee80211_print_essid(ni->ni_essid, ni->ni_esslen);
 		printf("%s\n", fail & 0x10 ? "!" : "");
-	}
+	}*/
 #endif
 	return fail;
 }

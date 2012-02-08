@@ -119,8 +119,13 @@ void Voodoo80211Device::timeout_add_usec(VoodooTimeout* t, const unsigned int us
 }
 
 void Voodoo80211Device::timeout_del(VoodooTimeout* t) {
+	if (t == 0)
+		return;
+	if (t->timer == 0)
+		return;
 	t->timer->cancelTimeout();
-	fWorkloop->removeEventSource(t->timer);
+	if (fWorkloop)
+		fWorkloop->removeEventSource(t->timer);
 	t->timer->release();
 	t->timer = 0;
 }

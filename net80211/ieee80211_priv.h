@@ -21,10 +21,11 @@
 
 #include "ieee80211_crypto.h"
 
+/*
 #ifdef IEEE80211_DEBUG
 extern int ieee80211_debug;
 #define DPRINTF(X) do {				\
-	if (ieee80211_debug) {			\
+	if (true) {			\
 		printf("%s: ", __func__);	\
 		printf X;			\
 	}					\
@@ -32,6 +33,9 @@ extern int ieee80211_debug;
 #else
 #define DPRINTF(X)
 #endif
+*/
+
+#define DPRINTF(x)	do { printf("%s: ", __func__); printf x; } while(0);
 
 #define SEQ_LT(a,b)	\
 	((((u_int16_t)(a) - (u_int16_t)(b)) & 0xfff) > 2048)

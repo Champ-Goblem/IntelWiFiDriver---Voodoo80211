@@ -51,6 +51,8 @@
 #include "if_wpireg.h"
 #include "if_wpivar.h"
 
+
+/*
 #ifdef WPI_DEBUG
 #define DPRINTF(x)	do { if (wpi_debug > 0) printf x; } while (0)
 #define DPRINTFN(n, x)	do { if (wpi_debug >= (n)) printf x; } while (0)
@@ -59,6 +61,9 @@ int wpi_debug = 0;
 #define DPRINTF(x)
 #define DPRINTFN(n, x)
 #endif
+*/
+
+#define DPRINTF(x)	printf x
 
 #define abs(x)	(x) < 0 ? (0 - (x)) : (x)
 
@@ -112,17 +117,19 @@ device_attach(void *aux)
 	}
 	
 	/* Install interrupt handler. */
-	if (pci_intr_map_msi(pa, &ih) != 0 && pci_intr_map(pa, &ih) != 0) {
+	fInterrupt = IOInterruptEventSource::interruptEventSource(this, OSMemberFunctionCast(IOInterruptEventSource::Action, this, &VoodooIntel3945::wpi_intr));
+	if (fInterrupt == 0) {
 		printf(": can't map interrupt\n");
 		return false;
 	}
 
-	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, OSMemberFunctionCast(int (*)(void *), this, &VoodooIntel3945::wpi_intr), sc);
-	if (sc->sc_ih == NULL) {
+	//sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, OSMemberFunctionCast(int (*)(void *), this, &VoodooIntel3945::wpi_intr), sc);
+	if (getWorkLoop()->addEventSource(fInterrupt) != kIOReturnSuccess) {
 		printf(": can't establish interrupt");
 		printf("\n");
 		return false;
 	}
+	fInterrupt->enable();
 	
 	/* Power ON adapter. */
 	if ((error = wpi_apm_init(sc)) != 0) {
@@ -226,8 +233,11 @@ device_detach(int flags)
 	timeout_del(sc->calib_to);
 	
 	/* Uninstall interrupt handler. */
-	if (sc->sc_ih != NULL)
-		pci_intr_disestablish(sc->sc_pct, sc->sc_ih);
+	if (fInterrupt != 0) {
+		getWorkLoop()->removeEventSource(fInterrupt);
+		fInterrupt->release();
+		fInterrupt = 0;
+	}
 	
 	/* Free DMA resources. */
 	wpi_free_rx_ring(sc, &sc->rxq);
@@ -266,7 +276,7 @@ wpi_resume()
 {
 	struct wpi_softc *sc = &fSelfData;
 	pcireg_t reg;
-	int s;
+	int s, count = 20;
 	
 	/* Clear device-specific "PCI retry timeout" register (41h). */
 	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
@@ -274,7 +284,7 @@ wpi_resume()
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, reg);
 	
 	s = splnet();
-	while (sc->sc_flags & WPI_FLAG_BUSY)
+	while (sc->sc_flags & WPI_FLAG_BUSY && --count > 0)
 		tsleep(&sc->sc_flags, 0, "wpipwr", 0);
 	sc->sc_flags |= WPI_FLAG_BUSY;
 	
@@ -1037,7 +1047,7 @@ wpi_rx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	
 	/* Discard frames with a bad FCS early. */
 	if ((flags & WPI_RX_NOERROR) != WPI_RX_NOERROR) {
-		DPRINTFN(2, ("rx tail flags error %x\n", flags));
+		DPRINTF(("rx tail flags error %x\n", flags));
 		// TODO ifp->if_ierrors++;
 		return;
 	}
@@ -1201,7 +1211,7 @@ wpi_notif_intr(struct wpi_softc *sc)
 				BUS_DMASYNC_POSTREAD);
 		desc = mtod(data->m, struct wpi_rx_desc *);
 		
-		DPRINTFN(4, ("rx notification qid=%x idx=%d flags=%x type=%d "
+		DPRINTF(("rx notification qid=%x idx=%d flags=%x type=%d "
 			     "len=%d\n", desc->qid, desc->idx, desc->flags, desc->type,
 			     letoh32(desc->len)));
 		
@@ -1269,7 +1279,7 @@ wpi_notif_intr(struct wpi_softc *sc)
 				
 				bus_dmamap_sync(sc->sc_dmat, data->map, sizeof (*desc),
 						sizeof (*scan), BUS_DMASYNC_POSTREAD);
-				DPRINTFN(2, ("scanning channel %d status %x\n",
+				DPRINTF(("scanning channel %d status %x\n",
 					     scan->chan, letoh32(scan->status)));
 				
 				/* Fix current channel. */
@@ -1377,9 +1387,9 @@ wpi_fatal_intr(struct wpi_softc *sc)
 }
 
 int VoodooIntel3945::
-wpi_intr(void *arg)
+wpi_intr(OSObject *ih, IOInterruptEventSource *, int count)
 {
-	struct wpi_softc *sc = (struct wpi_softc *)arg;
+	struct wpi_softc *sc = &fSelfData;
 	uint32_t r1, r2;
 	
 	/* Disable interrupts. */
@@ -1618,7 +1628,7 @@ wpi_tx(struct wpi_softc *sc, mbuf_t m, struct ieee80211_node *ni)
 	data->m = m;
 	data->ni = ni;
 	
-	DPRINTFN(4, ("sending data: qid=%d idx=%d len=%d nsegs=%d\n",
+	DPRINTF(("sending data: qid=%d idx=%d len=%d nsegs=%d\n",
 		     ring->qid, ring->cur, mbuf_pkthdr_len(m), data->map->dm_nsegs));
 	
 	/* Fill TX descriptor. */
@@ -2359,7 +2369,7 @@ wpi_scan(struct wpi_softc *sc, uint16_t flags)
 			continue;
 		
 		chan->chan = ieee80211_chan2ieee(ic, c);
-		DPRINTFN(2, ("adding channel %d\n", chan->chan));
+		DPRINTF(("adding channel %d\n", chan->chan));
 		chan->flags = 0;
 		if (!(c->ic_flags & IEEE80211_CHAN_PASSIVE))
 			chan->flags |= WPI_CHAN_ACTIVE;
@@ -2734,7 +2744,8 @@ wpi_read_firmware(struct wpi_softc *sc)
 	
 	/* Read firmware image from filesystem. */
 	// pvaibhav
-	bcopy(Intel3945FirmwareImage, fw->data, Intel3945FirmwareImage_len);
+	//bcopy(Intel3945FirmwareImage, fw->data, Intel3945FirmwareImage_len);
+	fw->data = (u_char*)Intel3945FirmwareImage;
 	size = Intel3945FirmwareImage_len;
 	/* TODO Not needed for now
 	if ((error = loadfirmware("wpi-3945abg", &fw->data, &size)) != 0) {
