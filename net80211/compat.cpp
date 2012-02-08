@@ -160,8 +160,8 @@ int bus_dmamap_create(bus_dma_tag_t tag, bus_size_t size, int nsegments, bus_siz
 		return 0;
 }
 
-IOBufferMemoryDescriptor* alloc_dma_memory(size_t size, mach_vm_address_t alignment, void** vaddr, mach_vm_address_t* paddr, IOOptionBits opts);
-IOBufferMemoryDescriptor* alloc_dma_memory(size_t size, mach_vm_address_t alignment, void** vaddr, mach_vm_address_t* paddr, IOOptionBits opts = kIOMemoryPhysicallyContiguous | kIOMapInhibitCache)
+IOBufferMemoryDescriptor* alloc_dma_memory(size_t size, mach_vm_address_t alignment,/* void** vaddr, mach_vm_address_t* paddr, */IOOptionBits opts);
+IOBufferMemoryDescriptor* alloc_dma_memory(size_t size, mach_vm_address_t alignment,/* void** vaddr, mach_vm_address_t* paddr, */IOOptionBits opts = kIOMemoryPhysicallyContiguous | kIOMapInhibitCache)
 {
 	size_t		reqsize;
 	uint64_t	phymask;
@@ -181,6 +181,7 @@ IOBufferMemoryDescriptor* alloc_dma_memory(size_t size, mach_vm_address_t alignm
 		return 0;
 
 	mem->prepare();
+	/*
 	if (paddr)
 		*paddr = mem->getPhysicalAddress();
 	if (vaddr)
@@ -190,7 +191,7 @@ IOBufferMemoryDescriptor* alloc_dma_memory(size_t size, mach_vm_address_t alignm
 	 * Check the alignment and increment by 4096 until we get the
 	 * requested alignment. Fail if can't obtain the alignment
 	 * we requested.
-	 */
+	 
 	if ((*paddr & (alignment - 1)) != 0) {
 		for (i = 0; i < alignment / 4096; i++) {
 			if ((*paddr & (alignment - 1 )) == 0)
@@ -203,7 +204,7 @@ IOBufferMemoryDescriptor* alloc_dma_memory(size_t size, mach_vm_address_t alignm
 			mem->release();
 			return 0;
 		}
-	}
+	}*/
 	return mem;
 }
 
@@ -212,11 +213,11 @@ int bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size, bus_size_t alignment, b
 	// Ignore flags and don't pass in the number of segments, it's not used in the driver (always 1 anyway)
 	if (segs == 0)
 		return 1;
-	*segs = alloc_dma_memory(size, alignment, 0, 0);
+	*segs = alloc_dma_memory(size, alignment);
 	if (*segs == 0)
 		return 1;
-	(*segs)->prepare();
-	return 0;
+	else
+		return 0;
 }
 
 int bus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs, size_t size, void **kvap, int flags) {

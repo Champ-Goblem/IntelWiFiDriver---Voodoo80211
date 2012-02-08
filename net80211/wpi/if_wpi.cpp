@@ -197,9 +197,9 @@ device_attach(void *aux)
 	ifp->if_watchdog = wpi_watchdog;
 	IFQ_SET_READY(&ifp->if_snd);
 	 */
-	bcopy(getInterface()->getBSDName(), sc->sc_dev.dv_xname, IFNAMSIZ);
 	
 	ieee80211_ifattach(&sc->sc_ic);
+	bcopy("voodoo3945\0", sc->sc_dev.dv_xname, IFNAMSIZ);
 	
 	ieee80211_media_init(&sc->sc_ic); // TODO: define media_change and media_status overloaded functions
 	

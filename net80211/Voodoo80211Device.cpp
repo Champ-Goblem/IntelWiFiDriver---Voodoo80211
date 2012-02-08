@@ -13,6 +13,13 @@
 OSDefineMetaClassAndStructors(Voodoo80211Device, IO80211Controller)
 OSDefineMetaClassAndStructors(VoodooTimeout, OSObject)
 
+IO80211WorkLoop* Voodoo80211Device::getWorkLoop() {
+	if (fWorkloop)
+		return fWorkloop;
+	fWorkloop = IO80211WorkLoop::workLoop();
+	return fWorkloop;
+}
+
 bool Voodoo80211Device::start(IOService* provider) {
 	if (!IO80211Controller::start(provider))
 		return false;
@@ -28,6 +35,10 @@ bool Voodoo80211Device::start(IOService* provider) {
 	
 	fAttachArgs.workloop = getWorkLoop();
 	fWorkloop = OSDynamicCast(IO80211WorkLoop, fAttachArgs.workloop);
+	if (fWorkloop == 0) {
+		IOLog("No workloop!!\n");
+		return false;
+	}
 	fWorkloop->retain();
 	fAttachArgs.pa_tag = dev;
 	

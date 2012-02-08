@@ -87,6 +87,9 @@ ieee80211_ifattach(struct ieee80211com *ic)
 	*/
 	
 	attachInterface((IONetworkInterface**) &fInterface, /* attach to DLIL = */ true);
+	if (fInterface == 0) {
+		panic("voodoo_wifi: Ethernet interface not attached\n");
+	}
 	ieee80211_crypto_attach(ic);
 	
 	/*
@@ -105,7 +108,7 @@ ieee80211_ifattach(struct ieee80211com *ic)
 			if (i != ieee80211_chan2ieee(ic, c)) {
 				printf("%s: bad channel ignored; "
 				       "freq %u flags %x number %u\n",
-				       fInterface->getBSDName(), c->ic_freq, c->ic_flags,
+				       "voodoo_wifi", c->ic_freq, c->ic_flags,
 				       i);
 				c->ic_flags = 0;	/* NB: remove */
 				continue;
@@ -200,10 +203,10 @@ ieee80211_chan2ieee(struct ieee80211com *ic, const struct ieee80211_channel *c)
 		return IEEE80211_CHAN_ANY;
 	else if (c != NULL) {
 		printf("%s: invalid channel freq %u flags %x\n",
-		       fInterface->getBSDName(), c->ic_freq, c->ic_flags);
+		       "voodoo_wifi", c->ic_freq, c->ic_flags);
 		return 0;		/* XXX */
 	} else {
-		printf("%s: invalid channel (NULL)\n", fInterface->getBSDName());
+		printf("%s: invalid channel (NULL)\n", "voodoo_wifi");
 		return 0;		/* XXX */
 	}
 }
@@ -260,7 +263,15 @@ IONetworkMedium::addMedium((_ic)->ic_media, IONetworkMedium::medium(IFM_IEEE8021
 	/*
 	 * Fill in media characteristics.
 	 */
-	ic->ic_media = OSDictionary::withCapacity(10); // about 10 media initially?
+	ic->ic_media = OSDictionary::withCapacity(1); // about 10 media initially?
+	IONetworkMedium* automed = IONetworkMedium::medium(kIOMediumIEEE80211Auto, 54000000, kIOMediumOptionHalfDuplex);
+	IONetworkMedium::addMedium(ic->ic_media, automed);
+	//ieee80211_media_status(ic, current);
+	setSelectedMedium(automed);
+	publishMediumDictionary(ic->ic_media);
+	
+	return;
+	
 	maxrate = 0;
 	memset(&allrates, 0, sizeof(allrates));
 	for (mode = IEEE80211_MODE_AUTO; mode < IEEE80211_MODE_MAX; mode++) {

@@ -287,7 +287,7 @@ ieee80211_input(struct ieee80211com *ic, mbuf_t m, struct ieee80211_node *ni,
 		    /* TODO debug
                 if (doprint)
                     printf("%s: received %s from %s rssi %d mode %s\n",
-                           fInterface->getBSDName(),
+                           "voodoo_wifi",
                            ieee80211_mgt_subtype_name[subtype
                                                       >> IEEE80211_FC0_SUBTYPE_SHIFT],
                            ether_sprintf(wh->i_addr2), rxi->rxi_rssi,
@@ -1410,7 +1410,7 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, mbuf_t m,
 		/* TODO debug
 		if (fInterface->getFlags() & IFF_DEBUG)
 			printf("%s: %sassociation failed (status %d)"
-                   " for %s\n", fInterface->getBSDName(),
+                   " for %s\n", "voodoo_wifi",
                    reassoc ?  "re" : "",
                    status, ether_sprintf((u_int8_t *)wh->i_addr3));
 		 */

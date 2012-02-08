@@ -157,7 +157,7 @@ ieee80211_begin_scan(struct ieee80211com *ic)
 		ic->ic_stats.is_scan_active++;
 	}
 	if (false /* ifp->debugOn */)
-		printf("%s: begin %s scan\n", fInterface->getBSDName(),
+		printf("%s: begin %s scan\n", "voodoo_wifi",
                (ic->ic_flags & IEEE80211_F_ASCAN) ?
                "active" : "passive");
     
