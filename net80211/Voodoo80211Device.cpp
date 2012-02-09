@@ -18,10 +18,7 @@ OSDefineMetaClassAndStructors(VoodooTimeout, OSObject)
 #define IOC_STRUCT_GOT(type)	type* got = (type*) data;
 
 IO80211WorkLoop* Voodoo80211Device::getWorkLoop() {
-	if (fWorkloop)
-		return fWorkloop;
-	else
-		return IO80211WorkLoop::workLoop();
+	return fWorkloop;
 }
 
 bool Voodoo80211Device::start(IOService* provider) {
@@ -37,14 +34,17 @@ bool Voodoo80211Device::start(IOService* provider) {
 	dev->retain();
 	dev->open(this);
 	
-	fWorkloop = getWorkLoop();
+	fWorkloop = IO80211WorkLoop::workLoop();
 	if (fWorkloop == 0) {
 		IOLog("No workloop!!\n");
 		return false;
 	}
-	fWorkloop->retain();
 	fAttachArgs.workloop = fWorkloop;
 	fAttachArgs.pa_tag = dev;
+	
+	fLock = IOSimpleLockAlloc();
+	fCommandGate = IOCommandGate::commandGate(this);
+	fWorkloop->addEventSource(fCommandGate);
 	
 	if (device_attach(&fAttachArgs) == false)
 		return false;
@@ -65,33 +65,50 @@ void Voodoo80211Device::stop(IOService* provider) {
 	IO80211Controller::stop(provider);
 }
 
-int Voodoo80211Device::tsleep(void *ident, int priority, const char *wmesg, int timo) {
-	if (fWorkloop == 0) {
-		// no workloop so we just sleep
-		IOSleep(timo);
-		return 0;
-	}
+IOReturn Voodoo80211Device::tsleepHandler(OSObject* owner, void* arg0 = 0, void* arg1 = 0, void* arg2 = 0, void* arg3 = 0) {
+	Voodoo80211Device* dev = OSDynamicCast(Voodoo80211Device, owner);
+	if (dev == 0)
+		return kIOReturnError;
 	
-	if (timo == 0) {
-		if (fWorkloop->sleepGate(ident, THREAD_INTERRUPTIBLE) == THREAD_AWAKENED)
-			return 0;
+	if (arg1 == 0) {
+		// no deadline
+		if (dev->fCommandGate->commandSleep(arg0, THREAD_INTERRUPTIBLE) == THREAD_AWAKENED)
+			return kIOReturnSuccess;
 		else
-			return 1;
+			return kIOReturnTimeout;
 	} else {
 		AbsoluteTime deadline;
-		clock_interval_to_deadline(timo, kMillisecondScale, reinterpret_cast<uint64_t*> (&deadline));
-		if (fWorkloop->sleepGateDeadline(ident, THREAD_INTERRUPTIBLE, deadline) == THREAD_AWAKENED)
-			return 0;
+		clock_interval_to_deadline((*(int*)arg1), kMillisecondScale, reinterpret_cast<uint64_t*> (&deadline));
+		if (dev->fCommandGate->commandSleep(arg0, deadline, THREAD_INTERRUPTIBLE) == THREAD_AWAKENED)
+			return kIOReturnSuccess;
 		else
-			return 1;
+			return kIOReturnTimeout;
 	}
 }
 
+int Voodoo80211Device::tsleep(void *ident, int priority, const char *wmesg, int timo) {
+	if (fCommandGate == 0) {
+		// no command gate so we just sleep
+		IOSleep(timo);
+		return 0;
+	}
+	IOReturn ret;
+	if (timo == 0) {
+		ret = fCommandGate->runCommand(ident);
+	} else {
+		ret = fCommandGate->runCommand(ident, &timo);
+	}
+	if (ret == kIOReturnSuccess)
+		return 0;
+	else
+		return 1;
+}
+
 void Voodoo80211Device::wakeupOn(void* ident) {
-	if (fWorkloop == 0)
+	if (fCommandGate == 0)
 		return;
 	else
-		fWorkloop->wakeupGate(ident, true /*wakeup one thread*/);
+		fCommandGate->commandWakeup(ident);
 }
 
 #pragma mark -
@@ -573,17 +590,21 @@ IOReturn Voodoo80211Device::registerWithPolicyMaker
 
 IOReturn Voodoo80211Device::enable ( IONetworkInterface* aNetif )
 {
+	IOSimpleLockLock(fLock);
 	device_activate(DVACT_RESUME);
 	fInterface->postMessage(APPLE80211_M_POWER_CHANGED);
 	fOutputQueue->setCapacity(200); // FIXME !!!!
+	IOSimpleLockUnlock(fLock);
 	return kIOReturnSuccess;
 }
 
 IOReturn Voodoo80211Device::disable( IONetworkInterface* aNetif ) {
+	IOSimpleLockLock(fLock);
 	fOutputQueue->setCapacity(0);
 	fOutputQueue->flush();
 	device_activate(DVACT_SUSPEND);
 	fInterface->postMessage(APPLE80211_M_POWER_CHANGED);
+	IOSimpleLockUnlock(fLock);
 	return kIOReturnSuccess;
 }
 

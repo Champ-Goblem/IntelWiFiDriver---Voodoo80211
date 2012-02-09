@@ -24,6 +24,7 @@ enum { DVACT_SUSPEND, DVACT_RESUME };
 #include <IOKit/IOWorkloop.h>
 #include <IOKit/network/IOGatedOutputQueue.h>
 #include <IOKit/IOTimerEventSource.h>
+#include <IOKit/IOLocks.h>
 
 #include "ieee80211.h"
 #include "ieee80211_priv.h"
@@ -48,6 +49,7 @@ class Voodoo80211Device : public IO80211Controller
 	OSDeclareDefaultStructors(Voodoo80211Device)
 	
 public:
+	static IOReturn		tsleepHandler(OSObject* owner, void* arg0, void* arg1, void* arg2, void* arg3);
 #pragma mark I/O Kit specific
 	bool			start(IOService* provider);
 	void			stop(IOService* provider);
@@ -75,11 +77,13 @@ private:
 #pragma mark Private data
 	IO80211Interface*	fInterface;
 	IO80211WorkLoop*	fWorkloop;
+	IOCommandGate*		fCommandGate;
 	IOTimerEventSource*     fTimer;
 	IOGatedOutputQueue*	fOutputQueue;
 	struct pci_attach_args	fAttachArgs;
 	struct ieee80211_node*	fNextNodeToSend; // as scan result
 	bool			fScanResultWrapping;
+	IOSimpleLock*	fLock; // for enable()
 
 protected:
 #pragma mark Protected data
