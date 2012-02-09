@@ -63,8 +63,6 @@ int wpi_debug = 0;
 #endif
 */
 
-#define DPRINTF(x)	printf x
-
 #define abs(x)	(x) < 0 ? (0 - (x)) : (x)
 
 #if 0
@@ -2840,6 +2838,7 @@ wpi_apm_init(struct wpi_softc *sc)
 	wpi_prph_setbits(sc, WPI_APMG_PCI_STT, WPI_APMG_PCI_STT_L1A_DIS);
 	wpi_nic_unlock(sc);
 	
+	fPoweredOn = true;
 	return 0;
 }
 
@@ -2867,6 +2866,7 @@ wpi_apm_stop(struct wpi_softc *sc)
 {
 	wpi_apm_stop_master(sc);
 	WPI_SETBITS(sc, WPI_RESET, WPI_RESET_SW);
+	fPoweredOn = false;
 }
 
 void VoodooIntel3945::

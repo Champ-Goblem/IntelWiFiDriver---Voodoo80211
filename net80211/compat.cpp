@@ -7,6 +7,8 @@
 
 #include "compat.h"
 #include <sys/random.h>
+#include <sys/param.h>
+#include <sys/proc.h>
 
 OSDefineMetaClassAndStructors(pci_intr_handle, OSObject)
 
@@ -32,9 +34,12 @@ int tsleep(void *ident, int priority, const char *wmesg, int timo) {
 	// for now just do an IOSleep, where timo is the time in ms.
 	// not ideal, I know, but dont want to have to deal with multithreading vs. workloop stuff right now
 	if (timo == 0)
-		timo = 100; // default time of waiting (?) it's in a while loop in driver code
-	IOSleep(timo);
-	return 0;
+		timo = 2000; // default time of waiting (?) it's in a while loop in driver code
+	
+	struct timespec ts;
+	ts.tv_sec = timo/1000;
+	
+	return msleep(ident, 0, priority, wmesg, &ts);
 }
 
 int pci_get_capability(pci_chipset_tag_t chipsettag, pcitag_t pcitag, int capid, int *offsetp, pcireg_t *valuep) {

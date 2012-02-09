@@ -35,7 +35,7 @@ extern int ieee80211_debug;
 #endif
 */
 
-#define DPRINTF(x)	do { printf("%s: ", __func__); printf x; } while(0);
+#define DPRINTF(x)	do { printf("voodoo_wifi: %s: ", __func__); printf x; } while(0);
 
 #define SEQ_LT(a,b)	\
 	((((u_int16_t)(a) - (u_int16_t)(b)) & 0xfff) > 2048)

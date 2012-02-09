@@ -28,10 +28,14 @@ protected:
 	virtual bool	device_attach(void *);
 	virtual int	device_detach(int);
 	virtual int	device_activate(int);
+	virtual void	device_netreset();
+	virtual bool	device_powered_on();
 	virtual struct ieee80211com* getIeee80211com();
+	virtual UInt32		outputPacket		( mbuf_t m, void* param );
 	
 private:
 	wpi_softc	fSelfData;
+	bool		fPoweredOn;
 	IOInterruptEventSource* fInterrupt;
 	void		wpi_resume();
 	int		wpi_nic_lock(struct wpi_softc *);

@@ -54,10 +54,12 @@ public:
 	virtual IO80211WorkLoop* getWorkLoop() ;
 	IOReturn		registerWithPolicyMaker	( IOService* policyMaker );
 	SInt32			apple80211Request	( UInt32 request_type, int request_number, IO80211Interface* interface, void* data );
+	IOReturn		apple80211Request_SET	( int request_number, void* data );
+	IOReturn		apple80211Request_GET	( int request_number, void* data );
 	IOReturn		enable			( IONetworkInterface* aNetif );
 	IOReturn		disable			( IONetworkInterface* aNetif );
 	IOOutputQueue*		createOutputQueue	( );
-	UInt32			outputPacket		( mbuf_t m, void* param );
+	virtual UInt32		outputPacket		( mbuf_t m, void* param );
 	IOReturn		getMaxPacketSize	( UInt32 *maxSize ) const;
 	const OSString*		newVendorString		( ) const;
 	const OSString*		newModelString		( ) const;
@@ -76,6 +78,8 @@ private:
 	IOTimerEventSource*     fTimer;
 	IOGatedOutputQueue*	fOutputQueue;
 	struct pci_attach_args	fAttachArgs;
+	struct ieee80211_node*	fNextNodeToSend; // as scan result
+	bool			fScanResultWrapping;
 
 protected:
 #pragma mark Protected data
@@ -97,6 +101,8 @@ protected:
 	virtual bool	device_attach(void *) { return false; }
 	virtual int	device_detach(int) { return 1; }
 	virtual int	device_activate(int) { return 1; }
+	virtual void	device_netreset() { return; }
+	virtual bool	device_powered_on() { return false; }
 	
 #pragma mark ieee80211_amrr.h
 	void	ieee80211_amrr_node_init(const struct ieee80211_amrr *, struct ieee80211_amrr_node *);
