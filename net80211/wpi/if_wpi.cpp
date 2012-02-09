@@ -258,7 +258,7 @@ device_activate(int act)
 	
 	switch (act) {
 		case DVACT_SUSPEND:
-			if (getInterface()->linkState() == kIO80211NetworkLinkUp)
+			//if (getInterface()->linkState() == kIO80211NetworkLinkUp)
 				wpi_stop(0);
 			break;
 		case DVACT_RESUME:

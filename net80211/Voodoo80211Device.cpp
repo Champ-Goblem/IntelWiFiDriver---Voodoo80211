@@ -43,7 +43,11 @@ bool Voodoo80211Device::start(IOService* provider) {
 	fAttachArgs.pa_tag = dev;
 	
 	fLock = IOSimpleLockAlloc();
-	fCommandGate = IOCommandGate::commandGate(this);
+	fCommandGate = IOCommandGate::commandGate(this, (IOCommandGate::Action)tsleepHandler);
+	if (fCommandGate == 0) {
+		IOLog("No command gate!!\n");
+		return false;
+	}
 	fWorkloop->addEventSource(fCommandGate);
 	
 	if (device_attach(&fAttachArgs) == false)
@@ -590,21 +594,23 @@ IOReturn Voodoo80211Device::registerWithPolicyMaker
 
 IOReturn Voodoo80211Device::enable ( IONetworkInterface* aNetif )
 {
-	IOSimpleLockLock(fLock);
+	//IOSimpleLockLock(fLock);
 	device_activate(DVACT_RESUME);
-	fInterface->postMessage(APPLE80211_M_POWER_CHANGED);
-	fOutputQueue->setCapacity(200); // FIXME !!!!
-	IOSimpleLockUnlock(fLock);
+	if (fInterface) fInterface->postMessage(APPLE80211_M_POWER_CHANGED);
+	if (fOutputQueue) fOutputQueue->setCapacity(200); // FIXME !!!!
+	//IOSimpleLockUnlock(fLock);
 	return kIOReturnSuccess;
 }
 
 IOReturn Voodoo80211Device::disable( IONetworkInterface* aNetif ) {
-	IOSimpleLockLock(fLock);
-	fOutputQueue->setCapacity(0);
-	fOutputQueue->flush();
+	//IOSimpleLockLock(fLock);
+	if (fOutputQueue) {
+		fOutputQueue->setCapacity(0);
+		fOutputQueue->flush();	
+	}
 	device_activate(DVACT_SUSPEND);
-	fInterface->postMessage(APPLE80211_M_POWER_CHANGED);
-	IOSimpleLockUnlock(fLock);
+	if (fInterface) fInterface->postMessage(APPLE80211_M_POWER_CHANGED);
+	//IOSimpleLockUnlock(fLock);
 	return kIOReturnSuccess;
 }
 
@@ -667,3 +673,49 @@ Voodoo80211Device::getMaxPacketSize
 	*maxSize = 1500; // FIXME !!!!
 	return kIOReturnSuccess;
 }
+
+IOBufferMemoryDescriptor* Voodoo80211Device::allocDmaMemory
+( size_t size, int alignment, void** vaddr, uint32_t* paddr )
+{
+	size_t		reqsize;
+	uint64_t	phymask;
+	int		i;
+	
+	if (alignment <= PAGE_SIZE) {
+		reqsize = size;
+		phymask = 0x00000000ffffffffull & (~(alignment - 1));
+	} else {
+		reqsize = size + alignment;
+		phymask = 0x00000000fffff000ull; /* page-aligned */
+	}
+	
+	IOBufferMemoryDescriptor* mem = 0;
+	mem = IOBufferMemoryDescriptor::inTaskWithPhysicalMask(kernel_task, kIOMemoryPhysicallyContiguous,
+							       reqsize, phymask);
+	if (!mem) return 0;
+	mem->prepare();
+	*paddr = mem->getPhysicalAddress();
+	*vaddr = mem->getBytesNoCopy();
+	
+	/*
+	 * Check the alignment and increment by 4096 until we get the
+	 * requested alignment. Fail if can't obtain the alignment
+	 * we requested.
+	 */
+	if ((*paddr & (alignment - 1)) != 0) {
+		for (i = 0; i < alignment / 4096; i++) {
+			if ((*paddr & (alignment - 1 )) == 0)
+				break;
+			*paddr += 4096;
+			*vaddr = ((uint8_t*) *vaddr) + 4096;
+		}
+		if (i == alignment / 4096) {
+			DPRINTF(("Memory alloc alignment requirement %d was not satisfied\n", alignment));
+			mem->complete();
+			mem->release();
+			return 0;
+		}
+	}
+	return mem;
+}
+

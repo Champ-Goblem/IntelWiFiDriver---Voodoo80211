@@ -165,14 +165,17 @@ IOBufferMemoryDescriptor* alloc_dma_memory(size_t size, mach_vm_address_t alignm
 	size_t		reqsize;
 	uint64_t	phymask;
 	int		i;
-	
+	/*
 	if (alignment <= PAGE_SIZE) {
 		reqsize = size;
 		phymask = 0x00000000ffffffffull & (~(alignment - 1));
 	} else {
 		reqsize = size + alignment;
-		phymask = 0x00000000fffff000ull; /* page-aligned */
-	}
+		phymask = 0x00000000fffff000ull; /* page-aligned 
+	}*/
+	
+	phymask = 0x00000000ffffffffull & (~(alignment - 1));
+	reqsize = size;
 	
 	IOBufferMemoryDescriptor* mem = 0;
 	mem = IOBufferMemoryDescriptor::inTaskWithPhysicalMask(kernel_task, opts, reqsize, phymask);

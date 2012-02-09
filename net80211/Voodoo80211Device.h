@@ -97,6 +97,7 @@ protected:
 	int     splnet();
 	void    splx(int);
 	void	voodooTimeoutOccurred(OSObject* owner, IOTimerEventSource* timer);
+	IOBufferMemoryDescriptor* allocDmaMemory	( size_t size, int alignment, void** vaddr, uint32_t* paddr );
 	void	timeout_set(VoodooTimeout*, void (*func)(void *), void* arg);
 	void	timeout_add_sec(VoodooTimeout*, const unsigned int sec);
 	void	timeout_add_msec(VoodooTimeout*, const unsigned int ms);
