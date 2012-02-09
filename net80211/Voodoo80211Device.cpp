@@ -681,6 +681,8 @@ IOBufferMemoryDescriptor* Voodoo80211Device::allocDmaMemory
 	uint64_t	phymask;
 	int		i;
 	
+	DPRINTF(("Asked to allocate %u bytes with align=%u\n", size, alignment));
+	
 	if (alignment <= PAGE_SIZE) {
 		reqsize = size;
 		phymask = 0x00000000ffffffffull & (~(alignment - 1));
@@ -692,10 +694,15 @@ IOBufferMemoryDescriptor* Voodoo80211Device::allocDmaMemory
 	IOBufferMemoryDescriptor* mem = 0;
 	mem = IOBufferMemoryDescriptor::inTaskWithPhysicalMask(kernel_task, kIOMemoryPhysicallyContiguous,
 							       reqsize, phymask);
-	if (!mem) return 0;
+	if (!mem) {
+		DPRINTF(("Could not allocate DMA memory\n"));
+		return 0;
+	}
 	mem->prepare();
 	*paddr = mem->getPhysicalAddress();
 	*vaddr = mem->getBytesNoCopy();
+	
+	DPRINTF(("Got allocated at paddr=0x%x, vaddr=0x%x\n", *paddr, *vaddr));
 	
 	/*
 	 * Check the alignment and increment by 4096 until we get the
@@ -716,6 +723,7 @@ IOBufferMemoryDescriptor* Voodoo80211Device::allocDmaMemory
 			return 0;
 		}
 	}
+	DPRINTF(("Re-aligned DMA memory to paddr=0x%x, vaddr=0x%x\n", *paddr, *vaddr));
 	return mem;
 }
 

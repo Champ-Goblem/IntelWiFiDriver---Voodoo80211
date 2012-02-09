@@ -15,6 +15,7 @@
 		1F0A495F14A0C22D00CDC173 /* ieee80211.h in Headers */ = {isa = PBXBuildFile; fileRef = 1F0A495E14A0C22D00CDC173 /* ieee80211.h */; settings = {ATTRIBUTES = (); }; };
 		1FA4953214E2BDF100F0B43A /* ieee80211_pae_input.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FA4953114E2BDF100F0B43A /* ieee80211_pae_input.cpp */; };
 		1FA4953414E2C2AB00F0B43A /* ieee80211_pae_output.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FA4953314E2C2AB00F0B43A /* ieee80211_pae_output.cpp */; };
+		1FA4954114E3B28000F0B43A /* Firmware.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA4954014E3B28000F0B43A /* Firmware.h */; };
 		1FDB50D614C9007F00C16F95 /* ieee80211_crypto.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDB50D514C9007F00C16F95 /* ieee80211_crypto.h */; settings = {ATTRIBUTES = (); }; };
 		1FDB50DC14C9AFBE00C16F95 /* ieee80211_crypto.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FDB50DB14C9AFBE00C16F95 /* ieee80211_crypto.cpp */; };
 		1FDB510814C9BA6800C16F95 /* ieee80211_crypto_ccmp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FDB510714C9BA6700C16F95 /* ieee80211_crypto_ccmp.cpp */; };
@@ -72,7 +73,6 @@
 		1FDBAAF314DF12020010697E /* ieee80211_amrr.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDBAAF214DF12010010697E /* ieee80211_amrr.h */; };
 		1FDBAAF514DF12320010697E /* ieee80211_amrr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FDBAAF414DF12310010697E /* ieee80211_amrr.cpp */; };
 		1FDBAAF714DF2D6B0010697E /* compat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FDBAAF614DF2D6A0010697E /* compat.cpp */; };
-		1FDBAAF914E1E4970010697E /* Firmware.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDBAAF814E1E4970010697E /* Firmware.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -88,6 +88,7 @@
 		1F0A495E14A0C22D00CDC173 /* ieee80211.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ieee80211.h; sourceTree = "<group>"; };
 		1FA4953114E2BDF100F0B43A /* ieee80211_pae_input.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ieee80211_pae_input.cpp; sourceTree = "<group>"; };
 		1FA4953314E2C2AB00F0B43A /* ieee80211_pae_output.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ieee80211_pae_output.cpp; sourceTree = "<group>"; };
+		1FA4954014E3B28000F0B43A /* Firmware.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Firmware.h; sourceTree = "<group>"; };
 		1FDB50D514C9007F00C16F95 /* ieee80211_crypto.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ieee80211_crypto.h; sourceTree = "<group>"; };
 		1FDB50DB14C9AFBE00C16F95 /* ieee80211_crypto.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ieee80211_crypto.cpp; sourceTree = "<group>"; };
 		1FDB510714C9BA6700C16F95 /* ieee80211_crypto_ccmp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ieee80211_crypto_ccmp.cpp; sourceTree = "<group>"; };
@@ -145,7 +146,6 @@
 		1FDBAAF214DF12010010697E /* ieee80211_amrr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ieee80211_amrr.h; sourceTree = "<group>"; };
 		1FDBAAF414DF12310010697E /* ieee80211_amrr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ieee80211_amrr.cpp; sourceTree = "<group>"; };
 		1FDBAAF614DF2D6A0010697E /* compat.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = compat.cpp; sourceTree = "<group>"; };
-		1FDBAAF814E1E4970010697E /* Firmware.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Firmware.h; path = ../../../../VoodooIntel3945/Firmware.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -321,7 +321,7 @@
 		1FDBAAE314DF0C530010697E /* wpi */ = {
 			isa = PBXGroup;
 			children = (
-				1FDBAAF814E1E4970010697E /* Firmware.h */,
+				1FA4954014E3B28000F0B43A /* Firmware.h */,
 				1FDBAAE414DF0C540010697E /* if_wpireg.h */,
 				1FDBAAEA14DF0D660010697E /* if_wpivar.h */,
 				1FDBAAEC14DF0F1A0010697E /* if_wpi.cpp */,
@@ -381,7 +381,7 @@
 				1FDBAAEB14DF0D660010697E /* if_wpivar.h in Headers */,
 				1FDBAAF114DF0FE70010697E /* compat.h in Headers */,
 				1FDBAAF314DF12020010697E /* ieee80211_amrr.h in Headers */,
-				1FDBAAF914E1E4970010697E /* Firmware.h in Headers */,
+				1FA4954114E3B28000F0B43A /* Firmware.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

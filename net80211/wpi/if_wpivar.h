@@ -24,9 +24,7 @@
 #include <net80211/compat.h>
 
 struct wpi_dma_info {
-	bus_dma_tag_t		tag;
-	bus_dmamap_t		map;
-	bus_dma_segment_t	seg;
+	IOBufferMemoryDescriptor* buffer;
 	bus_addr_t		paddr;
 	caddr_t			vaddr;
 	bus_size_t		size;
