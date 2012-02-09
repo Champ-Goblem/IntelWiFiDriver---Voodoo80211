@@ -361,7 +361,7 @@ ieee80211_end_scan(struct ieee80211com *ic)
 			    ic->ic_scan_lock & IEEE80211_SCAN_RESUME) {
 				ic->ic_scan_lock = IEEE80211_SCAN_LOCKED;
 				/* Return from an user-initiated scan */
-				wakeup(&ic->ic_scan_lock);
+				wakeupOn(&ic->ic_scan_lock);
 				// XXX: pvaibhav: do this here?
 				fInterface->postMessage(APPLE80211_M_SCAN_DONE);
 			} else if (ic->ic_scan_lock & IEEE80211_SCAN_REQUEST)
@@ -420,7 +420,7 @@ ieee80211_end_scan(struct ieee80211com *ic)
 wakeup:
 	if (ic->ic_scan_lock & IEEE80211_SCAN_REQUEST) {
 		/* Return from an user-initiated scan */
-		wakeup(&ic->ic_scan_lock);
+		wakeupOn(&ic->ic_scan_lock);
 		// XXX: pvaibhav: do this here?
 		fInterface->postMessage(APPLE80211_M_SCAN_DONE);
 	}

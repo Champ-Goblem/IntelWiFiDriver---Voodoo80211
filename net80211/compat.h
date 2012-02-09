@@ -81,7 +81,6 @@ struct bus_dmamap {
 };
 typedef struct bus_dmamap* bus_dmamap_t;
 
-int		tsleep(void *ident, int priority, const char *wmesg, int timo);
 u_int32_t	arc4random();
 void		arc4random_buf(void *buf, size_t n);
 char*		ether_sprintf(const u_char *ap);

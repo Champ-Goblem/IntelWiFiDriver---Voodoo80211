@@ -20,8 +20,8 @@ OSDefineMetaClassAndStructors(VoodooTimeout, OSObject)
 IO80211WorkLoop* Voodoo80211Device::getWorkLoop() {
 	if (fWorkloop)
 		return fWorkloop;
-	fWorkloop = IO80211WorkLoop::workLoop();
-	return fWorkloop;
+	else
+		return IO80211WorkLoop::workLoop();
 }
 
 bool Voodoo80211Device::start(IOService* provider) {
@@ -37,13 +37,13 @@ bool Voodoo80211Device::start(IOService* provider) {
 	dev->retain();
 	dev->open(this);
 	
-	fAttachArgs.workloop = getWorkLoop();
-	fWorkloop = OSDynamicCast(IO80211WorkLoop, fAttachArgs.workloop);
+	fWorkloop = getWorkLoop();
 	if (fWorkloop == 0) {
 		IOLog("No workloop!!\n");
 		return false;
 	}
 	fWorkloop->retain();
+	fAttachArgs.workloop = fWorkloop;
 	fAttachArgs.pa_tag = dev;
 	
 	if (device_attach(&fAttachArgs) == false)
@@ -65,10 +65,38 @@ void Voodoo80211Device::stop(IOService* provider) {
 	IO80211Controller::stop(provider);
 }
 
+int Voodoo80211Device::tsleep(void *ident, int priority, const char *wmesg, int timo) {
+	if (fWorkloop == 0) {
+		// no workloop so we just sleep
+		IOSleep(timo);
+		return 0;
+	}
+	
+	if (timo == 0) {
+		if (fWorkloop->sleepGate(ident, THREAD_INTERRUPTIBLE) == THREAD_AWAKENED)
+			return 0;
+		else
+			return 1;
+	} else {
+		AbsoluteTime deadline;
+		clock_interval_to_deadline(timo, kMillisecondScale, reinterpret_cast<uint64_t*> (&deadline));
+		if (fWorkloop->sleepGateDeadline(ident, THREAD_INTERRUPTIBLE, deadline) == THREAD_AWAKENED)
+			return 0;
+		else
+			return 1;
+	}
+}
+
+void Voodoo80211Device::wakeupOn(void* ident) {
+	if (fWorkloop == 0)
+		return;
+	else
+		fWorkloop->wakeupGate(ident, true /*wakeup one thread*/);
+}
+
 #pragma mark -
 #pragma mark Apple IOCTL
-SInt32 Voodoo80211Device::apple80211Request( UInt32 req, int type, IO80211Interface * intf, void * data ) {
-	DPRINTF(("Airport request %u (%s %u)\n", type, (req == IOCTL_GET_REQ) ? "GET" : "SET", req));
+SInt32 Voodoo80211Device::apple80211Request( UInt32 type, int req, IO80211Interface * intf, void * data ) {
 	if (type == IOCTL_GET_REQ)
 		return apple80211Request_GET(req, data);
 	else
@@ -123,7 +151,7 @@ Voodoo80211Device::apple80211Request_SET
 					ieee80211_newstate(ic, IEEE80211_S_SCAN, -1);
 			}
 			/* Let the userspace process wait for completion */
-			tsleep(&ic->ic_scan_lock, PCATCH, "80211scan", 1000 * IEEE80211_SCAN_TIMEOUT);
+			//tsleep(&ic->ic_scan_lock, PCATCH, "80211scan", 1000 * IEEE80211_SCAN_TIMEOUT);
 			return kIOReturnSuccess;
 		}
 			
@@ -151,6 +179,7 @@ Voodoo80211Device::apple80211Request_SET
 			return kIOReturnSuccess; // TODO !!
 			
 		default:
+			DPRINTF(("Unhandled Airport SET request %u\n", request_number));
 			return kIOReturnUnsupported;
 	};
 }
@@ -457,6 +486,7 @@ Voodoo80211Device::apple80211Request_GET
 		}
 			
 		default:
+			DPRINTF(("Unhandled Airport GET request %u\n", request_number));
 			return kIOReturnUnsupported;
 	};
 }

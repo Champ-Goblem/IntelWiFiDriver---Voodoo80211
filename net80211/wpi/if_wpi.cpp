@@ -290,7 +290,7 @@ wpi_resume()
 		wpi_init();
 	
 	sc->sc_flags &= ~WPI_FLAG_BUSY;
-	wakeup(&sc->sc_flags);
+	wakeupOn(&sc->sc_flags);
 	splx(s);
 }
 
@@ -1188,7 +1188,7 @@ wpi_cmd_done(struct wpi_softc *sc, struct wpi_rx_desc *desc)
 		mbuf_freem(data->m);
 		data->m = NULL;
 	}
-	wakeup(&ring->cmd[desc->idx]);
+	wakeupOn(&ring->cmd[desc->idx]);
 }
 
 void VoodooIntel3945::
@@ -1420,8 +1420,10 @@ wpi_intr(OSObject *ih, IOInterruptEventSource *, int count)
 	    (r2 & WPI_FH_INT_RX))
 		wpi_notif_intr(sc);
 	
-	if (r1 & WPI_INT_ALIVE)
-		wakeup(sc);	/* Firmware is alive. */
+	if (r1 & WPI_INT_ALIVE) {
+		DPRINTF(("Firmware ALIVE!\n"));
+		wakeupOn(sc);	/* Firmware is alive. */
+	}
 	
 	/* Re-enable interrupts. */
 	if (getInterface()->getFlags() & IFF_UP)
@@ -1810,7 +1812,7 @@ wpi_ioctl(struct ieee80211com *ifp, u_long cmd, caddr_t data)
 	}
 	
 	sc->sc_flags &= ~WPI_FLAG_BUSY;
-	wakeup(&sc->sc_flags);
+	wakeupOn(&sc->sc_flags);
 	splx(s);
 	return error;
 #endif

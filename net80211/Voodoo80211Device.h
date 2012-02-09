@@ -88,6 +88,8 @@ protected:
 #pragma mark Compatibility functions
 	void*	malloc(vm_size_t len, int type, int how);
 	void	free(void* addr);
+	int	tsleep(void *ident, int priority, const char *wmesg, int timo);
+	void	wakeupOn(void* ident);
 	int     splnet();
 	void    splx(int);
 	void	voodooTimeoutOccurred(OSObject* owner, IOTimerEventSource* timer);

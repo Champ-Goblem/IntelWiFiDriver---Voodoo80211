@@ -29,19 +29,6 @@ char* ether_sprintf(const u_char *ap)
          return (etherbuf);
 }
 
-int tsleep(void *ident, int priority, const char *wmesg, int timo) {
-	// implementation should be copied from http://fxr.watson.org/fxr/source/bsd/kern/kern_synch.c?v=xnu-1699.24.8;im=10#L363
-	// for now just do an IOSleep, where timo is the time in ms.
-	// not ideal, I know, but dont want to have to deal with multithreading vs. workloop stuff right now
-	if (timo == 0)
-		timo = 2000; // default time of waiting (?) it's in a while loop in driver code
-	
-	struct timespec ts;
-	ts.tv_sec = timo/1000;
-	
-	return msleep(ident, 0, priority, wmesg, &ts);
-}
-
 int pci_get_capability(pci_chipset_tag_t chipsettag, pcitag_t pcitag, int capid, int *offsetp, pcireg_t *valuep) {
 	uint8_t offset;
 	UInt32 value = pcitag->findPCICapability(capid, &offset);
@@ -252,15 +239,25 @@ void bus_dmamap_sync(bus_dma_tag_t tag, bus_dmamap_t dmam, bus_addr_t offset, bu
 }
 
 void bus_dmamem_unmap(bus_dma_segment_t seg) {
+	if (seg == 0)
+		return;
 	seg->complete();
 }
 
 void bus_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs) {
+	if (segs == 0)
+		return;
+	if (*segs == 0)
+		return;
 	(*segs)->release();
 	*segs = 0;
 }
 
 void bus_dmamap_destroy(bus_dma_tag_t tag, bus_dmamap_t dmam) {
+	if (dmam == 0)
+		return;
+	if (dmam->cursor == 0)
+		return;
 	dmam->cursor->release();
 	dmam->cursor = 0;
 	delete dmam;
