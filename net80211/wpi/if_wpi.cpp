@@ -106,6 +106,7 @@ device_attach(void *aux)
 	reg &= ~0xff00;
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, reg);
 	
+	/*
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, WPI_PCI_BAR0);
 	error = pci_mapreg_map(pa, WPI_PCI_BAR0, memtype, 0, &sc->sc_st,
 			       &sc->sc_sh, NULL, &sc->sc_sz, 0);
@@ -113,7 +114,23 @@ device_attach(void *aux)
 		printf(": can't map mem space\n");
 		return false;
 	}
+	 */
+	IOPCIDevice* dev = OSDynamicCast(IOPCIDevice, sc->sc_pcitag);
+	if (!dev) {
+		printf(": No PCI device\n");
+		return false;
+	}
 	
+	fMap = dev->mapDeviceMemoryWithRegister(kIOPCIConfigBaseAddress0);
+	if (!fMap) {
+		printf(": PCI device memory could not be mapped.\n");
+		return false;
+	}
+	DPRINTF(("PCI device memory at VMaddr 0x%x, size %u\n",
+	    fMap->getVirtualAddress(), fMap->getSize()));
+	sc->sc_sh = reinterpret_cast<caddr_t> (fMap->getVirtualAddress());
+	sc->sc_sz = fMap->getSize();
+
 	/* Install interrupt handler. */
 	fInterrupt = IOInterruptEventSource::interruptEventSource(this, OSMemberFunctionCast(IOInterruptEventSource::Action, this, &VoodooIntel3945::wpi_intr));
 	if (fInterrupt == 0) {
@@ -286,7 +303,7 @@ wpi_resume()
 		tsleep(&sc->sc_flags, 0, "wpipwr", 0);
 	sc->sc_flags |= WPI_FLAG_BUSY;
 	
-	if (getInterface()->getFlags() & IFF_UP)
+	//if (getInterface()->getFlags() & IFF_UP)
 		wpi_init();
 	
 	sc->sc_flags &= ~WPI_FLAG_BUSY;

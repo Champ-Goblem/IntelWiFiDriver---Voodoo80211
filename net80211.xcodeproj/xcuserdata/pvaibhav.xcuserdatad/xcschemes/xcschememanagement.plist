@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>SchemeUserState</key>
+	<dict>
+		<key>Intel3945.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>2</integer>
+		</dict>
+		<key>Voodoo80211Framework.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>1</integer>
+		</dict>
+		<key>net80211.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>0</integer>
+		</dict>
+	</dict>
+	<key>SuppressBuildableAutocreation</key>
+	<dict>
+		<key>1F0A4934149FF9E200CDC173</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>1FDBAA7514DC99030010697E</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>1FDBAA8A14DC99040010697E</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>1FDBAAA714DC99BE0010697E</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+	</dict>
+</dict>
+</plist>

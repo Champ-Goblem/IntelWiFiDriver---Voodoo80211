@@ -34,6 +34,17 @@ bool Voodoo80211Device::start(IOService* provider) {
 	dev->retain();
 	dev->open(this);
 	
+	if (dev->requestPowerDomainState(kIOPMPowerOn,
+						 (IOPowerConnection *) getParentEntry(gIOPowerPlane),
+						 IOPMLowestState) != IOPMNoErr)
+	{
+		IOLog("Power domain D0 not received!!\n");
+		return false;
+	}
+	
+	dev->configWrite8(0x41, 0); 	/* This comes from FreeBSD driver */
+	dev->setBusMasterEnable(true);
+	
 	fWorkloop = IO80211WorkLoop::workLoop();
 	if (fWorkloop == 0) {
 		IOLog("No workloop!!\n");
@@ -96,6 +107,7 @@ int Voodoo80211Device::tsleep(void *ident, int priority, const char *wmesg, int 
 		IOSleep(timo);
 		return 0;
 	}
+	DPRINTF(("%s\n", wmesg));
 	IOReturn ret;
 	if (timo == 0) {
 		ret = fCommandGate->runCommand(ident);
@@ -556,7 +568,7 @@ void Voodoo80211Device::timeout_add_msec(VoodooTimeout* t, const unsigned int ms
 	fWorkloop->addEventSource(t->timer);
 	t->timer->enable();
 	t->timer->setTimeoutMS(ms);
-}
+}	
 
 void Voodoo80211Device::timeout_add_usec(VoodooTimeout* t, const unsigned int usec) {
 	t->timer = IOTimerEventSource::timerEventSource(t, OSMemberFunctionCast(IOTimerEventSource::Action, t, &Voodoo80211Device::voodooTimeoutOccurred));
@@ -692,7 +704,7 @@ IOBufferMemoryDescriptor* Voodoo80211Device::allocDmaMemory
 	}
 	
 	IOBufferMemoryDescriptor* mem = 0;
-	mem = IOBufferMemoryDescriptor::inTaskWithPhysicalMask(kernel_task, kIOMemoryPhysicallyContiguous,
+	mem = IOBufferMemoryDescriptor::inTaskWithPhysicalMask(kernel_task, kIOMemoryPhysicallyContiguous | kIODirectionInOut,
 							       reqsize, phymask);
 	if (!mem) {
 		DPRINTF(("Could not allocate DMA memory\n"));

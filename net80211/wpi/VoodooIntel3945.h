@@ -37,6 +37,7 @@ private:
 	wpi_softc	fSelfData;
 	bool		fPoweredOn;
 	IOInterruptEventSource* fInterrupt;
+	IOMemoryMap*	fMap;
 	void		wpi_resume();
 	int		wpi_nic_lock(struct wpi_softc *);
 	int		wpi_read_prom_data(struct wpi_softc *, uint32_t, void *, int);
