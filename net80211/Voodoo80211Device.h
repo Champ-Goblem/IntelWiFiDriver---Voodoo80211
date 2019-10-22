@@ -21,7 +21,7 @@ enum { DVACT_SUSPEND, DVACT_RESUME };
 
 #include <IOKit/IOService.h>
 #include <IOKit/network/IOEthernetInterface.h>
-#include <IOKit/IOWorkloop.h>
+#include <IOKit/IOWorkLoop.h>
 #include <IOKit/network/IOGatedOutputQueue.h>
 #include <IOKit/IOTimerEventSource.h>
 #include <IOKit/IOLocks.h>
@@ -32,9 +32,9 @@ enum { DVACT_SUSPEND, DVACT_RESUME };
 #include "ieee80211_amrr.h"
 #include "VoodooTimeout.h"
 
-#include "apple80211/Lion/IO80211Controller.h"
-#include "apple80211/Lion/IO80211Interface.h"
-#include "apple80211/Lion/IO80211WorkLoop.h"
+#include "apple80211/mojave/IO80211Controller.h"
+#include "apple80211/mojave/IO80211WorkLoop.h"
+#include "apple80211/mojave/IO80211Interface.h"
 
 #include "compat.h"
 

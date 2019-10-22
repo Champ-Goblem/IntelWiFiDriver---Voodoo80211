@@ -152,7 +152,7 @@ Voodoo80211Device::apple80211Request_SET
 					DPRINTF(("Setting power on\n"));
 					device_activate(DVACT_RESUME);
 					if (fInterface)
-						fInterface->postMessage(APPLE80211_M_POWER_CHANGED);
+						fInterface->postMessage(APPLE80211_M_POWER_CHANGED, NULL, 0);
 					if (fOutputQueue)
 						fOutputQueue->setCapacity(200); // FIXME
 					return kIOReturnSuccess;
@@ -161,7 +161,7 @@ Voodoo80211Device::apple80211Request_SET
 					DPRINTF(("Setting power off\n"));
 					device_activate(DVACT_SUSPEND);
 					if (fInterface)
-						fInterface->postMessage(APPLE80211_M_POWER_CHANGED);
+						fInterface->postMessage(APPLE80211_M_POWER_CHANGED, NULL, 0);
 					if (fOutputQueue) {
 						fOutputQueue->stop();
 						fOutputQueue->flush();
@@ -608,7 +608,7 @@ IOReturn Voodoo80211Device::enable ( IONetworkInterface* aNetif )
 {
 	//IOSimpleLockLock(fLock);
 	device_activate(DVACT_RESUME);
-	if (fInterface) fInterface->postMessage(APPLE80211_M_POWER_CHANGED);
+	if (fInterface) fInterface->postMessage(APPLE80211_M_POWER_CHANGED, NULL, 0);
 	if (fOutputQueue) fOutputQueue->setCapacity(200); // FIXME !!!!
 	//IOSimpleLockUnlock(fLock);
 	return kIOReturnSuccess;
@@ -621,7 +621,7 @@ IOReturn Voodoo80211Device::disable( IONetworkInterface* aNetif ) {
 		fOutputQueue->flush();	
 	}
 	device_activate(DVACT_SUSPEND);
-	if (fInterface) fInterface->postMessage(APPLE80211_M_POWER_CHANGED);
+	if (fInterface) fInterface->postMessage(APPLE80211_M_POWER_CHANGED, NULL, 0);
 	//IOSimpleLockUnlock(fLock);
 	return kIOReturnSuccess;
 }

@@ -29,7 +29,7 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/conf.h>
-#include <net80211/compat.h>
+#include "../compat.h"
 
 #include <machine/endian.h>
 

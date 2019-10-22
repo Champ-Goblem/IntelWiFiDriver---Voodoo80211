@@ -9,7 +9,7 @@
 	<key>CFBundleIconFile</key>
 	<string></string>
 	<key>CFBundleIdentifier</key>
-	<string>org.projectcamphor.${PRODUCT_NAME:rfc1034identifier}</string>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -24,41 +24,38 @@
 	<string>1</string>
 	<key>IOKitPersonalities</key>
 	<dict>
-		<key>Intel3945</key>
+		<key>IntelWiFIDriver</key>
 		<dict>
 			<key>CFBundleIdentifier</key>
 			<string>org.projectcamphor.${PRODUCT_NAME:rfc1034identifier}</string>
 			<key>IOClass</key>
-			<string>VoodooIntel3945</string>
-			<key>IOMatchCategory</key>
-			<string>IODefaultMatchCategory</string>
+			<string>IntelWiFiDriver</string>
+			<key>IOPCIMatch</key>
+			<string>0x24f38086</string>
+			<key>IOProbeScore</key>
+			<integer>1000</integer>
 			<key>IOProviderClass</key>
 			<string>IOPCIDevice</string>
-			<key>IONameMatch</key>
-			<array>
-				<string>pci8086,4227</string>
-				<string>pci8086,4222</string>
-			</array>
 		</dict>
 	</dict>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2011 Prashant Vaibhav. All rights reserved.</string>
 	<key>OSBundleLibraries</key>
 	<dict>
-		<key>com.apple.iokit.IOPCIFamily</key>
-		<string>2.6.1</string>
-		<key>com.apple.iokit.IONetworkingFamily</key>
-		<string>2.0</string>
 		<key>com.apple.iokit.IO80211Family</key>
-		<string>400.0</string>
+		<string>1200.12.2</string>
+		<key>com.apple.iokit.IONetworkingFamily</key>
+		<string>3.4</string>
+		<key>com.apple.iokit.IOPCIFamily</key>
+		<string>2.9</string>
 		<key>com.apple.kpi.bsd</key>
-		<string>11.0.0</string>
+		<string>18.7</string>
 		<key>com.apple.kpi.iokit</key>
-		<string>11.0.0</string>
+		<string>18.7</string>
 		<key>com.apple.kpi.libkern</key>
-		<string>11.0.0</string>
+		<string>18.7</string>
 		<key>com.apple.kpi.mach</key>
-		<string>11.0.0</string>
+		<string>18.7</string>
 	</dict>
 </dict>
 </plist>

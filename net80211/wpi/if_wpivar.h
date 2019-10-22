@@ -20,8 +20,8 @@
 #ifndef __h__if_wpivar
 #define __h__if_wpivar
 
-#include <net80211/VoodooTimeout.h>
-#include <net80211/compat.h>
+#include "../VoodooTimeout.h"
+#include "../compat.h"
 
 struct wpi_dma_info {
 	IOBufferMemoryDescriptor* buffer;

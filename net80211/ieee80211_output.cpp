@@ -84,10 +84,10 @@ ieee80211_output(struct ieee80211com *ic, mbuf_t m, struct sockaddr *dst,
 	int error;
 	
 	/* Interface has to be up and running */
-	if (fInterface->linkState() != kIO80211NetworkLinkUp) {
-		error = ENETDOWN;
-		goto bad;
-	}
+//    if (fInterface->linkState() != kIO80211NetworkLinkUp) {
+//        error = ENETDOWN;
+//        goto bad;
+//    }
 	
 #if 0 // pvaibhav: we are not supporting sending raw 802.11 frames right now
 	/* Try to get the DLT from a mbuf tag */

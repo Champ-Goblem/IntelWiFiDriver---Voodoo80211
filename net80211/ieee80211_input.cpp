@@ -557,7 +557,7 @@ ieee80211_deliver_data(struct ieee80211com *ic, mbuf_t m,
 	    eh->ether_type == htons(ETHERTYPE_PAE))
 		ieee80211_eapol_key_input(ic, m, ni);
 	else
-		fInterface->inputPacket(m);
+		fInterface->inputPacket(m, 0, 0, 0);
 }
 
 #ifdef __STRICT_ALIGNMENT

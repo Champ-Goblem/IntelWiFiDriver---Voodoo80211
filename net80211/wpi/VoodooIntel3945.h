@@ -8,7 +8,7 @@
 #ifndef net80211_VoodooIntel3945_h
 #define net80211_VoodooIntel3945_h
 
-#include <net80211/Voodoo80211Device.h>
+#include "../Voodoo80211Device.h"
 #include "if_wpireg.h"
 #include "if_wpivar.h"
 
