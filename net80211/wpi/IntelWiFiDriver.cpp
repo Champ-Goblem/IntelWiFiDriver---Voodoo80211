@@ -11,7 +11,7 @@ OSDefineMetaClassAndStructors(IntelWiFiDriver, Voodoo80211Device)
 
 #pragma mark Setup
 bool IntelWiFiDriver::device_attach(void *aux) {
-    IO_LOG("%s: Start", DRVNAME);
+    IO_LOG("%s: Device Attach", DRVNAME);
     //Get and set our device
     struct pci_attach_args *pa = (struct pci_attach_args*)aux;
     //IOPCIDevice* dev = OSDynamicCast(IOPCIDevice, pa->pa_tag);
@@ -64,13 +64,7 @@ bool IntelWiFiDriver::device_attach(void *aux) {
         return false;
     }
     IO_LOG("%s: Mapped device memory at vmAddr:0x%llx, size:%llu\n", DRVNAME, deviceProps->deviceMemoryMap->getAddress(), \
-           deviceProps->deviceMemoryMap->getSize());
-    
-    //[From iwlwifi source]
-    //We disable the RETRY_TIMEOUT register (0x41) to keep PCI Tx retries from interfering with C3 CPU state
-    pci_conf_write(NULL, deviceProps->device, 0x41, 0x00);
-    
-    
+           deviceProps->deviceMemoryMap->getSize());    
     
     //Install our interrupt handler
     
@@ -102,14 +96,14 @@ int IntelWiFiDriver::device_detach(int flags) {
 
 void IntelWiFiDriver::releaseDeviceAllocs() {
     if (deviceProps->deviceMemoryMap) {
+        IO_LOG("releasing memory map");
         deviceProps->deviceMemoryMap->release();
     }
-    
-    //Null out our references so that Voodoo can correctly release them
+    deviceProps->deviceMemoryMap = 0;
     deviceProps->deviceConfig = 0;
     deviceProps->workLoop = 0;
     deviceProps->device = 0;
-    //not needed as Voodoo already does it
-    //deviceProps->device->release();
+    deviceProps->capabilitiesStructOffset = 0;
+    deviceProps = 0;
     IO_LOG("%s: Released all items in device struct", DRVNAME);
 }

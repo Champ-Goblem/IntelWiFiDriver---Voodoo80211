@@ -21,7 +21,14 @@ IO80211WorkLoop* Voodoo80211Device::getWorkLoop() {
 	return fWorkloop;
 }
 
+bool Voodoo80211Device::init(OSDictionary *dict) {
+    bool res = IO80211Controller::init(dict);
+    IOLog("%s::init\n", "net80211");
+    return res;
+}
+
 bool Voodoo80211Device::start(IOService* provider) {
+    IOLog("%s: ::start\n", "net80211");
 	if (!IO80211Controller::start(provider))
 		return false;
 	
@@ -72,10 +79,33 @@ bool Voodoo80211Device::start(IOService* provider) {
 void Voodoo80211Device::stop(IOService* provider) {
 	IOLog("Stopping\n");
 	device_detach(0);
-	fWorkloop->release();
+    IOLog("removingng event source\n");
+    fWorkloop->removeEventSource(fCommandGate);
+    if (fWorkloop){
+        IOLog("releasing workloop\n");
+        fWorkloop->release();
+    }
 	fWorkloop = 0;
+    if (fCommandGate){
+        IOLog("releasing commandGate\n");
+        fCommandGate->release();
+    }
+    fCommandGate = 0;
+    if (fTimer) {
+        IOLog("releasing timer\n");
+        fTimer->release();
+        fTimer = 0;
+    }
+    if (fOutputQueue) {
+        IOLog("releasing output queue\n");
+        fOutputQueue->release();
+        fOutputQueue = 0;
+    }
 	fAttachArgs.workloop = 0;
-	fAttachArgs.pa_tag->release();
+    if (fAttachArgs.pa_tag){
+        IOLog("releasing device\n");
+        fAttachArgs.pa_tag->release();
+    }
 	fAttachArgs.pa_tag = 0;
 	IO80211Controller::stop(provider);
 }

@@ -21,6 +21,7 @@
 
 class IntelWiFiDriver : public Voodoo80211Device {
     OSDeclareDefaultStructors(IntelWiFiDriver)
+    
 protected:
     virtual bool device_attach(void *aux);
     virtual int device_detach(int);

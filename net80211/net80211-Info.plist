@@ -30,8 +30,8 @@
 			<string>org.projectcamphor.${PRODUCT_NAME:rfc1034identifier}</string>
 			<key>IOClass</key>
 			<string>IntelWiFiDriver</string>
-			<key>IOPCIMatch</key>
-			<string>0x24f38086</string>
+			<key>IONameMatch</key>
+			<string>pci8086,24f3</string>
 			<key>IOProbeScore</key>
 			<integer>1000</integer>
 			<key>IOProviderClass</key>
