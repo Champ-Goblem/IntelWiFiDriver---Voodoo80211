@@ -599,7 +599,6 @@
 				GCC_PREFIX_HEADER = "net80211/net80211-Prefix.pch";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
-					"$(inherited)",
 					"__PRIVATE_SPI__=1",
 				);
 				GCC_VERSION = "";

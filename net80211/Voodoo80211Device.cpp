@@ -21,11 +21,11 @@ IO80211WorkLoop* Voodoo80211Device::getWorkLoop() {
 	return fWorkloop;
 }
 
-bool Voodoo80211Device::init(OSDictionary *dict) {
-    bool res = IO80211Controller::init(dict);
-    IOLog("%s::init\n", "net80211");
-    return res;
-}
+//bool Voodoo80211Device::init(OSDictionary *dict) {
+//    bool res = IO80211Controller::init(dict);
+//    IOLog("%s::init\n", "net80211");
+//    return res;
+//}
 
 bool Voodoo80211Device::start(IOService* provider) {
     IOLog("%s: ::start\n", "net80211");
@@ -79,35 +79,47 @@ bool Voodoo80211Device::start(IOService* provider) {
 void Voodoo80211Device::stop(IOService* provider) {
 	IOLog("Stopping\n");
 	device_detach(0);
-    IOLog("removingng event source\n");
+    
+    //If debug flag set print the reference counts of the objects left before we release them
+    if (DEBUG) printRefCounts();
+    
+    //IOLog("removingng event source\n");
     fWorkloop->removeEventSource(fCommandGate);
     if (fWorkloop){
-        IOLog("releasing workloop\n");
+        //IOLog("releasing workloop\n");
         fWorkloop->release();
     }
 	fWorkloop = 0;
     if (fCommandGate){
-        IOLog("releasing commandGate\n");
+        //IOLog("releasing commandGate\n");
         fCommandGate->release();
     }
     fCommandGate = 0;
     if (fTimer) {
-        IOLog("releasing timer\n");
+        //IOLog("releasing timer\n");
         fTimer->release();
         fTimer = 0;
     }
     if (fOutputQueue) {
-        IOLog("releasing output queue\n");
+        //IOLog("releasing output queue\n");
         fOutputQueue->release();
         fOutputQueue = 0;
     }
 	fAttachArgs.workloop = 0;
     if (fAttachArgs.pa_tag){
-        IOLog("releasing device\n");
+        //IOLog("releasing device\n");
         fAttachArgs.pa_tag->release();
     }
 	fAttachArgs.pa_tag = 0;
 	IO80211Controller::stop(provider);
+}
+
+void Voodoo80211Device::printRefCounts() {
+    //Print out all the reference counters for objects here
+    IOLog("Workloop reference counter: %i", fWorkloop ? fWorkloop->getRetainCount() : 0);
+    IOLog("Command gate reference counter: %i", fCommandGate ? fCommandGate->getRetainCount() : 0);
+    IOLog("Output queue reference counter: %i", fOutputQueue ? fOutputQueue->getRetainCount() : 0);
+    IOLog("IOPCIDevice reference counter: %i ", fAttachArgs.pa_tag ? fAttachArgs.pa_tag->getRetainCount() : 0);
 }
 
 IOReturn Voodoo80211Device::tsleepHandler(OSObject* owner, void* arg0 = 0, void* arg1 = 0, void* arg2 = 0, void* arg3 = 0) {

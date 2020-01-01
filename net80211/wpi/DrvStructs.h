@@ -16,7 +16,10 @@ struct PCIDevice {
     IOWorkLoop* workLoop;
     int capabilitiesStructOffset;
     IOMemoryMap* deviceMemoryMap;
+    bus_space_handle_t deviceMemoryMapVAddr;
     PCIDeviceConfig* deviceConfig;
+    IOEventSource* interruptController;
+    //bus_space_tag_t busSpaceTag;
 };
 
 #endif /* DrvStructs_h */

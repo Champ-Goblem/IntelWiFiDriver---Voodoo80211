@@ -13,6 +13,8 @@
 #include "DrvStructs.h"
 #include "iwlwifi_headers/deviceConfigs.h"
 #include <os/log.h>
+#include <libkern/OSDebug.h>
+//#include <IOKit/IOFilterInterruptEventSource.h>
 
 #define DRVNAME "net80211"
 #define PCI_VENDOR_ID_INTEL 0x8086
@@ -26,11 +28,19 @@ protected:
     virtual bool device_attach(void *aux);
     virtual int device_detach(int);
 private:
-     PCIDevice* deviceProps;
+     PCIDevice deviceProps;
     
     void releaseDeviceAllocs();
-    int interruptHandler(OSObject* owner, IOInterruptEventSource* sender);
     int setDeviceCFG(uint16_t deviceID, uint16_t ss_deviceID);
+    
+#pragma mark Interrupt functions
+    int interruptHandler(OSObject* owner, IOInterruptEventSource* sender, int count);
+    //bool interruptFilter(IOFilterInterruptEventSource* source);
+    
+#pragma make Debugging
+    void printRefCounts();
+//    void taggedRetain(const void* tag) const;
+//    void taggedRelease(const void* tag) const;
 };
 
 #endif /* IntelWiFiDriver_hpp */

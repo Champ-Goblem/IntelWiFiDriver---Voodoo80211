@@ -12,16 +12,16 @@ OSDefineMetaClassAndStructors(IntelWiFiDriver, Voodoo80211Device)
 #pragma mark Setup
 bool IntelWiFiDriver::device_attach(void *aux) {
     IO_LOG("%s: Device Attach", DRVNAME);
+
     //Get and set our device
-    struct pci_attach_args *pa = (struct pci_attach_args*)aux;
-    //IOPCIDevice* dev = OSDynamicCast(IOPCIDevice, pa->pa_tag);
-    IOPCIDevice* dev = pa->pa_tag;
+    struct pci_attach_args *attach_args = (struct pci_attach_args*)aux;
+    IOPCIDevice* dev = attach_args->pa_tag;
     if (!dev) {
         LOG_ERROR("%s: Failed to get initial setup\n", DRVNAME);
         return false;
     }
-    deviceProps = new PCIDevice;
-    deviceProps->device = dev;
+    
+    deviceProps.device = dev;
     
     //Read vendor and device ID from both subsystem and system
     uint16_t vendorID = dev->configRead16(kIOPCIConfigVendorID);
@@ -45,7 +45,7 @@ bool IntelWiFiDriver::device_attach(void *aux) {
     IO_LOG("%s: Got device (did:0x%04x, ss_did:0x%04x)\n", DRVNAME, deviceID, ss_deviceID);
     
     //Get the PCI Capability structure offset and store it
-    int error = pci_get_capability(NULL, dev, PCI_CAP_PCIEXPRESS, &deviceProps->capabilitiesStructOffset, NULL);
+    int error = pci_get_capability(NULL, dev, PCI_CAP_PCIEXPRESS, &deviceProps.capabilitiesStructOffset, NULL);
     if (error == 0) {
         LOG_ERROR("%s: PCIe capability structure not found!\n", DRVNAME);
         return false;
@@ -58,16 +58,15 @@ bool IntelWiFiDriver::device_attach(void *aux) {
     }
     
     //Allocate our device memory and store the pointer to it in our structure
-    deviceProps->deviceMemoryMap = dev->mapDeviceMemoryWithRegister(kIOPCIConfigBaseAddress0);
-    if (!deviceProps->deviceMemoryMap) {
+    deviceProps.deviceMemoryMap = dev->mapDeviceMemoryWithRegister(kIOPCIConfigBaseAddress0);
+    if (!deviceProps.deviceMemoryMap) {
         LOG_ERROR("%s: Could not get memory map for device\n", DRVNAME);
         return false;
     }
-    IO_LOG("%s: Mapped device memory at vmAddr:0x%llx, size:%llu\n", DRVNAME, deviceProps->deviceMemoryMap->getAddress(), \
-           deviceProps->deviceMemoryMap->getSize());    
+    IO_LOG("%s: Mapped device memory at vmAddr:0x%llx, size:%llu\n", DRVNAME, deviceProps.deviceMemoryMap->getAddress(), \
+           deviceProps.deviceMemoryMap->getSize());
     
     //Install our interrupt handler
-    
     return true;
 }
 
@@ -84,7 +83,7 @@ int IntelWiFiDriver::setDeviceCFG(uint16_t deviceID, uint16_t ss_deviceID) {
         return 1;
     }
     IO_LOG("%s: Got cards config (%s)", DRVNAME, devCfg->name);
-    deviceProps->deviceConfig = devCfg;
+    deviceProps.deviceConfig = devCfg;
     return 0;
 }
 
@@ -95,15 +94,50 @@ int IntelWiFiDriver::device_detach(int flags) {
 }
 
 void IntelWiFiDriver::releaseDeviceAllocs() {
-    if (deviceProps->deviceMemoryMap) {
-        IO_LOG("releasing memory map");
-        deviceProps->deviceMemoryMap->release();
+    if (DEBUG) printRefCounts();
+    
+    if (deviceProps.deviceMemoryMap) {
+        deviceProps.deviceMemoryMap->release();
     }
-    deviceProps->deviceMemoryMap = 0;
-    deviceProps->deviceConfig = 0;
-    deviceProps->workLoop = 0;
-    deviceProps->device = 0;
-    deviceProps->capabilitiesStructOffset = 0;
-    deviceProps = 0;
+    
+    deviceProps.deviceMemoryMap = NULL;
+    deviceProps.deviceConfig = NULL;
+    deviceProps.workLoop = NULL;
+    deviceProps.device = NULL;
+    deviceProps.capabilitiesStructOffset = NULL;
+    
     IO_LOG("%s: Released all items in device struct", DRVNAME);
 }
+
+void IntelWiFiDriver::printRefCounts() {
+    IO_LOG("IntelWiFiDriver Reference counters: ");
+    IO_LOG("Device Memory Map: %i", deviceProps.deviceMemoryMap ? deviceProps.deviceMemoryMap->getRetainCount() : 0);
+    IO_LOG("Work loop: %i", deviceProps.workLoop ? deviceProps.workLoop->getRetainCount() : 0);
+    IO_LOG("Device: %i", deviceProps.device ? deviceProps.device->getRetainCount() : 0);
+}
+
+//#define CLASS_OBJECT_FORMAT_STRING "[%s@%p:%dx]"
+//#define CLASS_OBJECT_FORMAT(obj) myClassName(obj), obj, myRefCount(obj)
+//inline int myRefCount(const OSObject* obj) {
+//    return obj ? obj->getRetainCount() : 0;
+//}
+//
+//inline const char* myClassName(const OSObject* obj) {
+//    return obj->getMetaClass()->getClassName();
+//}
+//
+//void IntelWiFiDriver::taggedRetain(const void* tag) const {
+//    OSReportWithBacktrace("IntelWiFiDriver" CLASS_OBJECT_FORMAT_STRING "::taggedRetain(tag=%p)\n", CLASS_OBJECT_FORMAT(this), tag);;
+//    OSObject::taggedRetain(tag);
+//}
+//
+//void IntelWiFiDriver::taggedRelease(const void* tag) const {
+//    OSReportWithBacktrace("IntelWiFiDriver" CLASS_OBJECT_FORMAT_STRING "::taggedRelease(tag=%p)\n", CLASS_OBJECT_FORMAT(this), tag);
+//    int count = getRetainCount();
+//    OSObject::taggedRelease(tag);
+//    if (count == 1) {
+//        IO_LOG("IntelWiFiDriver::taggedRelease(tag=%p) final done \n", tag);
+//    } else {
+//        IO_LOG("IntelWiFiDriver" CLASS_OBJECT_FORMAT_STRING "::taggedRelease(tag=%p) done\n", CLASS_OBJECT_FORMAT(this), tag);
+//    }
+//}

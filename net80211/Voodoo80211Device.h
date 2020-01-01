@@ -51,7 +51,7 @@ class Voodoo80211Device : public IO80211Controller
 public:
 	static IOReturn		tsleepHandler(OSObject* owner, void* arg0, void* arg1, void* arg2, void* arg3);
 #pragma mark I/O Kit specific
-    bool            init(OSDictionary* data);
+//    bool            init(OSDictionary* data);
 	bool			start(IOService* provider);
 	void			stop(IOService* provider);
 	virtual IO80211WorkLoop* getWorkLoop() ;
@@ -75,6 +75,9 @@ public:
 	virtual SInt32		monitorModeSetEnabled	( IO80211Interface * interface, bool enabled, UInt32 dlt );
 	
 private:
+#pragma mark Debuging functions
+    void printRefCounts();
+    
 #pragma mark Private data
 	IO80211Interface*	fInterface;
 	IO80211WorkLoop*	fWorkloop;
