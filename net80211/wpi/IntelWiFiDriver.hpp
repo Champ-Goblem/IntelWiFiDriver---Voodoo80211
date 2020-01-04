@@ -21,6 +21,13 @@
 #define LOG_ERROR(string...) os_log_error(OS_LOG_DEFAULT,string)
 #define IO_LOG(string...) IOLog(string)
 
+//Set the debug flag, might not be needed
+#ifdef DEBUG
+#define DEBUG 1
+#else
+#define DEBUG 0
+#endif
+
 class IntelWiFiDriver : public Voodoo80211Device {
     OSDeclareDefaultStructors(IntelWiFiDriver)
     
@@ -35,10 +42,15 @@ private:
     
 #pragma mark Interrupt functions
     int interruptHandler(OSObject* owner, IOInterruptEventSource* sender, int count);
-    //bool interruptFilter(IOFilterInterruptEventSource* source);
+    void disableInterrupts();
+    void handleHardwareErrorINT();
+    void handleRFKillINT();
+    void handleWakeupINT();
     
-#pragma make Debugging
+#pragma mark Debugging
     void printRefCounts();
+    hardwareDebugStatisticsCounters hwStats;
+    void updateHardwareDebugStatistics(enum hardwareDebugStatistics updateStat, uint32_t value);
 //    void taggedRetain(const void* tag) const;
 //    void taggedRelease(const void* tag) const;
 };

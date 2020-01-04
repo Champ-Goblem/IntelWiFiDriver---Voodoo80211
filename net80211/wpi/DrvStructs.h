@@ -16,10 +16,30 @@ struct PCIDevice {
     IOWorkLoop* workLoop;
     int capabilitiesStructOffset;
     IOMemoryMap* deviceMemoryMap;
-    bus_space_handle_t deviceMemoryMapVAddr;
+    IOVirtualAddress deviceMemoryMapVAddr;
     PCIDeviceConfig* deviceConfig;
     IOEventSource* interruptController;
-    //bus_space_tag_t busSpaceTag;
+    uint32_t intaBitMask;
+};
+
+struct hardwareDebugStatisticsCounters {
+    uint32_t hardwareError;
+    uint32_t softwareError;
+    uint32_t schedulerFired;
+    uint32_t aliveRecieved;
+    uint32_t rfKillToggledOn;
+    uint32_t ctKill;
+    uint32_t wakeup;
+};
+
+enum hardwareDebugStatistics {
+    hardwareError,
+    softwareError,
+    schedulerFired,
+    aliveRecieved,
+    rfKillToggledOn,
+    ctKill,
+    wakeup
 };
 
 #endif /* DrvStructs_h */
