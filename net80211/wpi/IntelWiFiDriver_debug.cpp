@@ -34,7 +34,13 @@ void IntelWiFiDriver::updateHardwareDebugStatistics(enum hardwareDebugStatistics
             hwStats.ctKill++;
             break;
         case wakeup:
-            hwStats.wakeup++:
+            hwStats.wakeup++;
+            break;
+        case rxRecieved:
+            hwStats.rx++;
+            break;
+        case txRecieved:
+            hwStats.tx++;
             break;
     }
 }

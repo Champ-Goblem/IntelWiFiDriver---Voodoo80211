@@ -14,6 +14,7 @@
 #include "iwlwifi_headers/deviceConfigs.h"
 #include <os/log.h>
 #include <libkern/OSDebug.h>
+#include <IOKit/system.h>
 //#include <IOKit/IOFilterInterruptEventSource.h>
 
 #define DRVNAME "net80211"
@@ -43,9 +44,14 @@ private:
 #pragma mark Interrupt functions
     int interruptHandler(OSObject* owner, IOInterruptEventSource* sender, int count);
     void disableInterrupts();
+    void enableInterrupts();
+    void enableFirmwareLoadINT();
+    void enableRFKillINT();
+    void enableCTXInfoINT();
     void handleHardwareErrorINT();
     void handleRFKillINT();
     void handleWakeupINT();
+    void handleRxINT();
     
 #pragma mark Debugging
     void printRefCounts();

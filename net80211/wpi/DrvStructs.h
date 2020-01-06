@@ -11,15 +11,30 @@
 
 typedef const struct iwl_cfg PCIDeviceConfig;
 
+struct PCIStatus {
+    Boolean interruptsEnabled;
+};
+
 struct PCIDevice {
-    IOPCIDevice* device;
-    IOWorkLoop* workLoop;
-    int capabilitiesStructOffset;
-    IOMemoryMap* deviceMemoryMap;
-    IOVirtualAddress deviceMemoryMapVAddr;
-    PCIDeviceConfig* deviceConfig;
-    IOEventSource* interruptController;
-    uint32_t intaBitMask;
+    IOPCIDevice*        device;
+    IOWorkLoop*         workLoop;
+    int                 capabilitiesStructOffset;
+    IOMemoryMap*        deviceMemoryMap;
+    IOVirtualAddress    deviceMemoryMapVAddr;
+    PCIDeviceConfig*    deviceConfig;
+    IOEventSource*      interruptController;
+    uint32_t            intaBitMask;
+    
+    IOLock*             ucodeWriteWaitLock;
+    Boolean             ucodeWriteComplete = false;
+    
+    PCIStatus           status;
+    
+    Boolean             msixEnabled;
+    uint32_t            msixFHInitMask;
+    uint32_t            msixFHMask;
+    uint32_t            msixHWInitMask;
+    uint32_t            msixHWMask;
 };
 
 struct hardwareDebugStatisticsCounters {
@@ -30,6 +45,8 @@ struct hardwareDebugStatisticsCounters {
     uint32_t rfKillToggledOn;
     uint32_t ctKill;
     uint32_t wakeup;
+    uint32_t rx;
+    uint32_t tx;
 };
 
 enum hardwareDebugStatistics {
@@ -39,7 +56,9 @@ enum hardwareDebugStatistics {
     aliveRecieved,
     rfKillToggledOn,
     ctKill,
-    wakeup
+    wakeup,
+    rxRecieved,
+    txRecieved
 };
 
 #endif /* DrvStructs_h */

@@ -104,6 +104,23 @@
 #define WPI_BSM_DRAM_DATA_ADDR		0x3498
 #define WPI_BSM_DRAM_DATA_SIZE		0x349c
 
+/*****************************************************************************
+ *                        MSIX related registers                             *
+ *****************************************************************************/
+
+#define CSR_MSIX_BASE            (0x2000)
+#define CSR_MSIX_FH_INT_CAUSES_AD    (CSR_MSIX_BASE + 0x800)
+#define CSR_MSIX_FH_INT_MASK_AD        (CSR_MSIX_BASE + 0x804)
+#define CSR_MSIX_HW_INT_CAUSES_AD    (CSR_MSIX_BASE + 0x808)
+#define CSR_MSIX_HW_INT_MASK_AD        (CSR_MSIX_BASE + 0x80C)
+#define CSR_MSIX_AUTOMASK_ST_AD        (CSR_MSIX_BASE + 0x810)
+#define CSR_MSIX_RX_IVAR_AD_REG        (CSR_MSIX_BASE + 0x880)
+#define CSR_MSIX_IVAR_AD_REG        (CSR_MSIX_BASE + 0x890)
+#define CSR_MSIX_PENDING_PBA_AD        (CSR_MSIX_BASE + 0x1000)
+#define CSR_MSIX_RX_IVAR(cause)        (CSR_MSIX_RX_IVAR_AD_REG + (cause))
+#define CSR_MSIX_IVAR(cause)        (CSR_MSIX_IVAR_AD_REG + (cause))
+
+#define MSIX_FH_INT_CAUSES_Q(q)        (q)
 
 /* Possible flags for register WPI_HW_IF_CONFIG. */
 #define WPI_HW_IF_CONFIG_ALM_MB		(1 << 8)
@@ -170,11 +187,23 @@
 #define WPI_INT_SW_RX		(1 <<  3)
 #define WPI_INT_CT_KILL     (1 <<  6)
 #define WPI_INT_RF_TOGGLED	(1 <<  7)
-#define WPI_INT_SCD         (1 << 26)
 #define WPI_INT_SW_ERR		(1 << 25)
+#define WPI_INT_SCD         (1 << 26)
 #define WPI_INT_FH_TX		(1 << 27)
+#define WPI_INT_RX_PERIODIC (1 << 28)
 #define WPI_INT_HW_ERR		(1 << 29)
 #define WPI_INT_FH_RX		(1 << 31)
+
+//Defined in iwl-csr.h
+#define WPI_INT_MASK_ALL    (WPI_INT_FH_RX | \
+    WPI_INT_HW_ERR | \
+    WPI_INT_RX_PERIODIC | \
+    WPI_INT_FH_TX | \
+    WPI_INT_SW_ERR | \
+    WPI_INT_RF_TOGGLED | \
+    WPI_INT_SW_RX | \
+    WPI_INT_WAKEUP | \
+    WPI_INT_ALIVE)
 
 /* Shortcut. */
 #define WPI_INT_MASK							\
@@ -192,9 +221,19 @@ WPI_FH_INT_RX_CHNL(1) |	\
 WPI_FH_INT_RX_CHNL(2) |	\
 WPI_FH_INT_HI_PRIOR)
 
+//Defined in iwl-csr.h
+#define WPI_FH_INT_RX_MASK (WPI_FH_INT_HI_PRIOR | \
+WPI_FH_INT_RX_CHNL(0) | \
+WPI_FH_INT_RX_CHNL(1))
+
 /* Possible flags for register WPI_FH_TX_STATUS. */
 #define WPI_FH_TX_STATUS_IDLE(qid)	\
 (1 << ((qid) + 24) | 1 << ((qid) + 16))
+
+#define WPI_FH_INT_TX_CHNL(x) (1 << (x))
+
+#define WPI_FH_INT_TX_MASK (WPI_FH_INT_TX_CHNL(1) | \
+WPI_FH_INT_TX_CHNL(0))
 
 /* Possible flags for register WPI_EEPROM. */
 #define WPI_EEPROM_READ_VALID	(1 << 0)
