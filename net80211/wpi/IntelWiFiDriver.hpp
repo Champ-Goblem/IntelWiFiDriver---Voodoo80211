@@ -55,8 +55,13 @@ private:
     
 #pragma mark IO functions (IntelWiFiDriver_io.cpp)
     void busWrite32(uint32_t offset, uint32_t value);
+    void busSetBit(uint32_t offset, uint8_t bitPosition);
+    void busClearBit(uint32_t offset, uint8_t bitPosition);
     uint32_t busRead32(uint32_t offset);
     uint32_t readPRHP(uint32_t offset);
+    
+#pragma mark Device communication functions (IntelWiFiDriver_comms.cpp)
+    bool grabNICAccess(u_long flags);
     
 #pragma mark Debugging (IntelWiFiDriver_debug.cpp)
     void printRefCounts();

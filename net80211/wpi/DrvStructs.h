@@ -11,30 +11,41 @@
 
 typedef const struct iwl_cfg PCIDeviceConfig;
 
-struct PCIStatus {
+struct PCIDeviceStatus {
     Boolean interruptsEnabled;
 };
 
+//Contains all attrbutes of the device used by the driver
 struct PCIDevice {
+    //NIC related variables
     IOPCIDevice*        device;
     IOWorkLoop*         workLoop;
     int                 capabilitiesStructOffset;
     IOMemoryMap*        deviceMemoryMap;
-    IOVirtualAddress    deviceMemoryMapVAddr;
+//    IOVirtualAddress    deviceMemoryMapVAddr;
     PCIDeviceConfig*    deviceConfig;
+    
+    //Interrupt related variables
     IOEventSource*      interruptController;
     uint32_t            intaBitMask;
     
+    //Firmware related varaibales
     IOLock*             ucodeWriteWaitLock;
     Boolean             ucodeWriteComplete = false;
     
-    PCIStatus           status;
+    //Contains the statuses of the driver
+    PCIDeviceStatus           status;
     
+    //MSIX related variables
     Boolean             msixEnabled;
     uint32_t            msixFHInitMask;
     uint32_t            msixFHMask;
     uint32_t            msixHWInitMask;
     uint32_t            msixHWMask;
+    
+    //Used for grabbing NIC access
+    bool                holdNicAwake;
+    
 };
 
 struct hardwareDebugStatisticsCounters {

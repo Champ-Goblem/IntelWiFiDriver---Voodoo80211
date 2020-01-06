@@ -64,8 +64,8 @@ bool IntelWiFiDriver::device_attach(void *aux) {
         return false;
     }
     //Set the memory map for the device
-    deviceProps.deviceMemoryMapVAddr = deviceProps.deviceMemoryMap->getVirtualAddress();
-    IO_LOG("%s: Mapped device memory at vmAddr:0x%llx, size:%llu\n", DRVNAME, deviceProps.deviceMemoryMapVAddr, \
+//    deviceProps.deviceMemoryMapVAddr = deviceProps.deviceMemoryMap->getVirtualAddress();
+    IO_LOG("%s: Mapped device memory at vmAddr:0x%llx, size:%llu\n", DRVNAME, deviceProps.deviceMemoryMap->getVirtualAddress(), \
            deviceProps.deviceMemoryMap->getSize());
     
     //Install our interrupt handler
