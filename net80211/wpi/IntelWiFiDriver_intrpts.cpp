@@ -23,15 +23,13 @@ int IntelWiFiDriver::interruptHandler(OSObject* owner, IOInterruptEventSource* s
      */
     uint32_t inta;
     Boolean receivedFHTX, receivedRFKill, recievedAlive_FHRX;
-    IOPCIDevice* device = deviceProps.device;
-    IOMemoryMap* deviceBusMap = deviceProps.deviceMemoryMap;
     //Disable interrupts
 //    bus_space_write_4(NULL, deviceBusMap, WPI_MASK, 0);
-    device->ioWrite32(WPI_MASK, 0, deviceBusMap);
+    busWrite32(WPI_MASK, 0);
     
     //Read INTA register
 //    inta = bus_space_read_4(NULL, deviceBusMap, WPI_INT);
-    inta = device->ioRead32(WPI_INT, deviceBusMap);
+    inta = busRead32(WPI_INT);
     //VoodooIntel3945 uses r2 value too, not sure this relates to interrupts?
 //    intb = bus_space_read_4(NULL, deviceBusPointer, WPI_FH_INT);
     
@@ -50,7 +48,7 @@ int IntelWiFiDriver::interruptHandler(OSObject* owner, IOInterruptEventSource* s
     
     //Acknowledge interrupt recieved
 //    bus_space_write_4(NULL, deviceBusMap, WPI_INT, inta | ~deviceProps.intaBitMask);
-    device->ioWrite32(WPI_INT, inta | ~deviceProps.intaBitMask);
+    busWrite32(WPI_INT, inta | ~deviceProps.intaBitMask);
 //    bus_space_write_4(NULL, deviceBusPointer, WPI_FH_INT, intb);
     
     if (inta & WPI_INT_HW_ERR) {
@@ -113,7 +111,7 @@ int IntelWiFiDriver::interruptHandler(OSObject* owner, IOInterruptEventSource* s
         
         if (inta & (WPI_INT_FH_RX | WPI_INT_SW_RX)) {
 //            bus_space_write_4(NULL, deviceBusMap, WPI_FH_INT, WPI_FH_INT_RX_MASK);
-            device->ioWrite32(WPI_FH_INT, WPI_FH_INT_RX_MASK);
+            busWrite32(WPI_FH_INT, WPI_FH_INT_RX_MASK);
         }
         
         //TODO: If using ICT
@@ -128,7 +126,7 @@ int IntelWiFiDriver::interruptHandler(OSObject* owner, IOInterruptEventSource* s
     if (inta & WPI_INT_FH_TX) {
         //Tx channel for microcode load complete
 //        bus_space_write_4(NULL, deviceBusMap, WPI_FH_INT, WPI_FH_INT_TX_MASK);
-        device->ioWrite32(WPI_FH_INT, WPI_FH_INT_TX_MASK);
+        busWrite32(WPI_FH_INT, WPI_FH_INT_TX_MASK);
         
         updateHardwareDebugStatistics(txRecieved, 0);
         
@@ -163,12 +161,12 @@ void IntelWiFiDriver::enableInterrupts() {
         //TODO: if using MSIX enable this
 //        deviceProps.msixFHMask = deviceProps.msixFHInitMask;
 //        deviceProps.msixHWMask = deviceProps.msixHWInitMask;
-//        deviceProps.device->ioWrite32(CSR_MSIX_FH_INT_MASK_AD, deviceProps.msixFHMask);
-//        deviceProps.device->ioWrite32(CSR_MSIX_HW_INT_MASK_AD, deviceProps.msixHWMask);
+//        busWrite32(CSR_MSIX_FH_INT_MASK_AD, deviceProps.msixFHMask);
+//        busWrite32(CSR_MSIX_HW_INT_MASK_AD, deviceProps.msixHWMask);
         printf("%s: enableInterrupts MSIX exec path not setup", DRVNAME);
     } else {
         deviceProps.intaBitMask = WPI_INT_MASK_ALL;
-        deviceProps.device->ioWrite32(WPI_MASK, WPI_INT_MASK_ALL);
+        busWrite32(WPI_MASK, WPI_INT_MASK_ALL);
     }
     
     if(DEBUG) printf("%s: Enabled interrupts", DRVNAME);
@@ -181,13 +179,13 @@ void IntelWiFiDriver::disableInterrupts() {
 
     if (deviceProps.msixEnabled) {
         //TODO: if using MSIX enable this
-//        deviceProps.device->ioWrite32(CSR_MSIX_FH_INT_MASK_AD, deviceProps.msixFHInitMask);
-//        deviceProps.device->ioWrite32(CSR_MSIX_HW_INT_MASK_AD, deviceProps.msixHWInitMask);
+//        busWrite32(CSR_MSIX_FH_INT_MASK_AD, deviceProps.msixFHInitMask);
+//        busWrite32(CSR_MSIX_HW_INT_MASK_AD, deviceProps.msixHWInitMask);
         printf("%s: disableInterrupts MSIX exec path not setup", DRVNAME);
     } else {
-        deviceProps.device->ioWrite32(WPI_MASK, 0);
-        deviceProps.device->ioWrite32(WPI_INT, 0xffffffff);
-        deviceProps.device->ioWrite32(WPI_FH_INT, 0xffffffff);
+        busWrite32(WPI_MASK, 0);
+        busWrite32(WPI_INT, 0xffffffff);
+        busWrite32(WPI_FH_INT, 0xffffffff);
     }
     
     if (DEBUG) printf("%s: Disabled interrupts", DRVNAME);
@@ -201,7 +199,7 @@ void IntelWiFiDriver::enableFirmwareLoadINT() {
         printf("%s: enableFirmareLoadINT MSIX exec path not setup", DRVNAME);
     } else {
         deviceProps.intaBitMask = WPI_INT_FH_TX;
-        deviceProps.device->ioWrite32(WPI_MASK, WPI_INT_FH_TX);
+        busWrite32(WPI_MASK, WPI_INT_FH_TX);
     }
     
     if (DEBUG) printf("%s: Enabled firmware load interrupt", DRVNAME);
@@ -215,7 +213,7 @@ void IntelWiFiDriver::enableRFKillINT() {
         printf("%s: enableRFKillINT MSIX exec path not setup", DRVNAME);
     } else {
         deviceProps.intaBitMask = WPI_INT_RF_TOGGLED;
-        deviceProps.device->ioWrite32(WPI_MASK, WPI_INT_RF_TOGGLED);
+        busWrite32(WPI_MASK, WPI_INT_RF_TOGGLED);
     }
     
     if(DEBUG) printf("%s: Enabled RF toggle interrupt", DRVNAME);
@@ -229,7 +227,7 @@ void IntelWiFiDriver::enableCTXInfoINT() {
         printf("%s: enableCTXInfoINT MSIX exec path not setup", DRVNAME);
     } else {
         deviceProps.intaBitMask = WPI_INT_ALIVE | WPI_INT_FH_RX;
-        deviceProps.device->ioWrite32(WPI_MASK, deviceProps.intaBitMask);
+        busWrite32(WPI_MASK, deviceProps.intaBitMask);
     }
     
     if (DEBUG) printf("%s: Enabled CTX Info interrupt", DRVNAME);
@@ -238,7 +236,12 @@ void IntelWiFiDriver::enableCTXInfoINT() {
 
 #pragma mark Different handler functions for interrupt bits
 void IntelWiFiDriver::handleHardwareErrorINT() {
-    //TODO: Implement handling hardware errors
+    //Handles any hardware errors reported by the NIC
+    
+    if(deviceProps.deviceConfig->internal_wimax_coex &&
+       !deviceProps.deviceConfig->apmg_not_supported) {
+        
+    }
     return;
 }
 

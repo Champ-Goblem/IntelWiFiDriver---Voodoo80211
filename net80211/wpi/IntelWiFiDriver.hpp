@@ -41,7 +41,7 @@ private:
     void releaseDeviceAllocs();
     int setDeviceCFG(uint16_t deviceID, uint16_t ss_deviceID);
     
-#pragma mark Interrupt functions
+#pragma mark Interrupt functions (IntelWiFiDriver_intrpts.cpp)
     int interruptHandler(OSObject* owner, IOInterruptEventSource* sender, int count);
     void disableInterrupts();
     void enableInterrupts();
@@ -53,7 +53,12 @@ private:
     void handleWakeupINT();
     void handleRxINT();
     
-#pragma mark Debugging
+#pragma mark IO functions (IntelWiFiDriver_io.cpp)
+    void busWrite32(uint32_t offset, uint32_t value);
+    uint32_t busRead32(uint32_t offset);
+    uint32_t readPRHP(uint32_t offset);
+    
+#pragma mark Debugging (IntelWiFiDriver_debug.cpp)
     void printRefCounts();
     hardwareDebugStatisticsCounters hwStats;
     void updateHardwareDebugStatistics(enum hardwareDebugStatistics updateStat, uint32_t value);
