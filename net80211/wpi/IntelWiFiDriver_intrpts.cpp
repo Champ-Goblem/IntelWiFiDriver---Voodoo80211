@@ -238,9 +238,19 @@ void IntelWiFiDriver::enableCTXInfoINT() {
 void IntelWiFiDriver::handleHardwareErrorINT() {
     //Handles any hardware errors reported by the NIC
     
-    if(deviceProps.deviceConfig->internal_wimax_coex &&
-       !deviceProps.deviceConfig->apmg_not_supported) {
-        
+    if(deviceProps.deviceConfig->internal_wimax_coex && //Enabled 5150/5350_agn/6050/6150 series NICs
+       !deviceProps.deviceConfig->apmg_not_supported && //False for 22000/8000/9000 series NICs
+       (!(readPRPH(WPI_APMG_CLK_CTRL_REG) & WPI_APMG_CLK_MRB_FUNC_MODE) ||
+        (readPRPH(WPI_APMG_PS) & WPI_APMG_PS_CTRL_VAL_RESET_REQ))) {
+           deviceProps.status.syncHCMDActive = false;
+           //No need to worry about here for now enabling WIMAX and that as we are
+           //only supporting MVM cards for the time being, leaving this here for future
+           //DVM update or removal
+           //TODO: Will need to complete here for DVM cards
+       }
+    
+    for (int i = 0; i < deviceProps.deviceConfig->base_params->num_of_queues; i++) {
+//        if (!deviceProps)
     }
     return;
 }

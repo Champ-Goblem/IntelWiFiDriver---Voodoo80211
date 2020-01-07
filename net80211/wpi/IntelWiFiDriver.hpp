@@ -10,8 +10,10 @@
 
 #include "../Voodoo80211Device.h"
 #include "if_wpireg.h"
-#include "DrvStructs.h"
+#include "DrvStructs.hpp"
 #include "iwlwifi_headers/deviceConfigs.h"
+#include "iwlwifi_headers/internals.h"
+
 #include <os/log.h>
 #include <libkern/OSDebug.h>
 #include <IOKit/system.h>
@@ -55,18 +57,24 @@ private:
     
 #pragma mark IO functions (IntelWiFiDriver_io.cpp)
     void busWrite32(uint32_t offset, uint32_t value);
+    uint32_t busRead32(uint32_t offset);
+    void write32Direct(volatile void* base, uint32_t offset, uint32_t value);
+    uint32_t read32Direct(volatile void* base, uint32_t offset);
     void busSetBit(uint32_t offset, uint8_t bitPosition);
     void busClearBit(uint32_t offset, uint8_t bitPosition);
-    uint32_t busRead32(uint32_t offset);
-    uint32_t readPRHP(uint32_t offset);
+    int pollBit(uint32_t offset, uint32_t bits, uint32_t mask, int timeout);
+    uint32_t readPRPH(uint32_t offset);
+    uint32_t getPRPHMask();
     
 #pragma mark Device communication functions (IntelWiFiDriver_comms.cpp)
-    bool grabNICAccess(u_long flags);
+    bool grabNICAccess(IOInterruptState flags);
+    void releaseNICAccess(IOInterruptState flags);
     
 #pragma mark Debugging (IntelWiFiDriver_debug.cpp)
     void printRefCounts();
     hardwareDebugStatisticsCounters hwStats;
     void updateHardwareDebugStatistics(enum hardwareDebugStatistics updateStat, uint32_t value);
+    void dumpHardwareRegisters();
 //    void taggedRetain(const void* tag) const;
 //    void taggedRelease(const void* tag) const;
 };

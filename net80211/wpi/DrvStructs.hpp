@@ -12,7 +12,9 @@
 typedef const struct iwl_cfg PCIDeviceConfig;
 
 struct PCIDeviceStatus {
-    Boolean interruptsEnabled;
+    bool interruptsEnabled;
+    bool connectionClosed;
+    bool syncHCMDActive;
 };
 
 //Contains all attrbutes of the device used by the driver
@@ -22,7 +24,7 @@ struct PCIDevice {
     IOWorkLoop*         workLoop;
     int                 capabilitiesStructOffset;
     IOMemoryMap*        deviceMemoryMap;
-//    IOVirtualAddress    deviceMemoryMapVAddr;
+//    volatile void*      deviceMemoryMapVAddr;
     PCIDeviceConfig*    deviceConfig;
     
     //Interrupt related variables
@@ -31,20 +33,23 @@ struct PCIDevice {
     
     //Firmware related varaibales
     IOLock*             ucodeWriteWaitLock;
-    Boolean             ucodeWriteComplete = false;
+    bool                ucodeWriteComplete = false;
     
     //Contains the statuses of the driver
     PCIDeviceStatus           status;
     
     //MSIX related variables
-    Boolean             msixEnabled;
+    bool                msixEnabled;
     uint32_t            msixFHInitMask;
     uint32_t            msixFHMask;
     uint32_t            msixHWInitMask;
     uint32_t            msixHWMask;
     
     //Used for grabbing NIC access
-    bool                holdNicAwake;
+    bool                holdNICAwake; //Status if a current command in flight is holding NIC awake
+    IOSimpleLock*       NICAccessLock; //Lock for grabbing NIC access
+    
+    //Device communication queues
     
 };
 

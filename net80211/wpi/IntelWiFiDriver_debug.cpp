@@ -44,3 +44,9 @@ void IntelWiFiDriver::updateHardwareDebugStatistics(enum hardwareDebugStatistics
             break;
     }
 }
+
+void IntelWiFiDriver::dumpHardwareRegisters() {
+    if (!DEBUG) return;
+    
+    //TODO:Get registers from NIC and write out to log buffer
+}

@@ -89,6 +89,7 @@
 #define WPI_ALM_SCHED_TXF5MF		0x2e20
 #define WPI_ALM_SCHED_SBYPASS_MODE1	0x2e2c
 #define WPI_ALM_SCHED_SBYPASS_MODE2	0x2e30
+#define WPI_APMG_CLK_CTRL_REG   0x3000
 #define WPI_APMG_CLK_ENA		0x3004
 #define WPI_APMG_CLK_DIS		0x3008
 #define WPI_APMG_RFKILL			0x3014
@@ -141,6 +142,7 @@
 
 /* Possible flags for register WPI_RESET. */
 #define WPI_RESET_NEVO			(1 << 0)
+#define WPI_RESET_FORCE_NMI     (1 << 1)
 #define WPI_RESET_SW			(1 << 7)
 #define WPI_RESET_MASTER_DISABLED	(1 << 8)
 #define WPI_RESET_STOP_MASTER		(1 << 9)
@@ -154,7 +156,7 @@
 #define WPI_GP_CNTRL_PS_MASK		(7 << 24)
 #define WPI_GP_CNTRL_MAC_PS		(4 << 24)
 #define WPI_GP_CNTRL_RFKILL		(1 << 27)
-
+#define WPI_GP_CNTRL_REG_FLAG_GOING_TO_SLEEP (0x00000010)
 /* Possible flags for register WPI_GIO_CHICKEN. */
 #define WPI_GIO_CHICKEN_L1A_NO_L0S_RX	(1 << 23)
 
@@ -243,7 +245,8 @@ WPI_FH_INT_TX_CHNL(0))
 #define WPI_EEPROM_GP_IF_OWNER	0x00000180
 
 /* Possible flags for register WPI_APMG_PS. */
-#define WPI_APMG_PS_PWR_SRC_MASK	(3 << 24)
+#define WPI_APMG_PS_CTRL_VAL_RESET_REQ  (0x04000000)
+#define WPI_APMG_PS_PWR_SRC_MASK	    (3 << 24)
 
 /* Possible flags for register WPI_APMG_CLK_ENA/WPI_APMG_CLK_DIS. */
 #define WPI_APMG_CLK_DMA_CLK_RQT	(1 <<  9)
@@ -251,6 +254,9 @@ WPI_FH_INT_TX_CHNL(0))
 
 /* Possible flags for register WPI_APMG_PCI_STT. */
 #define WPI_APMG_PCI_STT_L1A_DIS	(1 << 11)
+
+//Possible flags for WPI_APMG_CLK_CTRL_REG
+#define WPI_APMG_CLK_MRB_FUNC_MODE (1UL)
 
 struct wpi_shared {
 	uint32_t	txbase[8];
