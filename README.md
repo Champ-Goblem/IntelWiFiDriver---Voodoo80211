@@ -35,3 +35,4 @@ Please do *NOT* install this to `/Library/Extensions` or `/System/Library/Extens
 Updates on release will follow shortly.
 
 ## Current Known Issues
+* Not unloading properly
