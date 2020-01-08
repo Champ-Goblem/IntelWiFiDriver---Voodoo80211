@@ -50,3 +50,8 @@ void IntelWiFiDriver::dumpHardwareRegisters() {
     
     //TODO:Get registers from NIC and write out to log buffer
 }
+
+
+void IntelWiFiDriver::dumpNICErrorLog() {
+    //TODO:Dump the error log from the NIC
+}

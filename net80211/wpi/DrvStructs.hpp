@@ -8,13 +8,27 @@
 #ifndef DrvStructs_h
 #define DrvStructs_h
 #include "iwlwifi_headers/iwl-config.h"
+#include "iwlwifi_headers/internals.h"
+//#include "iwlwifi_headers/mvm.h"
 
 typedef const struct iwl_cfg PCIDeviceConfig;
+
+#define MAX_TX_QUEUES 512 //Maximum number of transmit queues
 
 struct PCIDeviceStatus {
     bool interruptsEnabled;
     bool connectionClosed;
     bool syncHCMDActive;
+    bool FWError;
+    bool deviceNotAvailable;
+};
+
+struct MVMSpecificConfig {
+    struct notificationWaiters{
+        IOSimpleLock* notifWaitLock;
+        LIST_HEAD(, notificationWaitEntry) firstWaitEntry;
+        IOLock* notifWaitQueue;
+    }notifWaits;
 };
 
 //Contains all attrbutes of the device used by the driver
@@ -26,6 +40,7 @@ struct PCIDevice {
     IOMemoryMap*        deviceMemoryMap;
 //    volatile void*      deviceMemoryMapVAddr;
     PCIDeviceConfig*    deviceConfig;
+    MVMSpecificConfig   mvmConfig; //Will need replacing if we implement DVM cards
     
     //Interrupt related variables
     IOEventSource*      interruptController;
@@ -50,7 +65,11 @@ struct PCIDevice {
     IOSimpleLock*       NICAccessLock; //Lock for grabbing NIC access
     
     //Device communication queues
-    
+    //iwlwifi also defines txq_memory which simply points to the allocated txqs in memory
+    //only a function in trans.c uses this later so we wont bother eek
+    iwl_txq*            txQueues[MAX_TX_QUEUES];
+    u_long              txq_used[BITS_TO_LONGS(MAX_TX_QUEUES)];
+    u_long              txq_stopped[BITS_TO_LONGS(MAX_TX_QUEUES)];
 };
 
 struct hardwareDebugStatisticsCounters {

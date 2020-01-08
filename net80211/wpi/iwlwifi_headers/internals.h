@@ -74,7 +74,7 @@
 //#include <linux/cpu.h>
 
 #include "linux-porting.h"
-#include "iwl-fh.h"
+//#include "iwl-fh.h"
 #include <sys/kernel_types.h>
 #include <sys/queue.h>
 
@@ -118,7 +118,7 @@ struct iwl_rx_mem_buffer {
     struct page *page;
     u16 vid;
     bool invalid;
-    LIST_ENTRY(iwl_rx_mem_buffer) list;
+    TAILQ_ENTRY(iwl_rx_mem_buffer) list;
 };
 
 ///**
@@ -195,6 +195,7 @@ struct iwl_rx_completion_desc {
  *
  * NOTE:  rx_free and rx_used are used as a FIFO for iwl_rx_mem_buffers
  */
+#define RX_QUEUE_SIZE 256
 struct iwl_rxq {
     int id;
     void *bd;
@@ -215,8 +216,10 @@ struct iwl_rxq {
     u32 used_count;
     u32 write_actual;
     u32 queue_size;
-    TAILQ_ENTRY(iwl_rxq) rx_free;
-    TAILQ_ENTRY(iwl_rxq) rx_used;
+//    TAILQ_ENTRY(iwl_rxq) rx_free;
+//    TAILQ_ENTRY(iwl_rxq) rx_used;
+    TAILQ_HEAD(, iwl_rxq) rx_free;
+    TAILQ_HEAD(, iwl_rxq) rx_used;
     bool need_update;
     void *rb_stts;
     dma_addr_t rb_stts_dma;
@@ -240,11 +243,15 @@ struct iwl_rxq {
 struct iwl_rb_allocator {
     atomic_t req_pending;
     atomic_t req_ready;
-    struct list_head rbd_allocated;
-    struct list_head rbd_empty;
+//    struct list_head rbd_allocated;
+//    struct list_head rbd_empty;
+    LIST_HEAD(, iwl_rx_mem_buffer) rbd_allocated;
+    LIST_HEAD(, iwl_rx_mem_buffer) rbd_empty;
     spinlock_t lock;
-    struct workqueue_struct *alloc_wq;
-    struct work_struct rx_alloc;
+//    struct workqueue_struct *alloc_wq;
+    IOWorkLoop* alloc_wq;
+//    struct work_struct rx_alloc;
+    IOEventSource rx_alloc; //TODO: check if IOEventSource is what we actually want
 };
 
 struct iwl_dma_ptr {
@@ -369,14 +376,16 @@ struct iwl_txq {
     struct iwl_pcie_txq_entry *entries;
     spinlock_t lock;
     unsigned long frozen_expiry_remainder;
-    struct timer_list stuck_timer;
-    struct iwl_trans_pcie *trans_pcie;
+    //From what I read I think we can use IOTimerEventSource and add that to fWorkLoop for each txq
+    struct IOTimerEventSource stuck_timer;
+//    struct iwl_trans_pcie *trans_pcie; //Not needed
     bool need_update;
     bool frozen;
     bool ampdu;
     int block;
     unsigned long wd_timeout;
-    struct sk_buff_head overflow_q;
+//    struct sk_buff_head overflow_q;
+    mbuf_t overflow_q;
     struct iwl_dma_ptr bc_tbl;
     
     int write_ptr;

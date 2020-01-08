@@ -63,10 +63,10 @@
 #ifndef iwl_fh_h
 #define iwl_fh_h
 
-#include <linux/types.h>
-#include <linux/bitfield.h>
-
-#include "iwl-trans.h"
+//#include <linux/types.h>
+//#include <linux/bitfield.h>
+#include "linux-porting.h"
+//#include "iwl-trans.h"
 
 /****************************/
 /* Flow Handler Definitions */
@@ -375,7 +375,7 @@
 
 #define FH_MEM_RSSR_SHARED_CTRL_REG       (FH_MEM_RSSR_LOWER_BOUND)
 #define FH_MEM_RSSR_RX_STATUS_REG    (FH_MEM_RSSR_LOWER_BOUND + 0x004)
-#define FH_MEM_RSSR_RX_ENABLE_ERR_IRQ2DRV\
+#define FH_MEM_RSSR_RX_ENABLE_ERR_IRQ2DRV \
 (FH_MEM_RSSR_LOWER_BOUND + 0x008)
 
 #define FH_RSSR_CHNL0_RX_STATUS_CHNL_IDLE    (0x01000000)

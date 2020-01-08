@@ -11,8 +11,11 @@
 #include "../Voodoo80211Device.h"
 #include "if_wpireg.h"
 #include "DrvStructs.hpp"
+#include "IntelWiFiDriver_notif.hpp"
+
 #include "iwlwifi_headers/deviceConfigs.h"
 #include "iwlwifi_headers/internals.h"
+//#include "iwlwifi_headers/mvm.h"
 
 #include <os/log.h>
 #include <libkern/OSDebug.h>
@@ -70,11 +73,19 @@ private:
     bool grabNICAccess(IOInterruptState flags);
     void releaseNICAccess(IOInterruptState flags);
     
+#pragma mark MVM only functions (IntelWiFiDriver_mvm.cpp)
+    void receivedNICError();
+    void forceNICRestart();
+    
+#pragma mark Notification wait helpers (IntelWiFiDriver_notif.cpp)
+    void abortNotificationWaits();
+    
 #pragma mark Debugging (IntelWiFiDriver_debug.cpp)
     void printRefCounts();
     hardwareDebugStatisticsCounters hwStats;
     void updateHardwareDebugStatistics(enum hardwareDebugStatistics updateStat, uint32_t value);
     void dumpHardwareRegisters();
+    void dumpNICErrorLog();
 //    void taggedRetain(const void* tag) const;
 //    void taggedRelease(const void* tag) const;
 };

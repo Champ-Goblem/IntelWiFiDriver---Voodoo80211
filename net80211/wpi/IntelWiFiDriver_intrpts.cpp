@@ -250,7 +250,13 @@ void IntelWiFiDriver::handleHardwareErrorINT() {
        }
     
     for (int i = 0; i < deviceProps.deviceConfig->base_params->num_of_queues; i++) {
-//        if (!deviceProps)
+        if (deviceProps.txQueues[i]) {
+            //Inactive the timers for each txq
+            //We have a choice of disabling or cancelling but intuitively I would say cancel
+            deviceProps.txQueues[i]->stuck_timer.cancelTimeout();
+        }
+        
+        
     }
     return;
 }

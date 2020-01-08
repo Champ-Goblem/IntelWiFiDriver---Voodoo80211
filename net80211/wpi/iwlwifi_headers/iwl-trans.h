@@ -347,10 +347,10 @@ struct iwl_host_cmd {
 	u8 dataflags[IWL_MAX_CMD_TBS_PER_TFD];
 };
 
-static inline void iwl_free_resp(struct iwl_host_cmd *cmd)
-{
-	free_pages(cmd->_rx_page_addr, cmd->_rx_page_order);
-}
+//static inline void iwl_free_resp(struct iwl_host_cmd *cmd)
+//{
+//    free_pages(cmd->_rx_page_addr, cmd->_rx_page_order);
+//}
 
 struct iwl_rx_cmd_buffer {
 	struct page *_page;
@@ -360,27 +360,27 @@ struct iwl_rx_cmd_buffer {
 	unsigned int truesize;
 };
 
-static inline void *rxb_addr(struct iwl_rx_cmd_buffer *r)
-{
-	return (void *)((unsigned long)page_address(r->_page) + r->_offset);
-}
-
-static inline int rxb_offset(struct iwl_rx_cmd_buffer *r)
-{
-	return r->_offset;
-}
-
-static inline struct page *rxb_steal_page(struct iwl_rx_cmd_buffer *r)
-{
-	r->_page_stolen = true;
-	get_page(r->_page);
-	return r->_page;
-}
-
-static inline void iwl_free_rxb(struct iwl_rx_cmd_buffer *r)
-{
-	__free_pages(r->_page, r->_rx_page_order);
-}
+//static inline void *rxb_addr(struct iwl_rx_cmd_buffer *r)
+//{
+//    return (void *)((unsigned long)page_address(r->_page) + r->_offset);
+//}
+//
+//static inline int rxb_offset(struct iwl_rx_cmd_buffer *r)
+//{
+//    return r->_offset;
+//}
+//
+//static inline struct page *rxb_steal_page(struct iwl_rx_cmd_buffer *r)
+//{
+//    r->_page_stolen = true;
+//    get_page(r->_page);
+//    return r->_page;
+//}
+//
+//static inline void iwl_free_rxb(struct iwl_rx_cmd_buffer *r)
+//{
+//    __free_pages(r->_page, r->_rx_page_order);
+//}
 
 #define MAX_NO_RECLAIM_CMDS	6
 

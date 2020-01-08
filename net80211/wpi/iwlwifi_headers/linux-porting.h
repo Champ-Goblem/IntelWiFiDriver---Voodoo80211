@@ -99,6 +99,22 @@ static bool check_warn_condition(bool test, char *message) {
 #define le32_to_cpus(x) ((*x) = OSSwapLittleToHostInt32((*x)))
 #define le64_to_cpus(x) ((*x) = OSSwapLittleToHostInt64((*x)))
 
+/**
+ * upper_32_bits - return bits 32-63 of a number
+ * @n: the number we're accessing
+ *
+ * A basic shift-right of a 64- or 32-bit quantity.  Use this to suppress
+ * the "right shift count >= width of type" warning when that quantity is
+ * 32-bits.
+ */
+#define upper_32_bits(n) ((u32)(((n) >> 16) >> 16))
+
+/**
+ * lower_32_bits - return bits 0-31 of a number
+ * @n: the number we're accessing
+ */
+#define lower_32_bits(n) ((u32)(n))
+
 #define container_of(ptr, type, member) ({                                     \
 const typeof( ((type *)0)->member ) *__mptr = (ptr);                       \
 (type *)( (char *)__mptr - offsetof(type,member) );})
