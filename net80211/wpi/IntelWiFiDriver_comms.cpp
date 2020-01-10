@@ -53,3 +53,7 @@ void IntelWiFiDriver::releaseNICAccess(IOInterruptState flags) {
     IOSimpleLockUnlockEnableInterrupt(deviceProps.NICAccessLock, flags);
     return;
 }
+
+void IntelWiFiDriver::restartHardware() {
+    //TODO: Implement restarting hardware
+}

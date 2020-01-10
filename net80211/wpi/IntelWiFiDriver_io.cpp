@@ -68,3 +68,22 @@ uint32_t IntelWiFiDriver::getPRPHMask() {
     }
     return 0x000fffff;
 }
+
+int IntelWiFiDriver::readIOMemToBuffer(uint32_t address, void* buffer, int dwords) {
+    IOInterruptState flags;
+    
+    if (grabNICAccess(flags)) {
+        //Might seem as though reading from WPI_MEM_RDATA would keep returning the same
+        //values, but once WPI_MEM_RADDR is set, each time WPI_MEM_RDATA is read the
+        //value is incremented by one dword
+        busWrite32(WPI_MEM_RADDR, address);
+        uint32_t* buff = (uint32_t*)buffer;
+        for (int offsets = 0; offsets < dwords; offsets++) {
+            buff[offsets] = busRead32(WPI_MEM_RDATA);
+        }
+        releaseNICAccess(flags);
+    } else {
+        return -EBUSY;
+    }
+    return 0;
+}

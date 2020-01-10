@@ -55,6 +55,7 @@
 		1FDBAAF314DF12020010697E /* ieee80211_amrr.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FDBAAF214DF12010010697E /* ieee80211_amrr.h */; };
 		1FDBAAF514DF12320010697E /* ieee80211_amrr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FDBAAF414DF12310010697E /* ieee80211_amrr.cpp */; };
 		1FDBAAF714DF2D6B0010697E /* compat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FDBAAF614DF2D6A0010697E /* compat.cpp */; };
+		C33A248023C7C864005933E2 /* IntelWiFiDriver_ops.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C33A247E23C7C864005933E2 /* IntelWiFiDriver_ops.cpp */; };
 		C33B5E3D23C2C3DB00085E32 /* IntelWiFiDriver_io.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C33B5E3B23C2C3DB00085E32 /* IntelWiFiDriver_io.cpp */; };
 		C33B8E0D23C6332B0052380A /* IntelWiFiDriver_notif.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C33B8E0C23C6332A0052380A /* IntelWiFiDriver_notif.cpp */; };
 		C33C6047235E55F300E39230 /* DrvStructs.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C33C6046235E55F300E39230 /* DrvStructs.hpp */; };
@@ -138,6 +139,10 @@
 		1FDBAAF214DF12010010697E /* ieee80211_amrr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ieee80211_amrr.h; sourceTree = "<group>"; };
 		1FDBAAF414DF12310010697E /* ieee80211_amrr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ieee80211_amrr.cpp; sourceTree = "<group>"; };
 		1FDBAAF614DF2D6A0010697E /* compat.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = compat.cpp; sourceTree = "<group>"; };
+		C33A247E23C7C864005933E2 /* IntelWiFiDriver_ops.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = IntelWiFiDriver_ops.cpp; sourceTree = "<group>"; };
+		C33A248223C7D1D8005933E2 /* IntelWiFiDriver_mvm.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = IntelWiFiDriver_mvm.hpp; sourceTree = "<group>"; };
+		C33A248323C7DCC8005933E2 /* Firmware.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Firmware.hpp; sourceTree = "<group>"; };
+		C33A248423C7F552005933E2 /* uCode_api.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = uCode_api.hpp; sourceTree = "<group>"; };
 		C33B5E3B23C2C3DB00085E32 /* IntelWiFiDriver_io.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = IntelWiFiDriver_io.cpp; sourceTree = "<group>"; };
 		C33B8E0C23C6332A0052380A /* IntelWiFiDriver_notif.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = IntelWiFiDriver_notif.cpp; sourceTree = "<group>"; };
 		C33B8E0E23C634110052380A /* IntelWiFiDriver_notif.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = IntelWiFiDriver_notif.hpp; sourceTree = "<group>"; };
@@ -315,16 +320,20 @@
 				1FDBAAEA14DF0D660010697E /* if_wpivar.h */,
 				1FDBAAEC14DF0F1A0010697E /* if_wpi.cpp */,
 				1FDBAAE614DF0C810010697E /* VoodooIntel3945.h */,
+				C33A248423C7F552005933E2 /* uCode_api.hpp */,
 				1FDBAAE814DF0CBB0010697E /* VoodooIntel3945.cpp */,
+				C33A248323C7DCC8005933E2 /* Firmware.hpp */,
 				C33C6046235E55F300E39230 /* DrvStructs.hpp */,
 				C33E0A6F2326E1C700A9DC77 /* IntelWiFiDriver.cpp */,
 				C33E0A702326E1C700A9DC77 /* IntelWiFiDriver.hpp */,
 				C3792CDE235F5E9B0021F4FC /* IntelWiFiDriver_intrpts.cpp */,
 				C33B5E3B23C2C3DB00085E32 /* IntelWiFiDriver_io.cpp */,
 				C33C7B8223C3876900BDD6BF /* IntelWiFiDriver_comms.cpp */,
+				C33A248223C7D1D8005933E2 /* IntelWiFiDriver_mvm.hpp */,
 				C3566F6E23C566880076978C /* IntelWiFiDriver_mvm.cpp */,
 				C33B8E0E23C634110052380A /* IntelWiFiDriver_notif.hpp */,
 				C33B8E0C23C6332A0052380A /* IntelWiFiDriver_notif.cpp */,
+				C33A247E23C7C864005933E2 /* IntelWiFiDriver_ops.cpp */,
 				C34ADB4B23C01E9B00A6E9F3 /* IntelWiFiDriver_debug.cpp */,
 			);
 			path = wpi;
@@ -517,6 +526,7 @@
 				1FDB50DC14C9AFBE00C16F95 /* ieee80211_crypto.cpp in Sources */,
 				1FDB510814C9BA6800C16F95 /* ieee80211_crypto_ccmp.cpp in Sources */,
 				1FDB510D14CA21E300C16F95 /* ieee80211_node.cpp in Sources */,
+				C33A248023C7C864005933E2 /* IntelWiFiDriver_ops.cpp in Sources */,
 				1FDB512414CA3D0D00C16F95 /* arc4.cpp in Sources */,
 				1FDB512614CA3D0D00C16F95 /* cmac.cpp in Sources */,
 				1FDB512814CA3D0D00C16F95 /* hmac.cpp in Sources */,

@@ -19,5 +19,7 @@ void IntelWiFiDriver::abortNotificationWaits() {
     
     //From what I believe passing false should wake up all threads not just one?
     //TODO: Might need to pass an event here
+    IOLockLock(deviceProps.mvmConfig.notifWaits.notifWaitQueue);
     IOLockWakeup(deviceProps.mvmConfig.notifWaits.notifWaitQueue, NULL, false);
+    IOLockUnlock(deviceProps.mvmConfig.notifWaits.notifWaitQueue);
 }

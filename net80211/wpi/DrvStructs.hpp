@@ -9,9 +9,11 @@
 #define DrvStructs_h
 #include "iwlwifi_headers/iwl-config.h"
 #include "iwlwifi_headers/internals.h"
+#include "IntelWiFiDriver_mvm.hpp"
+#include "Firmware.hpp"
 //#include "iwlwifi_headers/mvm.h"
 
-typedef const struct iwl_cfg PCIDeviceConfig;
+typedef const iwl_cfg PCIDeviceConfig;
 
 #define MAX_TX_QUEUES 512 //Maximum number of transmit queues
 
@@ -29,6 +31,16 @@ struct MVMSpecificConfig {
         LIST_HEAD(, notificationWaitEntry) firstWaitEntry;
         IOLock* notifWaitQueue;
     }notifWaits;
+    
+    //Firmware specific data
+    struct FirmwareRuntimeData fwRuntimeData;
+    struct FirmwareData        fwData;
+    int8_t firmwareRestart;
+    uint8_t* errorRecoveryBuffer;
+    
+    MVMStatus status;
+    
+    bool harwareRegistered;
 };
 
 //Contains all attrbutes of the device used by the driver
@@ -40,7 +52,7 @@ struct PCIDevice {
     IOMemoryMap*        deviceMemoryMap;
 //    volatile void*      deviceMemoryMapVAddr;
     PCIDeviceConfig*    deviceConfig;
-    MVMSpecificConfig   mvmConfig; //Will need replacing if we implement DVM cards
+    struct MVMSpecificConfig   mvmConfig; //Will need replacing if we implement DVM cards
     
     //Interrupt related variables
     IOEventSource*      interruptController;
@@ -70,6 +82,8 @@ struct PCIDevice {
     iwl_txq*            txQueues[MAX_TX_QUEUES];
     u_long              txq_used[BITS_TO_LONGS(MAX_TX_QUEUES)];
     u_long              txq_stopped[BITS_TO_LONGS(MAX_TX_QUEUES)];
+    
+    IOLock*             waitCommandQueue;
 };
 
 struct hardwareDebugStatisticsCounters {

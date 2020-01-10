@@ -53,5 +53,9 @@ void IntelWiFiDriver::dumpHardwareRegisters() {
 
 
 void IntelWiFiDriver::dumpNICErrorLog() {
-    //TODO:Dump the error log from the NIC
+    //TODO: Dump the error log from the NIC
+}
+
+void IntelWiFiDriver::collectFirmwareErrorDetail() {
+    //TODO: Implement collecting the error log from the firmware
 }

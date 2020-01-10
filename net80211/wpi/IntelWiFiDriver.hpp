@@ -68,17 +68,22 @@ private:
     int pollBit(uint32_t offset, uint32_t bits, uint32_t mask, int timeout);
     uint32_t readPRPH(uint32_t offset);
     uint32_t getPRPHMask();
+    int readIOMemToBuffer(uint32_t address, void* buffer, int dwords);
     
 #pragma mark Device communication functions (IntelWiFiDriver_comms.cpp)
     bool grabNICAccess(IOInterruptState flags);
     void releaseNICAccess(IOInterruptState flags);
+    void restartHardware();
     
 #pragma mark MVM only functions (IntelWiFiDriver_mvm.cpp)
     void receivedNICError();
-    void forceNICRestart();
+    void forceNICRestart(bool firmwareError);
     
 #pragma mark Notification wait helpers (IntelWiFiDriver_notif.cpp)
     void abortNotificationWaits();
+    
+#pragma mark NIC operations (IntelWiFiDriver_opps.cpp)
+    void reportScanAborted();
     
 #pragma mark Debugging (IntelWiFiDriver_debug.cpp)
     void printRefCounts();
@@ -86,6 +91,7 @@ private:
     void updateHardwareDebugStatistics(enum hardwareDebugStatistics updateStat, uint32_t value);
     void dumpHardwareRegisters();
     void dumpNICErrorLog();
+    void collectFirmwareErrorDetails();
 //    void taggedRetain(const void* tag) const;
 //    void taggedRelease(const void* tag) const;
 };

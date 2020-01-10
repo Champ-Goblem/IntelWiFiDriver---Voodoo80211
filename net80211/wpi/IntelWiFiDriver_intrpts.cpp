@@ -132,10 +132,10 @@ int IntelWiFiDriver::interruptHandler(OSObject* owner, IOInterruptEventSource* s
         
         //Notify any waiting locks that we have finally loaded the microcode
         //Not sure the lock should be locked by us here?
-//        IOLockLock(deviceProps.ucodeWriteWaitLock);
+        IOLockLock(deviceProps.ucodeWriteWaitLock);
         deviceProps.ucodeWriteComplete = true;
         IOLockWakeup(deviceProps.ucodeWriteWaitLock, &deviceProps.ucodeWriteComplete, true);
-//        IOLockUnlock(deviceProps.ucodeWriteWaitLock);
+        IOLockUnlock(deviceProps.ucodeWriteWaitLock);
         receivedFHTX = true;
     }
     
@@ -255,9 +255,13 @@ void IntelWiFiDriver::handleHardwareErrorINT() {
             //We have a choice of disabling or cancelling but intuitively I would say cancel
             deviceProps.txQueues[i]->stuck_timer.cancelTimeout();
         }
-        
-        
     }
+    
+    receivedNICError();
+    deviceProps.status.syncHCMDActive = false;
+    IOLockLock(deviceProps.waitCommandQueue);
+    IOLockWakeup(deviceProps.waitCommandQueue, &deviceProps.status, true);
+    IOLockUnlock(deviceProps.waitCommandQueue);
     return;
 }
 

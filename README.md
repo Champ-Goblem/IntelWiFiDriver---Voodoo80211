@@ -18,7 +18,7 @@ Now navigate to the directory that net80211.kext is in and in a new terminal win
 sudo chown -R root:wheel net80211.kext
 sudo kextload -v 6 net80211.kext
 ```
-And check check `console.app` for any problems
+And check `console.app` for any problems
 or try:
 ```
 sudo chown -R root:wheel net80211.kext
