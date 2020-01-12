@@ -7,7 +7,7 @@
 
 #ifndef Firmware_h
 #define Firmware_h
-#include "uCode_api.h"
+#include "uCode_api.hpp"
 enum UCodeType {
     REGULAR,
     INIT,
@@ -46,7 +46,7 @@ struct UCodeCapabilities {
 
 struct FirmwareData {
     struct UCodeCapabilities uCodeCapabilities;
-}
+};
 
 struct FirmwareRuntimeData {
     enum UCodeType microcodeType;

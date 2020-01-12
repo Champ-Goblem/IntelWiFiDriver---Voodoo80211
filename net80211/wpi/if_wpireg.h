@@ -52,6 +52,7 @@
 #define WPI_GP_CNTRL		0x024
 #define WPI_EEPROM		0x02c
 #define WPI_EEPROM_GP		0x030
+#define WPI_UCODE_DRV_GP1   0x054
 #define WPI_UCODE_GP1_CLR	0x05c
 #define WPI_UCODE_GP2		0x060
 #define WPI_GIO_CHICKEN		0x100
@@ -257,6 +258,44 @@ WPI_FH_INT_TX_CHNL(0))
 
 //Possible flags for WPI_APMG_CLK_CTRL_REG
 #define WPI_APMG_CLK_MRB_FUNC_MODE (1UL)
+
+#define MQ_RX_TABLE_SIZE    512
+#define MQ_RX_TABLE_MASK    (MQ_RX_TABLE_SIZE - 1)
+#define MQ_RX_NUM_RBDS        (MQ_RX_TABLE_SIZE - 1)
+
+/*
+ * UCODE-DRIVER GP (general purpose) mailbox register 1
+ * Host driver and uCode write and/or read this register to communicate with
+ * each other.
+ * Bit fields:
+ *     4:  UCODE_DISABLE
+ *         Host sets this to request permanent halt of uCode, same as
+ *         sending CARD_STATE command with "halt" bit set.
+ *     3:  CT_KILL_EXIT
+ *         Host sets this to request exit from CT_KILL state, i.e. host thinks
+ *         device temperature is low enough to continue normal operation.
+ *     2:  CMD_BLOCKED
+ *         Host sets this during RF KILL power-down sequence (HW, SW, CT KILL)
+ *         to release uCode to clear all Tx and command queues, enter
+ *         unassociated mode, and power down.
+ *         NOTE:  Some devices also use HBUS_TARG_MBX_C register for this bit.
+ *     1:  SW_BIT_RFKILL
+ *         Host sets this when issuing CARD_STATE command to request
+ *         device sleep.
+ *     0:  MAC_SLEEP
+ *         uCode sets this when preparing a power-saving power-down.
+ *         uCode resets this when power-up is complete and SRAM is sane.
+ *         NOTE:  device saves internal SRAM data to host when powering down,
+ *                and must restore this data after powering back up.
+ *                MAC_SLEEP is the best indication that restore is complete.
+ *                Later devices (5xxx/6xxx/1xxx) use non-volatile SRAM, and
+ *                do not need to save/restore it.
+ */
+#define WPI_UCODE_DRV_GP1_BIT_MAC_SLEEP             (0x00000001)
+#define WPI_UCODE_SW_BIT_RFKILL                     (0x00000002)
+#define WPI_UCODE_DRV_GP1_BIT_CMD_BLOCKED           (0x00000004)
+#define WPI_UCODE_DRV_GP1_REG_BIT_CT_KILL_EXIT      (0x00000008)
+#define WPI_UCODE_DRV_GP1_BIT_D3_CFG_COMPLETE       (0x00000020)
 
 struct wpi_shared {
 	uint32_t	txbase[8];

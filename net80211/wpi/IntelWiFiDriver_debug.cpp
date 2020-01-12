@@ -46,6 +46,7 @@ void IntelWiFiDriver::updateHardwareDebugStatistics(enum hardwareDebugStatistics
 }
 
 void IntelWiFiDriver::dumpHardwareRegisters() {
+    //iwl_trans_pcie_dump_regs
     if (!DEBUG) return;
     
     //TODO:Get registers from NIC and write out to log buffer
@@ -53,9 +54,11 @@ void IntelWiFiDriver::dumpHardwareRegisters() {
 
 
 void IntelWiFiDriver::dumpNICErrorLog() {
+    //iwl_mvm_dump_nic_error_log
     //TODO: Dump the error log from the NIC
 }
 
-void IntelWiFiDriver::collectFirmwareErrorDetail() {
+void IntelWiFiDriver::collectFirmwareErrorDetails() {
+    //iwl_fw_error_correct
     //TODO: Implement collecting the error log from the firmware
 }

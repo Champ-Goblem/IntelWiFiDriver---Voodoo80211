@@ -84,6 +84,9 @@ private:
     
 #pragma mark NIC operations (IntelWiFiDriver_opps.cpp)
     void reportScanAborted();
+    void rxMultiqueueRestock();
+    void restockRBD(struct iwl_rx_mem_buffer* rxmb);
+    void rxQueueIncrementWritePointer();
     
 #pragma mark Debugging (IntelWiFiDriver_debug.cpp)
     void printRefCounts();

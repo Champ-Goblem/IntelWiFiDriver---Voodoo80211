@@ -218,8 +218,8 @@ struct iwl_rxq {
     u32 queue_size;
 //    TAILQ_ENTRY(iwl_rxq) rx_free;
 //    TAILQ_ENTRY(iwl_rxq) rx_used;
-    TAILQ_HEAD(, iwl_rxq) rx_free;
-    TAILQ_HEAD(, iwl_rxq) rx_used;
+    TAILQ_HEAD(, iwl_rx_mem_buffer) *rx_free;
+    TAILQ_HEAD(, iwl_rx_mem_buffer) *rx_used;
     bool need_update;
     void *rb_stts;
     dma_addr_t rb_stts_dma;

@@ -127,6 +127,9 @@ const typeof( ((type *)0)->member ) *__mptr = (ptr);                       \
 #define BITS_PER_BYTE           8
 #define BITS_TO_LONGS(bits)     (((bits)+BITS_PER_LONG-1)/BITS_PER_LONG)
 
+#define DMA_BIT_MASK(n)    (((n) == 64) ? ~0ULL : ((1ULL<<(n))-1))
+#define DMA_MASK_NONE    0x0ULL
+
 #define ARRAY_SIZE(x)           (sizeof(x) / sizeof((x)[0]))
 
 #define min_t(type,x,y) \
@@ -134,6 +137,23 @@ const typeof( ((type *)0)->member ) *__mptr = (ptr);                       \
 
 #define max_t(type, x, y) \
 ({ type __x = (x); type __y = (y); __x > __y ? __x: __y; })
+
+/*
+ * This looks more complex than it should be. But we need to
+ * get the type for the ~ right in round_down (it needs to be
+ * as wide as the result!), and we want to evaluate the macro
+ * arguments just once each.
+ */
+#define __round_mask(x, y) ((__typeof__(x))((y)-1))
+/**
+ * round_down - round down to next specified power of 2
+ * @x: the value to round
+ * @y: multiple to round down to (must be a power of 2)
+ *
+ * Rounds @x down to next multiple of @y (which must be a power of 2).
+ * To perform arbitrary rounding down, use rounddown() below.
+ */
+#define round_down(x, y) ((x) & ~__round_mask(x, y))
 
 #if 0
 enum bool_t

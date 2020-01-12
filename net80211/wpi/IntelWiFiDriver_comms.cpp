@@ -55,5 +55,6 @@ void IntelWiFiDriver::releaseNICAccess(IOInterruptState flags) {
 }
 
 void IntelWiFiDriver::restartHardware() {
+    //ieee80211_restart_hw
     //TODO: Implement restarting hardware
 }

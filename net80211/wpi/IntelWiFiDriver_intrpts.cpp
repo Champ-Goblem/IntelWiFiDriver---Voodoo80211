@@ -36,7 +36,7 @@ int IntelWiFiDriver::interruptHandler(OSObject* owner, IOInterruptEventSource* s
     if (inta == 0){
         //Interupt was not for us
         //Re-enable as we dont have anything to service
-        if (!deviceProps.status.interruptsEnabled) enableInterrupts();
+        if (deviceProps.status.interruptsEnabled) enableInterrupts();
         return 0;
     }
     
@@ -74,7 +74,9 @@ int IntelWiFiDriver::interruptHandler(OSObject* owner, IOInterruptEventSource* s
     if (inta & WPI_INT_ALIVE) {
         //Device calling back alive
         updateHardwareDebugStatistics(aliveRecieved, 0);
-        //TODO: if gen2 restock RQMX
+        if (deviceProps.deviceConfig->gen2) {
+            rxMultiqueueRestock();
+        }
     }
     
 //    //These have been processed
