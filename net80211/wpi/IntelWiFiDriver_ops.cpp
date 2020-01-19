@@ -18,17 +18,17 @@ void IntelWiFiDriver::reportScanAborted() {
 //===================================
 
 void IntelWiFiDriver::rxMultiqueueRestock() {
+    //iwl_pcie_rxmq_restock
     struct iwl_rx_mem_buffer* rxmb;
     struct iwl_rxq* rxq = deviceProps.rxq;
-    if (!deviceProps.status.deviceNotAvailable) {
+    if (!deviceProps.status.deviceEnabled) {
         return;
     }
     
     IOSimpleLockLock(rxq->lock);
     rxmb = TAILQ_FIRST(rxq->rx_free);
     while (rxq->free_count) {
-        //Get next element and remove
-        rxmb = TAILQ_NEXT(rxmb, list);
+        //Remove the current element
         TAILQ_REMOVE(rxq->rx_free, rxmb, list);
         
         rxmb->invalid = false;
@@ -39,6 +39,8 @@ void IntelWiFiDriver::rxMultiqueueRestock() {
         restockRBD(rxmb);
         rxq->write = (rxq->write + 1) & MQ_RX_TABLE_MASK;
         rxq->free_count--;
+        //Get the next element
+        rxmb = TAILQ_NEXT(rxmb, list);
     }
     IOSimpleLockUnlock(rxq->lock);
     
@@ -101,4 +103,112 @@ void IntelWiFiDriver::rxQueueIncrementWritePointer() {
             busWrite32(FH_RSCSR_CHNL0_WPTR, deviceProps.rxq->write_actual);
         }
     }
+}
+//===================================
+//      Gen2 device operations
+//===================================
+//Stop a gen2 device or put it in a low power state
+void IntelWiFiDriver::stopDeviceG2(bool setLowPowerState) {
+    //_iwl_trans_pcie_gen2_stop_device
+    //TODO: Implement
+    if (deviceProps.isDown) return;
+    deviceProps.isDown = true;
+    
+    //Call stop dbgc
+    firmwareDebugStopRecording();
+    
+    //Disable interrupts for the device
+    disableInterrupts();
+    
+    //TODO: if using ICT call to ICT stop here
+    
+    //If the device hasn't already been stopped or not started
+    //yet then we need to remove both the rx and tx queues
+    if (deviceProps.status.deviceEnabled) {
+        deviceProps.status.deviceEnabled = false;
+        txStopG2();
+        rxStop();
+    }
+    
+    if (deviceProps.deviceConfig->device_family >= IWL_DEVICE_FAMILY_22560) {
+        ctxtInfoFreeG3();
+    } else {
+        ctxtInfoFree();
+    }
+    
+    //Make sure that we have released the request for the device to stay awake
+    busClearBit(WPI_GP_CNTRL, BIT(deviceProps.deviceConfig->csr->flag_mac_access_req));
+    
+    //Stop the device and put it in a low power state
+    apmStopG2();
+    resetDevice();
+    
+    //From iwlwifi:
+    /*
+     * Upon stop, the IVAR table gets erased, so msi-x won't
+     * work. This causes a bug in RF-KILL flows, since the interrupt
+     * that enables radio won't fire on the correct irq, and the
+     * driver won't be able to handle the interrupt.
+     * Configure the IVAR table again after reset.
+     */
+    configureMSIX();
+    
+    //From iwlwifi:
+    /*
+     * Upon stop, the APM issues an interrupt if HW RF kill is set.
+     * This is a bug in certain verions of the hardware.
+     * Certain devices also keep sending HW RF kill interrupt all
+     * the time, unless the interrupt is ACKed even if the interrupt
+     * should be masked. Re-ACK all the interrupts here.
+     */
+    disableInterrupts();
+    
+    //Reset some of the statuses associated with the card
+    deviceProps.status.syncHCMDActive = false;
+    deviceProps.status.interruptsEnabled = false;
+    deviceProps.status.PMI_TPower = false;
+    
+    //Even if the device is stopped, we still want it to be able to respond
+    //to the RF kill interrupt
+    enableRFKillINT();
+    
+    //iwlwifi talkes about maintaining ownership to the device, but I think
+    //we will still have ownership so long as this driver is not unloaded
+    //but implementing below should confirm either yes or no
+    //The hardware will still need to be prepared anyway so might as well call it
+    prepareCardHardware();
+}
+
+void IntelWiFiDriver::txStopG2() {
+    //iwl_pcie_gen2_tx_stop
+    //TODO: Implement
+    
+}
+
+void IntelWiFiDriver::apmStopG2() {
+    //iwl_pcie_gen2_apm_stop
+    //TODO: Implement
+}
+//===================================
+
+
+//===================================
+//       Gen1 device operations
+//===================================
+
+//Stop a gen1 device or put it in a low power state
+void IntelWiFiDriver::stopDeviceG1(bool setLowPowerState) {
+    //_iwl_trans_pcie_stop_device
+    //TODO: Implement
+}
+//===================================
+
+void IntelWiFiDriver::rxStop() {
+    //iwl_pcie_rx_stop
+    //TODO: Implement
+}
+
+void IntelWiFiDriver::configureMSIX() {
+    //iwl_pcie_conf_msix_hw
+    //TODO: Implement
 }

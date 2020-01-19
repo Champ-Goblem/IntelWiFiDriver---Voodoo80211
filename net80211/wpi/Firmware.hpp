@@ -9,11 +9,11 @@
 #define Firmware_h
 #include "uCode_api.hpp"
 enum UCodeType {
-    REGULAR,
-    INIT,
-    WOWLAN,
-    REGULAR_USNIFFER,
-    TYPE_MAX
+    REGULAR,            //IWL_UCODE_REGUALR
+    INIT,               //IWL_UCODE_INIT
+    WOWLAN,             //IWL_UCODE_WOWLAN
+    REGULAR_USNIFFER,   //IWL_UCODE_REGULAR_USNIFFER
+    TYPE_MAX            //IWL_UCODE_TYPE_MAX
 };
 
 /**

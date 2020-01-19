@@ -13,8 +13,6 @@
 #include "Firmware.hpp"
 //#include "iwlwifi_headers/mvm.h"
 
-typedef const iwl_cfg PCIDeviceConfig;
-
 #define MAX_TX_QUEUES 512 //Maximum number of transmit queues
 
 struct PCIDeviceStatus {
@@ -22,9 +20,11 @@ struct PCIDeviceStatus {
     bool connectionClosed;      //STATUS_TRANS_DEAD
     bool syncHCMDActive;        //STATUS_SYNC_HCMD_ACTIVE
     bool FWError;               //STATUS_FW_ERROR
-    bool deviceNotAvailable;    //STATUS_DEVICE_ENABLED
+    bool deviceEnabled;         //STATUS_DEVICE_ENABLED
     bool deviceAsleep;          //STATUS_TPOWER_PMI
-    
+    bool RFKillOpmodeEnabled;   //STATUS_RFKILL_OPMODE
+    bool RFKillHardwareEnabled; //STATUS_RFKILL_HW
+    bool PMI_TPower;             //STATUS_TPOWER_PMI
 };
 
 struct MVMSpecificConfig {
@@ -43,6 +43,9 @@ struct MVMSpecificConfig {
     MVMStatus status;
     
     bool harwareRegistered;
+    bool RFKillSafeInitDone;
+    
+    IOLock* rxSyncWaitQueue;
 };
 
 //Contains all attrbutes of the device used by the driver
@@ -55,6 +58,9 @@ struct PCIDevice {
 //    volatile void*              deviceMemoryMapVAddr;
     PCIDeviceConfig*            deviceConfig;
     struct MVMSpecificConfig    mvmConfig; //Will need replacing if we implement DVM cards
+    bool                        debugRFKill;
+    bool                        opmodeDown;
+    bool                        isDown;
     
     //Interrupt related variables
     IOEventSource*              interruptController;
@@ -84,10 +90,11 @@ struct PCIDevice {
     iwl_txq*                    txQueues[MAX_TX_QUEUES];
     u_long                      txq_used[BITS_TO_LONGS(MAX_TX_QUEUES)];
     u_long                      txq_stopped[BITS_TO_LONGS(MAX_TX_QUEUES)];
-    
+    iwl_rxq*                    rxq;
+
     IOLock*                     waitCommandQueue;
     
-    iwl_rxq*                    rxq;
+    IOSimpleLock*               mutex; //Can we rename this to something more descriptive?
 };
 
 struct hardwareDebugStatisticsCounters {

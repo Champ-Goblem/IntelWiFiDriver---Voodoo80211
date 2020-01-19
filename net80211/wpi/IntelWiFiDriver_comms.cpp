@@ -51,10 +51,26 @@ void IntelWiFiDriver::releaseNICAccess(IOInterruptState flags) {
     }
     
     IOSimpleLockUnlockEnableInterrupt(deviceProps.NICAccessLock, flags);
-    return;
 }
 
 void IntelWiFiDriver::restartHardware() {
     //ieee80211_restart_hw
     //TODO: Implement restarting hardware
+}
+
+bool IntelWiFiDriver::isRFKillSet() {
+    //iwlwifi asserts that the lock deviceProps.mutex is held
+    if (deviceProps.debugRFKill) return true;
+    
+    return !(busRead32(WPI_GP_CNTRL) & WPI_GP_CNTRL_RFKILL);
+}
+
+void IntelWiFiDriver::resetDevice() {
+    //iwl_trans_pcie_sw_reset
+    //TODO: Implement
+}
+
+void IntelWiFiDriver::prepareCardHardware() {
+    //iwl_pcie_prepare_card_hw
+    //TODO: Implement
 }

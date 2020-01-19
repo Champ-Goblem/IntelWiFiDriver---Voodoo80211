@@ -13,12 +13,13 @@
 
 //The NIC has encountered an error during operation, log and restart
 void IntelWiFiDriver::receivedNICError() {
+    //iwl_mvm_nic_error
     if (deviceProps.status.FWError) {
         //Already beed set before by another interrupt
         return;
     }
     deviceProps.status.FWError = true;
-    if (!deviceProps.status.deviceNotAvailable) {
+    if (deviceProps.status.deviceEnabled) {
         //We should print out NIC error log so long as we still have
         //a communication channel with the NIC
         dumpNICErrorLog();
@@ -28,6 +29,7 @@ void IntelWiFiDriver::receivedNICError() {
 }
 
 void IntelWiFiDriver::forceNICRestart(bool firmwareError) {
+    //iwl_mvm_nic_restart
     MVMSpecificConfig* mvmConfig = &deviceProps.mvmConfig;
     abortNotificationWaits();
     //Cancel the periodic dump trigger as we are restarting it
@@ -86,4 +88,56 @@ void IntelWiFiDriver::forceNICRestart(bool firmwareError) {
             restartHardware();
         }
     }
+}
+
+void IntelWiFiDriver::setHardwareRFKillState(bool status) {
+    //iwl_trans_pcie_rf_kill and iwl_mvm_set_hw_rfkill_state combined
+    
+    //iwlwifi reads the value of RFKillSafeInitDone with READ_ONCE,
+    //this is to detect and thus eliminate race conditions
+    //I am unsure whether a similar thing exists in xnu
+    //TODO: read normally for now
+    bool rfKillSafe = deviceProps.mvmConfig.RFKillSafeInitDone;
+    bool unifiedUCode = deviceHasUnifiedUCode(deviceProps.deviceConfig);
+    bool ret;
+    //Update our local status value
+    deviceProps.mvmConfig.status.HWRFKill = status;
+    
+    setRFKillState(status);
+    
+    if (rfKillSafe) {
+        abortNotificationWaits();
+    }
+    
+    if (unifiedUCode) {
+        ret =  false;
+    } else {
+        ret = status && (deviceProps.mvmConfig.fwRuntimeData.microcodeType != INIT ||
+                         rfKillSafe);
+    }
+    
+    if (ret) {
+        if (deviceProps.deviceConfig->gen2) {
+            stopDeviceG2(true);
+        } else {
+            stopDeviceG1(true);
+        }
+    }
+}
+
+void IntelWiFiDriver::setRFKillState(bool status) {
+    //iwl_mvm_set_rfkill_state
+    bool currentStatus = isRadioKilled(deviceProps.mvmConfig.status);
+    
+    if (currentStatus) {
+        IOLockLock(deviceProps.mvmConfig.rxSyncWaitQueue);
+        IOLockWakeup(deviceProps.mvmConfig.rxSyncWaitQueue, NULL, true);
+        IOLockUnlock(deviceProps.mvmConfig.rxSyncWaitQueue);
+    }
+    //iwlwifi here makes a call to wiphy_rfkill_set_hw_state
+    //which internally makes a call to 	rfkill_set_hw_state
+    //The call then schedules &rdev->rfkill_sync
+    //We need to find some replacement for these in the apple kernel
+    //TODO: Find a replacement
+    
 }

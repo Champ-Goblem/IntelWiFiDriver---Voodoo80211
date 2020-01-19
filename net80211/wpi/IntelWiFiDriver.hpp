@@ -74,10 +74,15 @@ private:
     bool grabNICAccess(IOInterruptState flags);
     void releaseNICAccess(IOInterruptState flags);
     void restartHardware();
+    bool isRFKillSet();
+    void resetDevice();
+    void prepareCardHardware();
     
 #pragma mark MVM only functions (IntelWiFiDriver_mvm.cpp)
     void receivedNICError();
     void forceNICRestart(bool firmwareError);
+    void setHardwareRFKillState(bool status);
+    void setRFKillState(bool status);
     
 #pragma mark Notification wait helpers (IntelWiFiDriver_notif.cpp)
     void abortNotificationWaits();
@@ -87,6 +92,17 @@ private:
     void rxMultiqueueRestock();
     void restockRBD(struct iwl_rx_mem_buffer* rxmb);
     void rxQueueIncrementWritePointer();
+    void stopDeviceG2(bool setLowPowerSate);
+    void stopDeviceG1(bool setLowPowerState);
+    void txStopG2();
+    void rxStop();
+    void apmStopG2();
+    void configureMSIX();
+    
+#pragma mark CTXT related stuff (IntelWiFiDriver_ctxt.cpp)
+    void ctxtInfoFreePaging();
+    void ctxtInfoFreeG3();
+    void ctxtInfoFree();
     
 #pragma mark Debugging (IntelWiFiDriver_debug.cpp)
     void printRefCounts();
@@ -95,6 +111,7 @@ private:
     void dumpHardwareRegisters();
     void dumpNICErrorLog();
     void collectFirmwareErrorDetails();
+    void firmwareDebugStopRecording();
 //    void taggedRetain(const void* tag) const;
 //    void taggedRelease(const void* tag) const;
 };

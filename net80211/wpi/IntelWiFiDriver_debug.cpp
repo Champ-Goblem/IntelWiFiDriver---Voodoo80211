@@ -62,3 +62,8 @@ void IntelWiFiDriver::collectFirmwareErrorDetails() {
     //iwl_fw_error_correct
     //TODO: Implement collecting the error log from the firmware
 }
+
+void IntelWiFiDriver::firmwareDebugStopRecording() {
+    //_iwl_fw_dbg_stop_recording
+    //TODO: Implement
+}

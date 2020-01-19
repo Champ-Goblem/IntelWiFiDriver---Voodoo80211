@@ -467,6 +467,8 @@ uhb_supported:1;
     u32 min_256_ba_txq_size;
 };
 
+typedef const struct iwl_cfg PCIDeviceConfig;
+
 extern const struct iwl_csr_params iwl_csr_v1;
 extern const struct iwl_csr_params iwl_csr_v2;
 

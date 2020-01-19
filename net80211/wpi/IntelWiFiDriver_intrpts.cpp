@@ -262,24 +262,57 @@ void IntelWiFiDriver::handleHardwareErrorINT() {
     receivedNICError();
     deviceProps.status.syncHCMDActive = false;
     IOLockLock(deviceProps.waitCommandQueue);
-    IOLockWakeup(deviceProps.waitCommandQueue, &deviceProps.status, true);
+    IOLockWakeup(deviceProps.waitCommandQueue, &deviceProps.status.syncHCMDActive, true);
     IOLockUnlock(deviceProps.waitCommandQueue);
     return;
 }
 
 void IntelWiFiDriver::handleRFKillINT() {
-    //TODO: Implement handling RFKill interrupt
     //Remember update hwstats
-    return;
+    bool ret, prev, rfKillSet;
+    
+    IOSimpleLockLock(deviceProps.mutex);
+    prev = deviceProps.status.RFKillOpmodeEnabled;
+    rfKillSet = isRFKillSet();
+    if (rfKillSet) {
+        deviceProps.status.RFKillOpmodeEnabled = true;
+        deviceProps.status.RFKillHardwareEnabled = true;
+    }
+    
+    if (deviceProps.opmodeDown) {
+        ret = rfKillSet;
+    } else {
+        ret = deviceProps.status.RFKillOpmodeEnabled;
+    }
+    
+    if (DEBUG) printf("%s: RF Kill toggled %s\n", DRVNAME, rfKillSet ? "on" : "off");
+    
+    updateHardwareDebugStatistics(rfKillToggledOn, 0);
+    
+    if (prev != ret) {
+        setHardwareRFKillState(ret);
+    }
+    IOSimpleLockUnlock(deviceProps.mutex);
+    
+    if (rfKillSet) {
+        if (deviceProps.status.syncHCMDActive) {
+            deviceProps.status.syncHCMDActive = false;
+            if (DEBUG) printf("RFKill while SYNC HCMD in flight\n");
+            IOLockWakeup(deviceProps.waitCommandQueue, &deviceProps.status.syncHCMDActive, true);
+        } else {
+            deviceProps.status.RFKillHardwareEnabled = false;
+            if (deviceProps.opmodeDown) {
+                deviceProps.status.RFKillOpmodeEnabled = false;
+            }
+        }
+    }
 }
 
 void IntelWiFiDriver::handleWakeupINT() {
     //TODO: Implement handling wakeup interrupt
     //Check rxQueue and txQueue
-    return;
 }
 
 void IntelWiFiDriver::handleRxINT() {
     //TODO: Implement handling Rx interrupt
-    return;
 }
