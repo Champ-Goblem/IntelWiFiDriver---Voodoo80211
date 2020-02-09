@@ -8,15 +8,6 @@
 #include "IntelWiFiDriver.hpp"
 #include "iwlwifi_headers/iwl-fh.h"
 
-//===================================
-//      MVM only card operations
-//===================================
-void IntelWiFiDriver::reportScanAborted() {
-    //iwl_mvm_report_scan_aborted
-    //TODO: Implement reporting scan abborted
-}
-//===================================
-
 void IntelWiFiDriver::rxMultiqueueRestock() {
     //iwl_pcie_rxmq_restock
     struct iwl_rx_mem_buffer* rxmb;
@@ -110,7 +101,6 @@ void IntelWiFiDriver::rxQueueIncrementWritePointer() {
 //Stop a gen2 device or put it in a low power state
 void IntelWiFiDriver::stopDeviceG2(bool setLowPowerState) {
     //_iwl_trans_pcie_gen2_stop_device
-    //TODO: Implement
     if (deviceProps.isDown) return;
     deviceProps.isDown = true;
     
@@ -137,10 +127,10 @@ void IntelWiFiDriver::stopDeviceG2(bool setLowPowerState) {
     }
     
     //Make sure that we have released the request for the device to stay awake
-    busClearBit(WPI_GP_CNTRL, BIT(deviceProps.deviceConfig->csr->flag_mac_access_req));
+    busClearBit(WPI_GP_CNTRL, deviceProps.deviceConfig->csr->flag_mac_access_req);
     
     //Stop the device and put it in a low power state
-    apmStopG2();
+    apmStopG2(false);
     resetDevice();
     
     //From iwlwifi:
@@ -185,7 +175,7 @@ void IntelWiFiDriver::txStopG2() {
     
 }
 
-void IntelWiFiDriver::apmStopG2() {
+void IntelWiFiDriver::apmStopG2(bool opModeLeave) {
     //iwl_pcie_gen2_apm_stop
     //TODO: Implement
 }
@@ -199,6 +189,123 @@ void IntelWiFiDriver::apmStopG2() {
 //Stop a gen1 device or put it in a low power state
 void IntelWiFiDriver::stopDeviceG1(bool setLowPowerState) {
     //_iwl_trans_pcie_stop_device
+    if (deviceProps.isDown) return;
+    deviceProps.isDown = true;
+    
+    //Stop debug recording
+    firmwareDebugStopRecording();
+    
+    //disable interrupts as we are putting device in sleep
+    disableInterrupts();
+    
+    //From iwlwifi
+    /*
+     * If a HW restart happens during firmware loading,
+     * then the firmware loading might call this function
+     * and later it might be called again due to the
+     * restart. So don't process again if the device is
+     * already dead.
+     */
+    if (deviceProps.status.deviceEnabled) {
+        deviceProps.status.deviceEnabled = false;
+        txStopG1();
+        rxStop();
+        
+        //Power down device's busmaster DMA checks
+        if (!deviceProps.deviceConfig->apmg_not_supported) {
+            writePRPH(WPI_APMG_CLK_DIS, WPI_APMG_CLK_DMA_CLK_RQT);
+            udelay(5);
+        }
+    }
+    
+    //Ensure we release our request to stay awake
+    busClearBit(WPI_GP_CNTRL, deviceProps.deviceConfig->csr->flag_mac_access_req);
+    
+    //Put the device into a lower power state
+    apmStopG1(false);
+    resetDevice();
+    
+    //From iwlwifi:
+    /*
+     * Upon stop, the IVAR table gets erased, so msi-x won't
+     * work. This causes a bug in RF-KILL flows, since the interrupt
+     * that enables radio won't fire on the correct irq, and the
+     * driver won't be able to handle the interrupt.
+     * Configure the IVAR table again after reset.
+     */
+    configureMSIX();
+    
+    //From iwlwifi:
+    /*
+     * Upon stop, the APM issues an interrupt if HW RF kill is set.
+     * This is a bug in certain verions of the hardware.
+     * Certain devices also keep sending HW RF kill interrupt all
+     * the time, unless the interrupt is ACKed even if the interrupt
+     * should be masked. Re-ACK all the interrupts here.
+     */
+    disableInterrupts();
+    
+    //Reset some of the statuses associated with the card
+    deviceProps.status.syncHCMDActive = false;
+    deviceProps.status.interruptsEnabled = false;
+    deviceProps.status.PMI_TPower = false;
+    
+    //Re-enable the rf kill interrupt so we can still service the card
+    //being enabled
+    enableRFKillINT();
+    
+    //iwlwifi talkes about maintaining ownership to the device, but I think
+    //we will still have ownership so long as this driver is not unloaded
+    //but implementing below should confirm either yes or no
+    //The hardware will still need to be prepared anyway so might as well call it
+    prepareCardHardware();
+}
+
+void IntelWiFiDriver::txStopG1() {
+    //iwl_pcie_tx_stop
+    //iwl_scd_deactivate_fifos
+    //Turn off all Tx DMA fifos
+    writePRPH(SCD_TXFACT, 0);
+    
+    //[iwl_pcie_tx_stop_fh START]
+    //Spinlock irq_lock
+    IOInterruptState flags;
+    uint32_t mask;
+    if (!grabNICAccess(flags)) {
+        return;
+    }
+    
+    for (int ch = 0; ch < FH_TCSR_CHNL_NUM; ch++) {
+        busWrite32(FH_TCSR_CHNL_TX_CONFIG_REG(ch), 0);
+        mask |= FH_TSSR_TX_STATUS_REG_MSK_CHNL_IDLE(ch);
+    }
+    
+    int ret = pollBit(FH_TSSR_TX_STATUS_REG, mask, mask, 5000);
+    if (ret < 0 ) {
+        LOG_ERROR("%s: Failing on timeout while stopping DMA channel [0x%08x]\n", DRVNAME, busRead32(FH_TSSR_TX_STATUS_REG));
+    }
+    
+    releaseNICAccess(flags);
+    
+    //Spinunlock irq_lock
+    //[iwl_pcie_tx_stop_fh END]
+    
+    //Mark the queues as stopped since we stopped Tx altogether
+    bzero(&deviceProps.txq_used, sizeof(deviceProps.txq_used));
+    bzero(&deviceProps.txq_stopped, sizeof(deviceProps.txq_stopped));
+    
+    //If device was started then immediately stopped, txqs will not be ready
+    if (!deviceProps.txqAllocated) return;
+    
+    //Unmap DMAs from host system and free skb's
+    for (int txqID = 0; txqID < deviceProps.deviceConfig->base_params->num_of_queues; txqID++) {
+        
+    }
+    
+}
+
+void IntelWiFiDriver::apmStopG1(bool opModeLeave) {
+    //iwl_pcie_apm_stop
     //TODO: Implement
 }
 //===================================
@@ -211,4 +318,149 @@ void IntelWiFiDriver::rxStop() {
 void IntelWiFiDriver::configureMSIX() {
     //iwl_pcie_conf_msix_hw
     //TODO: Implement
+}
+
+void IntelWiFiDriver::unmapTxQ(int txqID) {
+    //iwl_pcie_txq_unmap
+    struct iwl_txq* txq = deviceProps.txQueues[txqID];
+    
+    IOSimpleLockLock(txq->lock);
+    while (txq->write_ptr != txq->read_ptr) {
+        if (DEBUG) printf("%s: TxQ %d freed\n", DRVNAME, txqID);
+        
+        if (txqID != deviceProps.commandQueue) {
+            mbuf_t skb = txq->entries[txq->read_ptr].skb;
+            
+            //We need to free the skbs, first check that it points to something
+            if (!skb) {
+                LOG_ERROR("%s: pointer to skb null [txqID: %d, read_ptr: %08x]\n", DRVNAME, txqID, txq->read_ptr);
+            } else {
+                freeTSOPage(skb);
+            }
+        }
+        
+        
+    }
+}
+
+void IntelWiFiDriver::freeTSOPage(mbuf_t skb) {
+    //iwl_pcie_free_tso_page
+    //TODO: Needs adapting for xnu
+}
+
+void IntelWiFiDriver::txQFreeTDF(struct iwl_txq* txq) {
+    //iwl_pcie_txq_free_tfd
+    int readPointer = txq->read_ptr;
+    int commandIndex = getCommandIndex(txq, readPointer);
+    
+    unmapTFD(&txq->entries[commandIndex].meta, txq, readPointer);
+    
+    //free mbuf_t
+    if (txq->entries) {
+        mbuf_t skb;
+        skb = txq->entries[commandIndex].skb;
+        
+        if (skb) {
+            //TODO: Update for DVM
+            //Using MVM version for freeing SKBs by default, will need to update
+            //if adding DVM functionality
+            
+            freeSKB(skb);
+            txq->entries[commandIndex].skb = NULL;
+        }
+    }
+}
+
+void IntelWiFiDriver::unmapTFD(struct iwl_cmd_meta* meta, struct iwl_txq* txq, int index) {
+    //iwl_pcie_tfd_unmap
+    //TODO: Implement
+    void* tfd = getTFD(txq, index);
+    int numberTBS = TFDGetNumberOfTBS(tfd);
+    
+    if (numberTBS > deviceProps.maxTBS) {
+        LOG_ERROR("%s: Too many TBSs [index: %d, count: %d]\n", DRVNAME, index, numberTBS);
+        //TODO: Issue fatal error
+        return;
+    }
+    
+    //First TB is never freed, its the bidirectional DMA data
+    
+    for (int i = 1; i < numberTBS; i++) {
+        //TODO: Check if IOFree commands are right
+        if (meta->tbs & BIT(i)) {
+            IOFreePageable((void*)TFDGetTBAddress(tfd, i), TFDGetTBLength(tfd, i));
+        } else {
+            IOFree((void*)TFDGetTBAddress(tfd, i), TFDGetTBLength(tfd, i));
+        }
+    }
+    
+    meta->tbs = 0;
+    
+    if (deviceProps.deviceConfig->use_tfh) {
+        struct iwl_tfh_tfd* tfd_fh = (iwl_tfh_tfd*)tfd;
+        tfd_fh->num_tbs = 0;
+    } else {
+        struct iwl_tfd* tfd_fh = (iwl_tfd*)tfd;
+        tfd_fh->num_tbs = 0;
+    }
+}
+
+void* IntelWiFiDriver::getTFD(struct iwl_txq* txq, int index) {
+    //iwl_pcie_get_tfd
+    //Takes a different approach, in iwlwifi they do arithmetic to
+    //void* which is illegal, using the code from iwl_pcie_tfd_get_num_tbs
+    //we know what type to cast to for the situation and thus we can do safe
+    //pointer maths
+    if (deviceProps.deviceConfig->use_tfh) {
+        index = getCommandIndex(txq, index);
+        return (iwl_tfh_tfd*)txq->tfds + deviceProps.tfdSize * index;
+    }
+    return (iwl_tfd*)txq->tfds + deviceProps.tfdSize * index;
+}
+
+uint8_t IntelWiFiDriver::TFDGetNumberOfTBS(void* __tfd) {
+    if (deviceProps.deviceConfig->use_tfh) {
+        struct iwl_tfh_tfd* tfd = (iwl_tfh_tfd*)__tfd;
+        return le16_to_cpu(tfd->num_tbs) & 0x1f;
+    } else {
+        struct iwl_tfd* tfd = (iwl_tfd*)__tfd;
+        return tfd->num_tbs & 0x1f;
+    }
+}
+
+bus_addr_t IntelWiFiDriver::TFDGetTBAddress(void* __tfd, int index) {
+    //iwl_pcie_tfd_tb_get_addr
+    if (deviceProps.deviceConfig->use_tfh) {
+        struct iwl_tfh_tfd* tfd = (iwl_tfh_tfd*)__tfd;
+        struct iwl_tfh_tb* tb = &tfd->tbs[index];
+        
+        return tb->addr;
+    } else {
+        struct iwl_tfd* tfd = (iwl_tfd*)__tfd;
+        struct iwl_tfd_tb* tb = &tfd->tbs[index];
+        
+        //Warning for unaligned pointer value, doesnt matter
+        dma_addr_t addr = le32_to_cpus(&tb->lo);
+        dma_addr_t hi_len;
+        
+        if (sizeof(dma_addr_t) <= sizeof(uint32_t)) {
+            return addr;
+        }
+        hi_len = le16_to_cpu(tb->hi_n_len) & TB_HI_N_LEN_ADDR_HI_MSK;
+        return addr | (hi_len << 32);
+    }
+}
+
+uint16_t IntelWiFiDriver::TFDGetTBLength(void* __tfd, int index) {
+    if (deviceProps.deviceConfig->use_tfh) {
+        struct iwl_tfh_tfd* tfd = (iwl_tfh_tfd*)__tfd;
+        struct iwl_tfh_tb* tb = &tfd->tbs[index];
+        
+        return le16_to_cpu(tb->tb_len);
+    } else {
+        struct iwl_tfd* tfd = (iwl_tfd*)__tfd;
+        struct iwl_tfd_tb* tb = &tfd->tbs[index];
+        
+        return le16_to_cpu(tb->hi_n_len) >> 4;
+    }
 }

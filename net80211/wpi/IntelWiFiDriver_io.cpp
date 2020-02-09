@@ -62,6 +62,11 @@ uint32_t IntelWiFiDriver::readPRPH(uint32_t offset) {
     return value;
 }
 
+void IntelWiFiDriver::writePRPH(uint32_t offset, uint32_t value) {
+    //iwl_write_prph
+    //TODO: implement
+}
+
 uint32_t IntelWiFiDriver::getPRPHMask() {
     if (deviceProps.deviceConfig->device_family >= IWL_DEVICE_FAMILY_22560) {
         return 0x00ffffff;

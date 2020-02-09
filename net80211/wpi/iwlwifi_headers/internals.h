@@ -317,7 +317,8 @@ struct iwl_cmd_meta {
 
 struct iwl_pcie_txq_entry {
     struct iwl_device_cmd *cmd;
-    struct sk_buff *skb;
+//    struct sk_buff *skb;
+    mbuf_t skb;
     /* buffer to free after command completes */
     const void *free_buf;
     struct iwl_cmd_meta meta;
@@ -469,5 +470,10 @@ struct iwl_txq {
 //    struct mutex mutex;
 //};
 //#endif
+
+static inline u16 getCommandIndex(const struct iwl_txq *q, u32 index)
+{
+    return index & (q->n_window - 1);
+}
 
 #endif /* internals_h */

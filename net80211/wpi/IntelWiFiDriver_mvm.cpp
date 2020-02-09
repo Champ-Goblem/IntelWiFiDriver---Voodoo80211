@@ -135,9 +135,19 @@ void IntelWiFiDriver::setRFKillState(bool status) {
         IOLockUnlock(deviceProps.mvmConfig.rxSyncWaitQueue);
     }
     //iwlwifi here makes a call to wiphy_rfkill_set_hw_state
-    //which internally makes a call to 	rfkill_set_hw_state
+    //which internally makes a call to rfkill_set_hw_state
     //The call then schedules &rdev->rfkill_sync
     //We need to find some replacement for these in the apple kernel
     //TODO: Find a replacement
     
+}
+
+void IntelWiFiDriver::reportScanAborted() {
+    //iwl_mvm_report_scan_aborted
+    //TODO: Implement reporting scan abborted
+}
+
+void IntelWiFiDriver::freeSKB(mbuf_t skb) {
+    //iwl_mvm_free_skb
+    //TODO: Implement
 }

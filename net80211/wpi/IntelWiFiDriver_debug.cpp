@@ -64,6 +64,6 @@ void IntelWiFiDriver::collectFirmwareErrorDetails() {
 }
 
 void IntelWiFiDriver::firmwareDebugStopRecording() {
-    //_iwl_fw_dbg_stop_recording
+    //iwl_fw_dbg_stop_recording
     //TODO: Implement
 }

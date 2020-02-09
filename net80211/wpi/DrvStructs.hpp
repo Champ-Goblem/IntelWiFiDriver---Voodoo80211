@@ -24,7 +24,7 @@ struct PCIDeviceStatus {
     bool deviceAsleep;          //STATUS_TPOWER_PMI
     bool RFKillOpmodeEnabled;   //STATUS_RFKILL_OPMODE
     bool RFKillHardwareEnabled; //STATUS_RFKILL_HW
-    bool PMI_TPower;             //STATUS_TPOWER_PMI
+    bool PMI_TPower;            //STATUS_TPOWER_PMI
 };
 
 struct MVMSpecificConfig {
@@ -88,9 +88,13 @@ struct PCIDevice {
     //iwlwifi also defines txq_memory which simply points to the allocated txqs in memory
     //only a function in trans.c uses this later so we wont bother eek
     iwl_txq*                    txQueues[MAX_TX_QUEUES];
+    bool                        txqAllocated;
     u_long                      txq_used[BITS_TO_LONGS(MAX_TX_QUEUES)];
     u_long                      txq_stopped[BITS_TO_LONGS(MAX_TX_QUEUES)];
     iwl_rxq*                    rxq;
+    uint8_t                     commandQueue;
+    uint16_t                    tfdSize;
+    uint8_t                     maxTBS;
 
     IOLock*                     waitCommandQueue;
     

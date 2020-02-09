@@ -15,6 +15,7 @@
 
 #include "iwlwifi_headers/deviceConfigs.h"
 #include "iwlwifi_headers/internals.h"
+#include "iwlwifi_headers/iwl-prph.h"
 //#include "iwlwifi_headers/mvm.h"
 
 #include <os/log.h>
@@ -67,6 +68,7 @@ private:
     void busClearBit(uint32_t offset, uint8_t bitPosition);
     int pollBit(uint32_t offset, uint32_t bits, uint32_t mask, int timeout);
     uint32_t readPRPH(uint32_t offset);
+    void writePRPH(uint32_t offset, uint32_t value);
     uint32_t getPRPHMask();
     int readIOMemToBuffer(uint32_t address, void* buffer, int dwords);
     
@@ -83,6 +85,7 @@ private:
     void forceNICRestart(bool firmwareError);
     void setHardwareRFKillState(bool status);
     void setRFKillState(bool status);
+    void freeSKB(mbuf_t skb);
     
 #pragma mark Notification wait helpers (IntelWiFiDriver_notif.cpp)
     void abortNotificationWaits();
@@ -96,8 +99,18 @@ private:
     void stopDeviceG1(bool setLowPowerState);
     void txStopG2();
     void rxStop();
-    void apmStopG2();
+    void apmStopG2(bool opModeLeave);
     void configureMSIX();
+    void txStopG1();
+    void apmStopG1(bool opModeLeave);
+    void unmapTxQ(int txqID);
+    void freeTSOPage(mbuf_t skb);
+    void txQFreeTDF(struct iwl_txq* txq);
+    void unmapTFD(struct iwl_cmd_meta* meta, struct iwl_txq* txq, int index);
+    void* getTFD(struct iwl_txq* txq, int index);
+    uint8_t TFDGetNumberOfTBS(void* __tfd);
+    bus_addr_t TFDGetTBAddress(void* __tfd, int index);
+    uint16_t TFDGetTBLength(void* __tfd, int index);
     
 #pragma mark CTXT related stuff (IntelWiFiDriver_ctxt.cpp)
     void ctxtInfoFreePaging();
