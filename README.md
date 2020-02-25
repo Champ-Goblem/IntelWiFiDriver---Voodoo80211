@@ -12,6 +12,8 @@ Also contributing some components to it from the linux side is [AppleIntelWiFiMV
 The rest is based upon work already implemented in linux in the [iwlwifi source code](https://git.kernel.org/pub/scm/linux/kernel/git/iwlwifi/iwlwifi-fixes.git) and my own work to port it to Mac OS.
 
 ## Building from source:
+***FOR NOW DONT WORRY ABOUT DOWNLOADING/CLONING THIS REPO FOR RUNNING, IGNORE THIS SECTION UNTIL THIS NOTICE IS REMOVED***
+
 Open the project in Xcode and build the project using `cmd+B`.
 Now navigate to the directory that net80211.kext is in and in a new terminal window run:
 ```
@@ -36,3 +38,5 @@ Updates on release will follow shortly.
 
 ## Current Known Issues
 * Not unloading properly
+* Not building on latest xcode
+* Headers need updating
