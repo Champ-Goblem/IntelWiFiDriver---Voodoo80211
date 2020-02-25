@@ -429,15 +429,15 @@ struct iwl_txq {
 //};
 //#endif
 //
-///**
-// * enum iwl_shared_irq_flags - level of sharing for irq
-// * @IWL_SHARED_IRQ_NON_RX: interrupt vector serves non rx causes.
-// * @IWL_SHARED_IRQ_FIRST_RSS: interrupt vector serves first RSS queue.
-// */
-//enum iwl_shared_irq_flags {
-//    IWL_SHARED_IRQ_NON_RX        = BIT(0),
-//    IWL_SHARED_IRQ_FIRST_RSS    = BIT(1),
-//};
+/**
+ * enum iwl_shared_irq_flags - level of sharing for irq
+ * @IWL_SHARED_IRQ_NON_RX: interrupt vector serves non rx causes.
+ * @IWL_SHARED_IRQ_FIRST_RSS: interrupt vector serves first RSS queue.
+ */
+enum iwl_shared_irq_flags {
+    IWL_SHARED_IRQ_NON_RX        = BIT(0),
+    IWL_SHARED_IRQ_FIRST_RSS    = BIT(1),
+};
 //
 ///**
 // * enum iwl_image_response_code - image response values

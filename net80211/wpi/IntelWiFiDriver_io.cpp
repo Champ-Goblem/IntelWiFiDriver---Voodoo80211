@@ -14,6 +14,10 @@ void IntelWiFiDriver::busWrite32(uint32_t offset, uint32_t value) {
     deviceProps.device->ioWrite32(offset, value, deviceProps.deviceMemoryMap);
 }
 
+void IntelWiFiDriver::busWrite8(uint16_t offest, uint8_t value) {
+    deviceProps.device->ioWrite8(offest, value, deviceProps.deviceMemoryMap);
+}
+
 uint32_t IntelWiFiDriver::busRead32(uint32_t offset) {
     return deviceProps.device->ioRead32(offset, deviceProps.deviceMemoryMap);
 }
@@ -49,6 +53,10 @@ int IntelWiFiDriver::pollBit(uint32_t offset, uint32_t bits, uint32_t mask, int 
 }
 //===================================
 
+
+//===================================
+//          PRPH Related
+//===================================
 uint32_t IntelWiFiDriver::readPRPH(uint32_t offset) {
     IOInterruptState flags;
     uint32_t value = 0x5a5a5a5a;
@@ -73,6 +81,13 @@ uint32_t IntelWiFiDriver::getPRPHMask() {
     }
     return 0x000fffff;
 }
+
+void IntelWiFiDriver::writeUMAC_PRPH(uint32_t offset, uint32_t value) {
+    //iwl_write_umac_prph
+    //TODO: Implement
+}
+
+//===================================
 
 int IntelWiFiDriver::readIOMemToBuffer(uint32_t address, void* buffer, int dwords) {
     IOInterruptState flags;

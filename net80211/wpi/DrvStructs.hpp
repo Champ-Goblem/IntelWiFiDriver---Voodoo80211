@@ -79,6 +79,9 @@ struct PCIDevice {
     uint32_t                    msixFHMask;
     uint32_t                    msixHWInitMask;
     uint32_t                    msixHWMask;
+    uint8_t                     sharedVecMask;
+    uint32_t                    defIRQ; //Can we rename this to something more descriptive?
+    IOLock                      regLock; //Can we rename this to something more descriptive?
     
     //Used for grabbing NIC access
     bool                        holdNICAwake; //Status if a current command in flight is holding NIC awake
@@ -92,9 +95,10 @@ struct PCIDevice {
     u_long                      txq_used[BITS_TO_LONGS(MAX_TX_QUEUES)];
     u_long                      txq_stopped[BITS_TO_LONGS(MAX_TX_QUEUES)];
     iwl_rxq*                    rxq;
-    uint8_t                     commandQueue;
+    uint8_t                     commandQueue; //cmd_queue
     uint16_t                    tfdSize;
     uint8_t                     maxTBS;
+    uint8_t                     rxQCount; //num_rx_queues
 
     IOLock*                     waitCommandQueue;
     

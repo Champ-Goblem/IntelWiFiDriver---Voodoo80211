@@ -7,6 +7,7 @@
 
 #include "IntelWiFiDriver.hpp"
 #include "iwlwifi_headers/iwl-fh.h"
+#include "IntelWiFiDriver_ops.hpp"
 
 void IntelWiFiDriver::rxMultiqueueRestock() {
     //iwl_pcie_rxmq_restock
@@ -317,11 +318,35 @@ void IntelWiFiDriver::rxStop() {
 
 void IntelWiFiDriver::configureMSIX() {
     //iwl_pcie_conf_msix_hw
-    //TODO: Implement
+    if (!deviceProps.msixEnabled) {
+        if (deviceProps.deviceConfig->mq_rx_supported &&
+            deviceProps.status.deviceEnabled) {
+            writeUMAC_PRPH(UREG_CHICK, UREG_CHICK_MSI_ENABLE);
+        }
+        return;
+    }
+    
+    //IVAR needs to be configure after reset but device
+    //must be enabled to write to PRPH
+    if (deviceProps.status.deviceEnabled) {
+        writeUMAC_PRPH(UREG_CHICK, UREG_CHICK_MSI_ENABLE);
+    }
+    
+    //From iwlwifi:
+    /*
+     * Each cause from the causes list above and the RX causes is
+     * represented as a byte in the IVAR table. The first nibble
+     * represents the bound interrupt vector of the cause, the second
+     * represents no auto clear for this cause. This will be set if its
+     * interrupt vector is bound to serve other causes.
+     */
+    mapRxCauses();
+    mapNonRxCauses();
 }
 
 void IntelWiFiDriver::unmapTxQ(int txqID) {
     //iwl_pcie_txq_unmap
+    //TODO: Implement
     struct iwl_txq* txq = deviceProps.txQueues[txqID];
     
     IOSimpleLockLock(txq->lock);
@@ -338,8 +363,15 @@ void IntelWiFiDriver::unmapTxQ(int txqID) {
                 freeTSOPage(skb);
             }
         }
+        txQFreeTDF(txq);
+        txq->read_ptr = queueIncWrap(txq->read_ptr);
         
-        
+        if (txq->read_ptr == txq->write_ptr) {
+            IOInterruptState flags;
+            flags = IOSimpleLockLockDisableInterrupt(deviceProps.regLock);
+            //TODO: Complete
+            IOSimpleLockUnlockEnableInterrupt(deviceProps.regLock, <#IOInterruptState state#>);
+        }
     }
 }
 
@@ -373,7 +405,6 @@ void IntelWiFiDriver::txQFreeTDF(struct iwl_txq* txq) {
 
 void IntelWiFiDriver::unmapTFD(struct iwl_cmd_meta* meta, struct iwl_txq* txq, int index) {
     //iwl_pcie_tfd_unmap
-    //TODO: Implement
     void* tfd = getTFD(txq, index);
     int numberTBS = TFDGetNumberOfTBS(tfd);
     
@@ -463,4 +494,50 @@ uint16_t IntelWiFiDriver::TFDGetTBLength(void* __tfd, int index) {
         
         return le16_to_cpu(tb->hi_n_len) >> 4;
     }
+}
+
+void IntelWiFiDriver::mapRxCauses() {
+    //iwl_pcie_map_rx_causes
+    uint32_t offset = deviceProps.sharedVecMask & IWL_SHARED_IRQ_FIRST_RSS ? 1 : 0;
+    
+    //First Rx queue is always mapped to firs irq vector
+    //for use with management frames, command responses
+    //Other irqs mapped to other (N - 2) vectors
+    uint32_t value = BIT(MSIX_FH_INT_CAUSES_Q(0));
+    for (int index = 1; index < deviceProps.rxQCount; index++) {
+        busWrite8(CSR_MSIX_IVAR(index), MSIX_FH_INT_CAUSES_Q(index - offset));
+        value |= BIT(MSIX_FH_INT_CAUSES_Q(index - offset));
+    }
+    busWrite32(CSR_MSIX_FH_INT_MASK_AD, ~value);
+    
+    value = MSIX_FH_INT_CAUSES_Q(0);
+    if (deviceProps.sharedVecMask & IWL_SHARED_IRQ_NON_RX) {
+        value |= MSIX_NON_AUTO_CLEAR_CAUSE;
+    }
+    busWrite8(CSR_MSIX_RX_IVAR(0), value);
+    
+    if (deviceProps.sharedVecMask & IWL_SHARED_IRQ_FIRST_RSS) {
+        busWrite8(CSR_MSIX_RX_IVAR(1), value);
+    }
+}
+
+void IntelWiFiDriver::mapNonRxCauses() {
+    //iwl_pcie_map_non_rx_causes
+    int value = deviceProps.defIRQ | MSIX_AUTO_CLEAR_CAUSE;
+    
+    int arraySize = (deviceProps.deviceConfig->device_family != IWL_DEVICE_FAMILY_22560) ?
+    ARRAY_SIZE(causes_list) : ARRAY_SIZE(causes_list_v2);
+    
+    //Map all non RX causes onto default IRQ
+    //First interrupt vector will serve non-RX and FBQ causes
+    for (int index = 0; index < arraySize; index++) {
+        struct iwl_causes_list* causes = deviceProps.deviceConfig->device_family != IWL_DEVICE_FAMILY_22560 ? causes_list : causes_list_v2;
+        busWrite8(CSR_MSIX_IVAR(causes[index].addr), value);
+        busClearBit(causes[index].mask_reg, causes[index].cause_num);
+    }
+}
+
+int IntelWiFiDriver::queueIncWrap(int index) {
+    //iwl_queue_inc_wrap
+    //TODO: Implement
 }

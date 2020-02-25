@@ -61,6 +61,7 @@ private:
     
 #pragma mark IO functions (IntelWiFiDriver_io.cpp)
     void busWrite32(uint32_t offset, uint32_t value);
+    void busWrite8(uint16_t offfset, uint8_t value);
     uint32_t busRead32(uint32_t offset);
     void write32Direct(volatile void* base, uint32_t offset, uint32_t value);
     uint32_t read32Direct(volatile void* base, uint32_t offset);
@@ -70,6 +71,7 @@ private:
     uint32_t readPRPH(uint32_t offset);
     void writePRPH(uint32_t offset, uint32_t value);
     uint32_t getPRPHMask();
+    void writeUMAC_PRPH(uint32_t offset, uint32_t value);
     int readIOMemToBuffer(uint32_t address, void* buffer, int dwords);
     
 #pragma mark Device communication functions (IntelWiFiDriver_comms.cpp)
@@ -107,10 +109,13 @@ private:
     void freeTSOPage(mbuf_t skb);
     void txQFreeTDF(struct iwl_txq* txq);
     void unmapTFD(struct iwl_cmd_meta* meta, struct iwl_txq* txq, int index);
+    void mapRxCauses();
+    void mapNonRxCauses();
     void* getTFD(struct iwl_txq* txq, int index);
     uint8_t TFDGetNumberOfTBS(void* __tfd);
     bus_addr_t TFDGetTBAddress(void* __tfd, int index);
     uint16_t TFDGetTBLength(void* __tfd, int index);
+    int queueIncWrap(int index);
     
 #pragma mark CTXT related stuff (IntelWiFiDriver_ctxt.cpp)
     void ctxtInfoFreePaging();
