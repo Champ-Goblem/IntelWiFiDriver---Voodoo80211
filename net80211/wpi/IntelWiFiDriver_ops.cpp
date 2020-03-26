@@ -368,9 +368,14 @@ void IntelWiFiDriver::unmapTxQ(int txqID) {
         
         if (txq->read_ptr == txq->write_ptr) {
             IOInterruptState flags;
-            flags = IOSimpleLockLockDisableInterrupt(deviceProps.regLock);
-            //TODO: Complete
-            IOSimpleLockUnlockEnableInterrupt(deviceProps.regLock, <#IOInterruptState state#>);
+            flags = IOSimpleLockLockDisableInterrupt(deviceProps.NICAccessLock);
+            if (txqID != deviceProps.commandQueue) {
+                if (DEBUG) printf("%s: last txq freed: %d\n", DRVNAME, txq->id);
+                unref();
+            } else {
+                clearCommandInFlight();
+            }
+            IOSimpleLockUnlockEnableInterrupt(deviceProps.NICAccessLock, flags);
         }
     }
 }
@@ -540,4 +545,25 @@ void IntelWiFiDriver::mapNonRxCauses() {
 int IntelWiFiDriver::queueIncWrap(int index) {
     //iwl_queue_inc_wrap
     //TODO: Implement
+}
+
+void IntelWiFiDriver::clearCommandInFlight() {
+    //iwl_pcie_clear_cmd_in_flight
+    
+    //Clear the command in flight flag and call unref on the device
+    if (deviceProps.comandInFlight) {
+        deviceProps.comandInFlight = false;
+        if (DEBUG) printf("%s: clear commandInFlight flag\n", DRVNAME);
+        unref();
+    }
+    
+    if (!deviceProps.deviceConfig->base_params->apmg_wake_up_wa) {
+        return;
+    } else if (!deviceProps.holdNICAwake) {
+        LOG_ERROR("%s: holNICAwake flag not set", DRVNAME);
+        return;
+    }
+    
+    deviceProps.holdNICAwake = false;
+    busClearBit(WPI_GP_CNTRL, deviceProps.deviceConfig->csr->flag_mac_access_req);
 }

@@ -55,8 +55,10 @@
 #define WPI_UCODE_DRV_GP1   0x054
 #define WPI_UCODE_GP1_CLR	0x05c
 #define WPI_UCODE_GP2		0x060
+#define WPI_MBOX_SET        0x088
 #define WPI_GIO_CHICKEN		0x100
 #define WPI_ANA_PLL		0x20c
+#define WPI_DBG_LINK_PWR_MGMT_REG 0x250
 #define WPI_MEM_RADDR		0x40c
 #define WPI_MEM_WADDR		0x410
 #define WPI_MEM_WDATA		0x418
@@ -130,6 +132,13 @@
 #define WPI_HW_IF_CONFIG_SKU_MRC	(1 << 10)
 #define WPI_HW_IF_CONFIG_REV_D		(1 << 11)
 #define WPI_HW_IF_CONFIG_TYPE_B		(1 << 12)
+#define CSR_HW_IF_CONFIG_REG_PREPARE          (0x08000000) /* WAKE_ME */
+#define CSR_HW_IF_CONFIG_REG_BIT_NIC_READY    (0x00400000)
+#define HW_READY_TIMEOUT            (50) //Timeout for poll bit
+
+//flags for register MBOX_SET
+#define CSR_MBOX_SET_REG_OS_ALIVE        BIT(5)
+
 
 /* Possible flags for registers WPI_PRPH_RADDR/WPI_PRPH_WADDR. */
 #define WPI_PRPH_DWORD	((sizeof (uint32_t) - 1) << 24)
@@ -196,6 +205,9 @@
 #define WPI_INT_RX_PERIODIC (1 << 28)
 #define WPI_INT_HW_ERR		(1 << 29)
 #define WPI_INT_FH_RX		(1 << 31)
+
+//flags for DBG_LINK_PWR_MGMT_REG
+#define CSR_RESET_LINK_PWR_MGMT_DISABLED             (0x80000000)
 
 //Defined in iwl-csr.h
 #define WPI_INT_MASK_ALL    (WPI_INT_FH_RX | \

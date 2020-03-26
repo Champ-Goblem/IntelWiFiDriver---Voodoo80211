@@ -80,7 +80,9 @@ private:
     void restartHardware();
     bool isRFKillSet();
     void resetDevice();
-    void prepareCardHardware();
+    bool prepareCardHardware();
+    int setHardwareReady();
+    void unref();
     
 #pragma mark MVM only functions (IntelWiFiDriver_mvm.cpp)
     void receivedNICError();
@@ -116,6 +118,7 @@ private:
     bus_addr_t TFDGetTBAddress(void* __tfd, int index);
     uint16_t TFDGetTBLength(void* __tfd, int index);
     int queueIncWrap(int index);
+    void clearCommandInFlight();
     
 #pragma mark CTXT related stuff (IntelWiFiDriver_ctxt.cpp)
     void ctxtInfoFreePaging();

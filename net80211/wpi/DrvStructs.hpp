@@ -81,11 +81,11 @@ struct PCIDevice {
     uint32_t                    msixHWMask;
     uint8_t                     sharedVecMask;
     uint32_t                    defIRQ; //Can we rename this to something more descriptive?
-    IOLock                      regLock; //Can we rename this to something more descriptive?
     
     //Used for grabbing NIC access
     bool                        holdNICAwake; //Status if a current command in flight is holding NIC awake
-    IOSimpleLock*               NICAccessLock; //Lock for grabbing NIC access
+    bool                        comandInFlight;
+    IOSimpleLock*               NICAccessLock; //Lock for grabbing NIC access [reg_lock]
     
     //Device communication queues
     //iwlwifi also defines txq_memory which simply points to the allocated txqs in memory

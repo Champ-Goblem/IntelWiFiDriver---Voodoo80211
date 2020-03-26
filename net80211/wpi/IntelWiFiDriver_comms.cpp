@@ -56,6 +56,16 @@ void IntelWiFiDriver::releaseNICAccess(IOInterruptState flags) {
 void IntelWiFiDriver::restartHardware() {
     //ieee80211_restart_hw
     //TODO: Implement restarting hardware
+    
+    //In order to restart hardware we probably need to do some paperwork first
+    //with the kernel to alleviate any issues but basically I think we can put
+    //the device in powered off state (D0i3) then power it back up to reset
+    
+    //We will also need a way to completely reset the status of the driver too
+    //and then call start to initialise again
+    
+    //Might also be worth keeping track of how many times hardware has been restarted
+    //due to fatal error
 }
 
 bool IntelWiFiDriver::isRFKillSet() {
@@ -70,7 +80,60 @@ void IntelWiFiDriver::resetDevice() {
     //TODO: Implement
 }
 
-void IntelWiFiDriver::prepareCardHardware() {
+bool IntelWiFiDriver::prepareCardHardware() {
     //iwl_pcie_prepare_card_hw
+    
+    if (DEBUG) printf("%s: preparing card hw", DRVNAME);
+    
+    int ret = setHardwareReady();
+    if (ret >= 0) return true;
+    
+    busSetBit(WPI_DBG_LINK_PWR_MGMT_REG, CSR_RESET_LINK_PWR_MGMT_DISABLED);
+    IOSleep(2000);
+    
+    for (int c = 0; c < 10; c++) {
+        //If hw not ready prepare conditions to check again
+        busSetBit(WPI_HW_IF_CONFIG, CSR_HW_IF_CONFIG_REG_PREPARE);
+        int t = 0;
+        do {
+            ret = setHardwareReady();
+            if (ret >= 0) return true;
+            IOSleep(1000);
+            t += 200;
+        } while (t < 150000);
+        IOSleep(25);
+    }
+    
+    LOG_ERROR("%s: Could not prepare card hw", DRVNAME);
+    return false;
+}
+
+int IntelWiFiDriver::setHardwareReady() {
+    //iwl_pcie_set_hw_ready
     //TODO: Implement
+    
+    busSetBit(WPI_HW_IF_CONFIG, CSR_HW_IF_CONFIG_REG_BIT_NIC_READY);
+    
+    int ret = pollBit(WPI_HW_IF_CONFIG, CSR_HW_IF_CONFIG_REG_BIT_NIC_READY, CSR_HW_IF_CONFIG_REG_BIT_NIC_READY, HW_READY_TIMEOUT);
+    if (ret >= 0) busSetBit(WPI_MBOX_SET, CSR_MBOX_SET_REG_OS_ALIVE);
+    
+    if (DEBUG) printf("%s: harware%s read\n", DRVNAME, ret < 0 ? " not" : "");
+    return ret;
+}
+
+void IntelWiFiDriver::unref(){
+    //iwl_trans_pcie_unref
+    //TODO: find replacement
+    //Makes a call to pm_runtime_mark_last_busy then pm_runtime_put_autosuspend
+    //which decrements the reference counter of the device, not sure if we need
+    //this or if we will need a workaround
+    
+    //The function also checks the D0i3_disable flag to see if the power level 3
+    //(full power off) function is available.
+    
+    //The value of D0i3_disable is set to false by default, but is registered via
+    //MODULE_PARAM_NAMED and thus the value can be adjusted via modprobe or kernel
+    //command line arguments
+    
+    //[INFO]: iwl_trans_(ref/unref) command removed in iwlwifi-next tree
 }
