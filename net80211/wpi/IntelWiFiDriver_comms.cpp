@@ -77,7 +77,9 @@ bool IntelWiFiDriver::isRFKillSet() {
 
 void IntelWiFiDriver::resetDevice() {
     //iwl_trans_pcie_sw_reset
-    //TODO: Implement
+    
+    busSetBit(deviceProps.deviceConfig->csr->addr_sw_reset, deviceProps.deviceConfig->csr->flag_sw_reset);
+    IOSleep(6000);
 }
 
 bool IntelWiFiDriver::prepareCardHardware() {
@@ -110,7 +112,6 @@ bool IntelWiFiDriver::prepareCardHardware() {
 
 int IntelWiFiDriver::setHardwareReady() {
     //iwl_pcie_set_hw_ready
-    //TODO: Implement
     
     busSetBit(WPI_HW_IF_CONFIG, CSR_HW_IF_CONFIG_REG_BIT_NIC_READY);
     

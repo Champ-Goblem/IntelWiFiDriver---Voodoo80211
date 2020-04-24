@@ -70,7 +70,7 @@
 
 //#include <linux/module.h>
 //#include <linux/stringify.h>
-#include "iwl-config.h"
+//#include "iwl-config.h"
 
 /* Highest firmware API version supported */
 #define IWL7260_UCODE_API_MAX    17
