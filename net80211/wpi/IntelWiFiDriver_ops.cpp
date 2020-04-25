@@ -172,12 +172,89 @@ void IntelWiFiDriver::stopDeviceG2(bool setLowPowerState) {
 
 void IntelWiFiDriver::txStopG2() {
     //iwl_pcie_gen2_tx_stop
-    //TODO: Implement
+    
+    bzero(deviceProps.txq_stopped, sizeof(deviceProps.txq_stopped));
+    bzero(deviceProps.txq_used, sizeof(deviceProps.txq_used));
+    
+    for (int txqID = 0; txqID < ARRAY_SIZE(deviceProps.txQueues); txqID++) {
+        if (!deviceProps.txQueues[txqID]) continue;
+        unmapTxQG2(txqID);
+    }
     
 }
 
 void IntelWiFiDriver::apmStopG2(bool opModeLeave) {
     //iwl_pcie_gen2_apm_stop
+    if (DEBUG) printf("%s: Stopping card, entering low power state\n", DRVNAME);
+    
+    if (opModeLeave) {
+        if (!deviceProps.status.deviceEnabled) apmInitG2();
+        
+        busSetBit(WPI_DBG_LINK_PWR_MGMT_REG, CSR_RESET_LINK_PWR_MGMT_DISABLED);
+        busSetBit(WPI_HW_IF_CONFIG, CSR_HW_IF_CONFIG_REG_PREPARE | CSR_HW_IF_CONFIG_REG_ENABLE_PME);
+        IOSleep(1);
+        busClearBit(WPI_DBG_LINK_PWR_MGMT_REG, CSR_RESET_LINK_PWR_MGMT_DISABLED);
+        IOSleep(5);
+    }
+    
+    deviceProps.status.deviceEnabled = false;
+    
+    apmStopMaster();
+    
+    resetDevice();
+    
+    busClearBit(WPI_GP_CNTRL, deviceProps.deviceConfig->csr->flag_init_done);
+}
+
+void IntelWiFiDriver::unmapTxQG2(int txqID) {
+    //iwl_pcie_gen2_txq_unmap
+    struct iwl_txq *txq = deviceProps.txQueues[txqID];
+    
+    IOSimpleLockLock(txq->lock);
+    while (txq->write_ptr != txq->read_ptr) {
+        if (DEBUG) printf("%s: txq %d freed %d\n", DRVNAME, txqID, txq->read_ptr);
+        
+        if (txqID != deviceProps.commandQueue) {
+            int idx = getCommandIndex(txq, txq->read_ptr);
+            mbuf_t skb = txq->entries[idx].skb;
+            
+            if (!skb) LOG_ERROR("%s: skb not allocates, id: %d, idx: %d\n", DRVNAME, txqID, idx);
+            freeTSOPage(skb);
+        }
+        
+        freeTFDG2(txq);
+        txq->read_ptr = queueIncWrap(txq->read_ptr);
+        
+        if (txq->read_ptr == txq->write_ptr) {
+            IOInterruptState flags = IOSimpleLockLockDisableInterrupt(deviceProps.NICAccessLock);
+            if (txqID != deviceProps.commandQueue) {
+                if (DEBUG) printf("%s: txq %d, last tx freed\n", DRVNAME, txqID);
+                unref();
+            } else if (deviceProps.comandInFlight) {
+                deviceProps.comandInFlight = false;
+                if (DEBUG) printf("%s: cleared command in flight status\n", DRVNAME);
+                unref();
+            }
+            IOSimpleLockUnlockEnableInterrupt(deviceProps.NICAccessLock, flags);
+        }
+    }
+    
+    //While loop here calls iwl_op_mode_free_skb, we dont need to free each skb
+    //as we can just free the whole lot
+    mbuf_freem_list(txq->overflow_q);
+    
+    IOSimpleLockUnlock(txq->lock);
+    
+    wakeQueue(txq);
+}
+
+void IntelWiFiDriver::apmInitG2() {
+    //iwl_pcie_gen2_apm_init
+    //TODO: Implement
+}
+
+void IntelWiFiDriver::freeTFDG2(iwl_txq *txq) {
+    //iwl_pcie_gen2_free_tfd
     //TODO: Implement
 }
 //===================================
@@ -300,7 +377,7 @@ void IntelWiFiDriver::txStopG1() {
     
     //Unmap DMAs from host system and free skb's
     for (int txqID = 0; txqID < deviceProps.deviceConfig->base_params->num_of_queues; txqID++) {
-        
+        unmapTxQ(txqID);
     }
     
 }
@@ -566,4 +643,18 @@ void IntelWiFiDriver::clearCommandInFlight() {
     
     deviceProps.holdNICAwake = false;
     busClearBit(WPI_GP_CNTRL, deviceProps.deviceConfig->csr->flag_mac_access_req);
+}
+
+void IntelWiFiDriver::apmStopMaster() {
+    //iwl_pcie_apm_stop_master
+    //TODO: Implement
+}
+
+void IntelWiFiDriver::wakeQueue(iwl_txq *txq) {
+    //iwl_wake_queue
+    //TODO: Implement
+    if (test_and_clear_bit(txq->id, deviceProps.txq_stopped)) {
+        if (DEBUG) printf("%s: Wake hwq %d\n", DRVNAME, txq->id);
+        mvmWakeSWQueue(txq->id);
+    }
 }

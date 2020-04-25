@@ -103,10 +103,20 @@ uint32_t IntelWiFiDriver::readPRPH(uint32_t offset) {
 
 void IntelWiFiDriver::writePRPH(uint32_t offset, uint32_t value) {
     //iwl_write_prph
-    //TODO: implement
+    IOInterruptState flags;
+    if (grabNICAccess(flags)) {
+        //Makes a call to iwl_write_prph_no_grap which calls a debug trace function
+        //then calls tans->ops->write_prph which is set to iwl_trans_pcie_write_prph
+        //iwl_trans_pcie_write_prph:
+        uint32_t mask = getPRPHMask();
+        busWrite32(WPI_PRPH_WADDR, (offset & mask) | (3 << 24));
+        busWrite32(WPI_PRPH_WDATA, value);
+        releaseNICAccess(flags);
+    }
 }
 
 uint32_t IntelWiFiDriver::getPRPHMask() {
+    //iwl_trans_pcie_prph_msk
     if (deviceProps.deviceConfig->device_family >= IWL_DEVICE_FAMILY_22560) {
         return 0x00ffffff;
     }
@@ -115,7 +125,7 @@ uint32_t IntelWiFiDriver::getPRPHMask() {
 
 void IntelWiFiDriver::writeUMAC_PRPH(uint32_t offset, uint32_t value) {
     //iwl_write_umac_prph
-    //TODO: Implement
+    writePRPH(offset + deviceProps.deviceConfig->umac_prph_offset, value);
 }
 
 //===================================

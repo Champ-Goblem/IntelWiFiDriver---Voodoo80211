@@ -90,6 +90,7 @@ private:
     void setHardwareRFKillState(bool status);
     void setRFKillState(bool status);
     void freeSKB(mbuf_t skb);
+    void mvmWakeSWQueue(int txqID);
     
 #pragma mark Notification wait helpers (IntelWiFiDriver_notif.cpp)
     void abortNotificationWaits();
@@ -104,6 +105,9 @@ private:
     void txStopG2();
     void rxStop();
     void apmStopG2(bool opModeLeave);
+    void unmapTxQG2(int txqID);
+    void apmInitG2();
+    void freeTFDG2(iwl_txq *txq);
     void configureMSIX();
     void txStopG1();
     void apmStopG1(bool opModeLeave);
@@ -119,6 +123,8 @@ private:
     uint16_t TFDGetTBLength(void* __tfd, int index);
     int queueIncWrap(int index);
     void clearCommandInFlight();
+    void apmStopMaster();
+    void wakeQueue(iwl_txq *txq);
     
 #pragma mark CTXT related stuff (IntelWiFiDriver_ctxt.cpp)
     void ctxtInfoFreePaging();

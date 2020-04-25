@@ -133,6 +133,7 @@
 #define WPI_HW_IF_CONFIG_REV_D		(1 << 11)
 #define WPI_HW_IF_CONFIG_TYPE_B		(1 << 12)
 #define CSR_HW_IF_CONFIG_REG_PREPARE          (0x08000000) /* WAKE_ME */
+#define CSR_HW_IF_CONFIG_REG_ENABLE_PME       (0x10000000)
 #define CSR_HW_IF_CONFIG_REG_BIT_NIC_READY    (0x00400000)
 #define HW_READY_TIMEOUT            (50) //Timeout for poll bit
 

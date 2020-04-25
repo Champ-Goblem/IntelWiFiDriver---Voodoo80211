@@ -150,4 +150,13 @@ void IntelWiFiDriver::reportScanAborted() {
 void IntelWiFiDriver::freeSKB(mbuf_t skb) {
     //iwl_mvm_free_skb
     //TODO: Implement
+
+    //I dont think this is acutally needed as we free mbufs with methods from
+    //kpi_mbuf.h
+}
+
+void IntelWiFiDriver::mvmWakeSWQueue(int txqID) {
+    //iwl_mvm_wake_sw_queue ->
+    //iwl_mvm_queue_state_change
+    //TODO: Implement
 }

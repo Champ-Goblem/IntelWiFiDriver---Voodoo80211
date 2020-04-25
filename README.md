@@ -1,5 +1,5 @@
 # IntelWiFiDriver *WIP*
-Current progress: ~= 15-20%
+Current progress: ~= 20-25%
 
 For now do not worry about trying to run this, as it is nowhere near finished yet!
 
