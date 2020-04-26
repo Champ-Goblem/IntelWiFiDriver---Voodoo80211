@@ -56,8 +56,13 @@
 #define WPI_UCODE_GP1_CLR	0x05c
 #define WPI_UCODE_GP2		0x060
 #define WPI_MBOX_SET        0x088
+#define HEEP_CTRL_WRD_PCIEX_CRTL_REG 0x0ec
+#define HEEP_CTRL_WRD_PCIEX_DATA_REG 0x0f4
 #define WPI_GIO_CHICKEN		0x100
 #define WPI_ANA_PLL		0x20c
+#define CSR_MONITOR_CFG_REG 0x214
+#define CSR_MONITOR_STATUS_REG 0x228
+#define WPI_DBG_HPET_MEM_REG 0x240
 #define WPI_DBG_LINK_PWR_MGMT_REG 0x250
 #define WPI_MEM_RADDR		0x40c
 #define WPI_MEM_WADDR		0x410
@@ -132,8 +137,10 @@
 #define WPI_HW_IF_CONFIG_SKU_MRC	(1 << 10)
 #define WPI_HW_IF_CONFIG_REV_D		(1 << 11)
 #define WPI_HW_IF_CONFIG_TYPE_B		(1 << 12)
+#define CSR_HW_IF_CONFIG_REG_BIT_HAP_WAKE_L1A    (0x00080000)
 #define CSR_HW_IF_CONFIG_REG_PREPARE          (0x08000000) /* WAKE_ME */
 #define CSR_HW_IF_CONFIG_REG_ENABLE_PME       (0x10000000)
+#define CSR_HW_IF_CONFIG_REG_PERSIST_MODE      (0x40000000) /* PERSISTENCE */
 #define CSR_HW_IF_CONFIG_REG_BIT_NIC_READY    (0x00400000)
 #define HW_READY_TIMEOUT            (50) //Timeout for poll bit
 
@@ -168,8 +175,11 @@
 #define WPI_GP_CNTRL_MAC_PS		(4 << 24)
 #define WPI_GP_CNTRL_RFKILL		(1 << 27)
 #define WPI_GP_CNTRL_REG_FLAG_GOING_TO_SLEEP (0x00000010)
+#define CSR_GP_CNTRL_REG_FLAG_XTAL_ON             (0x00000400)
+
 /* Possible flags for register WPI_GIO_CHICKEN. */
 #define WPI_GIO_CHICKEN_L1A_NO_L0S_RX	(1 << 23)
+#define CSR_GIO_CHICKEN_BITS_REG_BIT_DIS_L0S_EXIT_TIMER  (0x20000000)
 
 /* Possible flags for register WPI_FH_RX_CONFIG. */
 #define WPI_FH_RX_CONFIG_DMA_ENA		(1 << 31)
@@ -182,6 +192,7 @@
 
 /* Possible flags for register WPI_ANA_PLL. */
 #define WPI_ANA_PLL_INIT	(1 << 24)
+#define CSR50_ANA_PLL_CFG_VAL        (0x00880300)
 
 /* Possible flags for register WPI_UCODE_GP1_CLR. */
 #define WPI_UCODE_GP1_RFKILL		(1 << 1)
@@ -206,6 +217,12 @@
 #define WPI_INT_RX_PERIODIC (1 << 28)
 #define WPI_INT_HW_ERR		(1 << 29)
 #define WPI_INT_FH_RX		(1 << 31)
+
+//flags for MONITOR_CFG_REG
+#define CSR_MONITOR_XTAL_RESOURCES    (0x00000010)
+
+//flags for DBG_HPET_MEM_REG
+#define CSR_DBG_HPET_MEM_REG_VAL    (0xFFFF0000)
 
 //flags for DBG_LINK_PWR_MGMT_REG
 #define CSR_RESET_LINK_PWR_MGMT_DISABLED             (0x80000000)

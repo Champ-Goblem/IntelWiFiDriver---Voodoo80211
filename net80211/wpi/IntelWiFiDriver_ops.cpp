@@ -190,10 +190,10 @@ void IntelWiFiDriver::apmStopG2(bool opModeLeave) {
     if (opModeLeave) {
         if (!deviceProps.status.deviceEnabled) apmInitG2();
         
-        busSetBit(WPI_DBG_LINK_PWR_MGMT_REG, CSR_RESET_LINK_PWR_MGMT_DISABLED);
-        busSetBit(WPI_HW_IF_CONFIG, CSR_HW_IF_CONFIG_REG_PREPARE | CSR_HW_IF_CONFIG_REG_ENABLE_PME);
+        busSetBits(WPI_DBG_LINK_PWR_MGMT_REG, CSR_RESET_LINK_PWR_MGMT_DISABLED);
+        busSetBits(WPI_HW_IF_CONFIG, CSR_HW_IF_CONFIG_REG_PREPARE | CSR_HW_IF_CONFIG_REG_ENABLE_PME);
         IOSleep(1);
-        busClearBit(WPI_DBG_LINK_PWR_MGMT_REG, CSR_RESET_LINK_PWR_MGMT_DISABLED);
+        busClearBits(WPI_DBG_LINK_PWR_MGMT_REG, CSR_RESET_LINK_PWR_MGMT_DISABLED);
         IOSleep(5);
     }
     
@@ -248,14 +248,82 @@ void IntelWiFiDriver::unmapTxQG2(int txqID) {
     wakeQueue(txq);
 }
 
-void IntelWiFiDriver::apmInitG2() {
+//Startup the NICs basic functionailty after reset
+//This does not load uCode or start embedded processor
+int IntelWiFiDriver::apmInitG2() {
     //iwl_pcie_gen2_apm_init
-    //TODO: Implement
+    if (DEBUG) printf("%s: APM init, starting cards basic functions\n", DRVNAME);
+    
+    /*
+     * Use "set_bit" below rather than "write", to preserve any hardware
+     * bits already set by default after reset.
+     */
+    
+    /*
+     * Disable L0s without affecting L1;
+     * don't wait for ICH L0s (ICH bug W/A)
+     */
+    busSetBits(WPI_GIO_CHICKEN, WPI_GIO_CHICKEN_L1A_NO_L0S_RX);
+    
+    //Set FH wait thresholf to maximum (HW error during stress W/A)
+    busSetBits(WPI_DBG_HPET_MEM_REG, CSR_DBG_HPET_MEM_REG_VAL);
+    
+    /*
+     * Enable HAP INTA (interrupt from management bus) to
+     * wake device's PCI Express link L1a -> L0s
+     */
+    busSetBits(WPI_HW_IF_CONFIG, CSR_HW_IF_CONFIG_REG_BIT_HAP_WAKE_L1A);
+    
+    apmConfig();
+    
+    int ret = finishNICInit();
+    if (ret) return ret;
+    
+    deviceProps.status.deviceEnabled = true;
+    
+    return 0;
 }
 
-void IntelWiFiDriver::freeTFDG2(iwl_txq *txq) {
+void IntelWiFiDriver::freeTFDG2(struct iwl_txq* txq) {
     //iwl_pcie_gen2_free_tfd
+
+    //rd_prt is bounded by TFD_QUEUE_SIZE_MAX and
+    //idx is bounded by n_widow
+    int idx = getCommandIndex(txq, txq->id);
+    
+    unmapTFDG2(&txq->entries[idx].meta, (iwl_tfh_tfd*)getTFD(txq, idx));
+    
+    if (txq->entries) {
+        mbuf_t skb = txq->entries[idx].skb;
+        
+        if (skb) {
+            mbuf_freem_list(skb);
+            txq->entries[idx].skb = NULL;
+        }
+    }
+}
+
+void IntelWiFiDriver::unmapTFDG2(struct iwl_cmd_meta* meta, struct iwl_tfh_tfd* tfd) {
+    //iwl_pcie_gen2_tfd_unmap
     //TODO: Implement
+    
+    int numTBS = getNumTBSG2(tfd);
+    
+    if(numTBS > deviceProps.maxTBS) {
+        LOG_ERROR("%s: Too many chunks: %i\n", DRVNAME, numTBS);
+        return;
+    }
+    
+    for (int i = 1; i < numTBS; i++) {
+        if (meta->tbs & BIT(i)) {
+            //TODO: Come back to here once DMA is implemented
+        }
+    }
+}
+
+int IntelWiFiDriver::getNumTBSG2(struct iwl_tfh_tfd* tfd) {
+    //iwl_pcie_gen2_get_num_tbs
+    return le16_to_cpu(tfd->num_tbs) & 0x1f;
 }
 //===================================
 
@@ -384,7 +452,196 @@ void IntelWiFiDriver::txStopG1() {
 
 void IntelWiFiDriver::apmStopG1(bool opModeLeave) {
     //iwl_pcie_apm_stop
+    if (DEBUG) printf("%s: Stopping card, putting into low power state\n", DRVNAME);
+    
+    if (opModeLeave) {
+        if (!deviceProps.status.deviceEnabled) {
+            apmInitG1();
+        }
+        
+        //Inform ME that we are leaving
+        if (deviceProps.deviceConfig->device_family == IWL_DEVICE_FAMILY_7000) {
+            setBitsPRPH(APMG_PCIDEV_STT_REG, APMG_PCIDEV_STT_VAL_WAKE_ME);
+        } else if (deviceProps.deviceConfig->device_family == IWL_DEVICE_FAMILY_8000) {
+            busSetBits(WPI_DBG_LINK_PWR_MGMT_REG, CSR_RESET_LINK_PWR_MGMT_DISABLED);
+            busSetBits(WPI_HW_IF_CONFIG, CSR_HW_IF_CONFIG_REG_PREPARE | CSR_HW_IF_CONFIG_REG_ENABLE_PME);
+            IOSleep(1);
+            busClearBits(WPI_DBG_LINK_PWR_MGMT_REG, CSR_RESET_LINK_PWR_MGMT_DISABLED);
+        }
+        IOSleep(5);
+    }
+    
+    deviceProps.status.deviceEnabled = false;
+    
+    apmStopMaster();
+    
+    if (deviceProps.deviceConfig->lp_xtal_workaround) {
+        apm_LP_XTAL_Enable();
+        return;
+    }
+    
+    resetDevice();
+    
+    /*
+     * Clear "initialization complete" bit to move adapter from
+     * D0A* (powered-up Active) --> D0U* (Uninitialized) state.
+     */
+    busClearBit(WPI_GP_CNTRL, deviceProps.deviceConfig->csr->flag_init_done);
+}
+
+int IntelWiFiDriver::apmInitG1() {
+    //iwl_pcie_apm_init
+    
+    if (DEBUG) printf("%s: APM init, preparing cards basic functions\n", DRVNAME);
+    
+    /*
+     * Use "set_bit" below rather than "write", to preserve any hardware
+     * bits already set by default after reset.
+     */
+    
+    /* Disable L0S exit timer (platform NMI Work/Around) */
+    if (deviceProps.deviceConfig->device_family < IWL_DEVICE_FAMILY_8000){
+        busSetBits(WPI_GIO_CHICKEN, CSR_GIO_CHICKEN_BITS_REG_BIT_DIS_L0S_EXIT_TIMER);
+    }
+    
+    /*
+     * Disable L0s without affecting L1;
+     *  don't wait for ICH L0s (ICH bug W/A)
+     */
+    busSetBits(WPI_GIO_CHICKEN, WPI_GIO_CHICKEN_L1A_NO_L0S_RX);
+    
+    //Set FH wait thresh to max (HW error during stress W/A)
+    busSetBits(WPI_DBG_HPET_MEM_REG, CSR_DBG_HPET_MEM_REG_VAL);
+    
+    /*
+     * Enable HAP INTA (interrupt from management bus) to
+     * wake device's PCI Express link L1a -> L0s
+     */
+    busSetBits(WPI_HW_IF_CONFIG, CSR_HW_IF_CONFIG_REG_BIT_HAP_WAKE_L1A);
+    
+    apmConfig();
+    
+    /* Configure analog phase-lock-loop before activating to D0A */
+    if (deviceProps.deviceConfig->base_params->pll_cfg) {
+        busSetBits(WPI_ANA_PLL, CSR50_ANA_PLL_CFG_VAL);
+    }
+    
+    int ret = finishNICInit();
+    if (ret) return ret;
+    
+    if (deviceProps.deviceConfig->host_interrupt_operation_mode) {
+        //From iwlwifi:
+        /*
+         * This is a bit of an abuse - This is needed for 7260 / 3160
+         * only check host_interrupt_operation_mode even if this is
+         * not related to host_interrupt_operation_mode.
+         *
+         * Enable the oscillator to count wake up time for L1 exit. This
+         * consumes slightly more power (100uA) - but allows to be sure
+         * that we wake up from L1 on time.
+         *
+         * This looks weird: read twice the same register, discard the
+         * value, set a bit, and yet again, read that same register
+         * just to discard the value. But that's the way the hardware
+         * seems to like it.
+         */
+        readPRPH(OSC_CLK);
+        readPRPH(OSC_CLK);
+        setBitsPRPH(OSC_CLK, OSC_CLK_FORCE_CONTROL);
+        readPRPH(OSC_CLK);
+        readPRPH(OSC_CLK);
+    }
+    
+    /*
+     * Enable DMA clock and wait for it to stabilize.
+     *
+     * Write to "CLK_EN_REG"; "1" bits enable clocks, while "0"
+     * bits do not disable clocks.  This preserves any hardware
+     * bits already set by default in "CLK_CTRL_REG" after reset.
+     */
+    if (!deviceProps.deviceConfig->apmg_not_supported) {
+        writePRPH(APMG_CLK_EN_REG, APMG_CLK_VAL_DMA_CLK_RQT);
+        IOSleep(1);
+        
+        //Disable L1 active
+        setBitsPRPH(APMG_PCIDEV_STT_REG, APMG_PCIDEV_STT_VAL_L1_ACT_DIS);
+        
+        //Clear the interrupt in APMG if the NIC is in RFKILL
+        writePRPH(APMG_RTC_INT_STT_REG, APMG_RTC_INT_STT_RFKILL);
+    }
+    
+    deviceProps.status.deviceEnabled = true;
+    
+    return 0;
+}
+
+/*
+ * Enable LP XTAL to avoid HW bug where device may consume much power if
+ * FW is not loaded after device reset. LP XTAL is disabled by default
+ * after device HW reset. Do it only if XTAL is fed by internal source.
+ * Configure device's "persistence" mode to avoid resetting XTAL again when
+ * SHRD_HW_RST occurs in S3.
+ */
+void IntelWiFiDriver::apm_LP_XTAL_Enable() {
+    //iwl_pcie_apm_lp_xtal_enable
     //TODO: Implement
+    
+    busSetBits(WPI_GP_CNTRL, CSR_GP_CNTRL_REG_FLAG_XTAL_ON);
+    
+    resetDevice();
+    
+    int ret = finishNICInit();
+    if (ret) {
+        LOG_ERROR("%s: finish nic init failed\n", DRVNAME);
+        busClearBits(WPI_GP_CNTRL, CSR_GP_CNTRL_REG_FLAG_XTAL_ON);
+        return;
+    }
+    
+    /*
+     * Clear "disable persistence" to avoid LP XTAL resetting when
+     * SHRD_HW_RST is applied in S3.
+     */
+    clearBitsPRPH(APMG_PCIDEV_STT_REG, APMG_PCIDEV_STT_VAL_PERSIST_DIS);
+    
+    /*
+     * Force APMG XTAL to be active to prevent its disabling by HW
+     * caused by APMG idle state.
+     */
+    uint32_t apmg_xtal_cfg_reg = busReadShr(SHR_APMG_XTAL_CFG_REG);
+    busWriteShr(SHR_APMG_XTAL_CFG_REG, apmg_xtal_cfg_reg | SHR_APMG_XTAL_CFG_XTAL_ON_REQ);
+    
+    resetDevice();
+    
+    //Enable LP XTAL by indirect access through CSR
+    uint32_t apmg_gp1_reg = busReadShr(SHR_APMG_GP1_REG);
+    busWriteShr(SHR_APMG_GP1_REG, apmg_gp1_reg | SHR_APMG_GP1_WF_XTAL_LP_EN | SHR_APMG_GP1_CHICKEN_BIT_SELECT);
+    
+    //Clear delay clock line power up
+    uint32_t dl_cfg_reg = busReadShr(SHR_APMG_DL_CFG_REG);
+    busWriteShr(SHR_APMG_DL_CFG_REG, dl_cfg_reg & ~SHR_APMG_DL_CFG_DL_CLOCK_POWER_UP);
+    
+    /*
+     * Enable persistence mode to avoid LP XTAL resetting when
+     * SHRD_HW_RST is applied in S3.
+     */
+    busSetBits(WPI_HW_IF_CONFIG, CSR_HW_IF_CONFIG_REG_PERSIST_MODE);
+    
+    /*
+     * Clear "initialization complete" bit to move adapter from
+     * D0A* (powered-up Active) --> D0U* (Uninitialized) state.
+     */
+    busClearBit(WPI_GP_CNTRL, deviceProps.deviceConfig->csr->flag_init_done);
+    
+    //Activates XTAL resources monitor
+    busSetBits(CSR_MONITOR_CFG_REG, CSR_MONITOR_XTAL_RESOURCES);
+    
+    //Release XTAL ON request
+    busClearBits(WPI_GP_CNTRL, CSR_GP_CNTRL_REG_FLAG_XTAL_ON);
+    
+    IOSleep(1);
+    
+    //Release APMG XTAL
+    busWriteShr(SHR_APMG_XTAL_CFG_REG, apmg_xtal_cfg_reg & ~SHR_APMG_XTAL_CFG_XTAL_ON_REQ);
 }
 //===================================
 
@@ -545,6 +802,7 @@ bus_addr_t IntelWiFiDriver::TFDGetTBAddress(void* __tfd, int index) {
     //iwl_pcie_tfd_tb_get_addr
     if (deviceProps.deviceConfig->use_tfh) {
         struct iwl_tfh_tfd* tfd = (iwl_tfh_tfd*)__tfd;
+        //TODO: Check here when implementing DMA
         struct iwl_tfh_tb* tb = &tfd->tbs[index];
         
         return tb->addr;
@@ -567,6 +825,7 @@ bus_addr_t IntelWiFiDriver::TFDGetTBAddress(void* __tfd, int index) {
 uint16_t IntelWiFiDriver::TFDGetTBLength(void* __tfd, int index) {
     if (deviceProps.deviceConfig->use_tfh) {
         struct iwl_tfh_tfd* tfd = (iwl_tfh_tfd*)__tfd;
+        //TODO: Check here when implementing DMA
         struct iwl_tfh_tb* tb = &tfd->tbs[index];
         
         return le16_to_cpu(tb->tb_len);
@@ -647,6 +906,11 @@ void IntelWiFiDriver::clearCommandInFlight() {
 
 void IntelWiFiDriver::apmStopMaster() {
     //iwl_pcie_apm_stop_master
+    //TODO: Implement
+}
+
+void IntelWiFiDriver::apmConfig() {
+    //iwl_pcie_apm_config
     //TODO: Implement
 }
 

@@ -52,21 +52,50 @@ void IntelWiFiDriver::busWrite8(uint16_t offest, uint8_t value) {
 uint32_t IntelWiFiDriver::busRead32(uint32_t offset) {
     return deviceProps.device->ioRead32(offset, deviceProps.deviceMemoryMap);
 }
+
+uint32_t IntelWiFiDriver::busReadShr(uint32_t address) {
+    busWrite32(HEEP_CTRL_WRD_PCIEX_CRTL_REG, ((address & 0x0000ffff) | (2 << 28)));
+    return busRead32(HEEP_CTRL_WRD_PCIEX_DATA_REG);
+}
+
+void IntelWiFiDriver::busWriteShr(uint32_t address, uint32_t value) {
+    busWrite32(HEEP_CTRL_WRD_PCIEX_DATA_REG, value);
+    busWrite32(HEEP_CTRL_WRD_PCIEX_CRTL_REG, ((address & 0x0000ffff) | (3 << 28)));
+}
 //==================================
 
 //==================================
 //          IO Bit opertaions
 //==================================
-//Reads uint32 at offset and sets the bit at position bitPosition to 1
+//Reads uint32 at offset and sets the bit at position bitPosition to 1, bitPosition specifies how much
+//to leftshift 1ul by
 void IntelWiFiDriver::busSetBit(uint32_t offset, uint8_t bitPosition) {
     uint32_t value = busRead32(offset);
     value |= BIT(bitPosition);
     busWrite32(offset, value);
 }
 
+//Reads value at offset and sets a number of bits, determined by bitPositions to 1, bitPositions has already been
+//shifted (more for use with the flags set in if_wpireg.h
+void IntelWiFiDriver::busSetBits(uint32_t offset, uint32_t bitPositions) {
+    uint32_t value = busRead32(offset);
+    value |= bitPositions;
+    busWrite32(offset, value);
+}
+
+//Reads value at offset and clears that bit, bitPosition specifies how much
+//to leftshift 1ul by
 void IntelWiFiDriver::busClearBit(uint32_t offset, uint8_t bitPosition) {
     uint32_t value = busRead32(offset);
     value &= ~BIT(bitPosition);
+    busWrite32(offset, value);
+}
+
+//Reads value at offset and clears the bits at bitPostions, bitPositions has already been
+//shifted (more for use with the flags set in if_wpireg.h
+void IntelWiFiDriver::busClearBits(uint32_t offset, uint32_t bitPositions) {
+    uint32_t value = busRead32(offset);
+    value &= ~bitPositions;
     busWrite32(offset, value);
 }
 
@@ -126,6 +155,16 @@ uint32_t IntelWiFiDriver::getPRPHMask() {
 void IntelWiFiDriver::writeUMAC_PRPH(uint32_t offset, uint32_t value) {
     //iwl_write_umac_prph
     writePRPH(offset + deviceProps.deviceConfig->umac_prph_offset, value);
+}
+
+void IntelWiFiDriver::setBitsPRPH(uint32_t offset, uint32_t mask) {
+    //iwl_set_bits_prph
+    //TODO: Implement
+}
+
+void IntelWiFiDriver::clearBitsPRPH(uint32_t offset, uint32_t mask) {
+    //iwl_clear_bits_prph
+    //TODO: Implement
 }
 
 //===================================

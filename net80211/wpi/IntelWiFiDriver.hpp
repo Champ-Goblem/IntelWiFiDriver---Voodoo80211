@@ -63,14 +63,20 @@ private:
     void busWrite32(uint32_t offset, uint32_t value);
     void busWrite8(uint16_t offfset, uint8_t value);
     uint32_t busRead32(uint32_t offset);
-    void write32Direct(volatile void* base, uint32_t offset, uint32_t value);
-    uint32_t read32Direct(volatile void* base, uint32_t offset);
+//    void write32Direct(volatile void* base, uint32_t offset, uint32_t value);
+//    uint32_t read32Direct(volatile void* base, uint32_t offset);
+    uint32_t busReadShr(uint32_t address);
+    void busWriteShr(uint32_t address, uint32_t value);
     void busSetBit(uint32_t offset, uint8_t bitPosition);
     void busClearBit(uint32_t offset, uint8_t bitPosition);
+    void busSetBits(uint32_t offset, uint32_t bitPositions);
+    void busClearBits(uint32_t offset, uint32_t bitPositions);
     int pollBit(uint32_t offset, uint32_t bits, uint32_t mask, int timeout);
     uint32_t readPRPH(uint32_t offset);
     void writePRPH(uint32_t offset, uint32_t value);
     uint32_t getPRPHMask();
+    void setBitsPRPH(uint32_t offset, uint32_t mask);
+    void clearBitsPRPH(uint32_t offset, uint32_t mask);
     void writeUMAC_PRPH(uint32_t offset, uint32_t value);
     int readIOMemToBuffer(uint32_t address, void* buffer, int dwords);
     
@@ -83,6 +89,7 @@ private:
     bool prepareCardHardware();
     int setHardwareReady();
     void unref();
+    int finishNICInit();
     
 #pragma mark MVM only functions (IntelWiFiDriver_mvm.cpp)
     void receivedNICError();
@@ -106,11 +113,15 @@ private:
     void rxStop();
     void apmStopG2(bool opModeLeave);
     void unmapTxQG2(int txqID);
-    void apmInitG2();
+    int apmInitG2();
     void freeTFDG2(iwl_txq *txq);
+    void unmapTFDG2(struct iwl_cmd_meta *meta, struct iwl_tfh_tfd *tfd);
+    int getNumTBSG2(struct iwl_tfh_tfd* tfd);
     void configureMSIX();
     void txStopG1();
     void apmStopG1(bool opModeLeave);
+    int apmInitG1();
+    void apm_LP_XTAL_Enable();
     void unmapTxQ(int txqID);
     void freeTSOPage(mbuf_t skb);
     void txQFreeTDF(struct iwl_txq* txq);
@@ -124,6 +135,7 @@ private:
     int queueIncWrap(int index);
     void clearCommandInFlight();
     void apmStopMaster();
+    void apmConfig();
     void wakeQueue(iwl_txq *txq);
     
 #pragma mark CTXT related stuff (IntelWiFiDriver_ctxt.cpp)

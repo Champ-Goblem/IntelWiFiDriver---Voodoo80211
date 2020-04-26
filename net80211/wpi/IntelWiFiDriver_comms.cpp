@@ -90,12 +90,12 @@ bool IntelWiFiDriver::prepareCardHardware() {
     int ret = setHardwareReady();
     if (ret >= 0) return true;
     
-    busSetBit(WPI_DBG_LINK_PWR_MGMT_REG, CSR_RESET_LINK_PWR_MGMT_DISABLED);
+    busSetBits(WPI_DBG_LINK_PWR_MGMT_REG, CSR_RESET_LINK_PWR_MGMT_DISABLED);
     IOSleep(2000);
     
     for (int c = 0; c < 10; c++) {
         //If hw not ready prepare conditions to check again
-        busSetBit(WPI_HW_IF_CONFIG, CSR_HW_IF_CONFIG_REG_PREPARE);
+        busSetBits(WPI_HW_IF_CONFIG, CSR_HW_IF_CONFIG_REG_PREPARE);
         int t = 0;
         do {
             ret = setHardwareReady();
@@ -113,10 +113,10 @@ bool IntelWiFiDriver::prepareCardHardware() {
 int IntelWiFiDriver::setHardwareReady() {
     //iwl_pcie_set_hw_ready
     
-    busSetBit(WPI_HW_IF_CONFIG, CSR_HW_IF_CONFIG_REG_BIT_NIC_READY);
+    busSetBits(WPI_HW_IF_CONFIG, CSR_HW_IF_CONFIG_REG_BIT_NIC_READY);
     
     int ret = pollBit(WPI_HW_IF_CONFIG, CSR_HW_IF_CONFIG_REG_BIT_NIC_READY, CSR_HW_IF_CONFIG_REG_BIT_NIC_READY, HW_READY_TIMEOUT);
-    if (ret >= 0) busSetBit(WPI_MBOX_SET, CSR_MBOX_SET_REG_OS_ALIVE);
+    if (ret >= 0) busSetBits(WPI_MBOX_SET, CSR_MBOX_SET_REG_OS_ALIVE);
     
     if (DEBUG) printf("%s: harware%s read\n", DRVNAME, ret < 0 ? " not" : "");
     return ret;
@@ -137,4 +137,9 @@ void IntelWiFiDriver::unref(){
     //command line arguments
     
     //[INFO]: iwl_trans_(ref/unref) command removed in iwlwifi-next tree
+}
+
+int IntelWiFiDriver::finishNICInit() {
+    //iwl_finish_nic_init
+    //TODO: Implement
 }
