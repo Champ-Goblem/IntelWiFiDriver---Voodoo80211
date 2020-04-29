@@ -52,6 +52,7 @@
 #define WPI_GP_CNTRL		0x024
 #define WPI_EEPROM		0x02c
 #define WPI_EEPROM_GP		0x030
+#define CSR_GIO_REG         0x03c
 #define WPI_UCODE_DRV_GP1   0x054
 #define WPI_UCODE_GP1_CLR	0x05c
 #define WPI_UCODE_GP2		0x060
@@ -176,6 +177,9 @@
 #define WPI_GP_CNTRL_RFKILL		(1 << 27)
 #define WPI_GP_CNTRL_REG_FLAG_GOING_TO_SLEEP (0x00000010)
 #define CSR_GP_CNTRL_REG_FLAG_XTAL_ON             (0x00000400)
+
+// Possible flags for register CSR_GIO_REG
+#define CSR_GIO_REG_VAL_L0S_ENABLED    (0x00000002)
 
 /* Possible flags for register WPI_GIO_CHICKEN. */
 #define WPI_GIO_CHICKEN_L1A_NO_L0S_RX	(1 << 23)

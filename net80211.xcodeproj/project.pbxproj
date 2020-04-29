@@ -158,6 +158,7 @@
 		C33E0A6F2326E1C700A9DC77 /* IntelWiFiDriver.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = IntelWiFiDriver.cpp; sourceTree = "<group>"; };
 		C33E0A702326E1C700A9DC77 /* IntelWiFiDriver.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = IntelWiFiDriver.hpp; sourceTree = "<group>"; };
 		C3408D1723CAC0E3006890B1 /* iwl-fh.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "iwl-fh.h"; sourceTree = "<group>"; };
+		C3410127245A24F4003F42C0 /* linux-pci_regs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "linux-pci_regs.h"; sourceTree = "<group>"; };
 		C345708B23F093FF007F2FBC /* IntelWiFiDriver_ops.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = IntelWiFiDriver_ops.hpp; sourceTree = "<group>"; };
 		C34ADB4B23C01E9B00A6E9F3 /* IntelWiFiDriver_debug.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = IntelWiFiDriver_debug.cpp; sourceTree = "<group>"; };
 		C3566F6E23C566880076978C /* IntelWiFiDriver_mvm.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = IntelWiFiDriver_mvm.cpp; sourceTree = "<group>"; };
@@ -367,6 +368,7 @@
 				C33C7B8423C39F5400BDD6BF /* iwl-config.h */,
 				C33C7B8523C3D68500BDD6BF /* internals.h */,
 				C33B097F23E653FF0057EB41 /* iwl-prph.h */,
+				C3410127245A24F4003F42C0 /* linux-pci_regs.h */,
 			);
 			path = iwlwifi_headers;
 			sourceTree = "<group>";

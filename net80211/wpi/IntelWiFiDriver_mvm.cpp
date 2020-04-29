@@ -149,7 +149,6 @@ void IntelWiFiDriver::reportScanAborted() {
 
 void IntelWiFiDriver::freeSKB(mbuf_t skb) {
     //iwl_mvm_free_skb
-    //TODO: Implement
 
     //I dont think this is acutally needed as we free mbufs with methods from
     //kpi_mbuf.h

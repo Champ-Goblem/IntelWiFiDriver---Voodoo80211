@@ -61,6 +61,9 @@ struct PCIDevice {
     bool                        debugRFKill;
     bool                        opmodeDown;
     bool                        isDown;
+    IOByteCount                 expressCapabilityOffset; //The offest of the PCIe express capabilities struct
+    bool                        powerManagementSupported; //Specifies if L0S is supported for the card [pm_supported]
+    bool                        enabledLTR; //ltr_enabled
     
     //Interrupt related variables
     IOEventSource*              interruptController;

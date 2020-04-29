@@ -62,6 +62,20 @@ void IntelWiFiDriver::busWriteShr(uint32_t address, uint32_t value) {
     busWrite32(HEEP_CTRL_WRD_PCIEX_DATA_REG, value);
     busWrite32(HEEP_CTRL_WRD_PCIEX_CRTL_REG, ((address & 0x0000ffff) | (3 << 28)));
 }
+
+uint16_t IntelWiFiDriver::pcieCapabilityRead16(uint32_t offset) {
+    //Check if the offset for PCI Express Capability has been set
+    if (!deviceProps.expressCapabilityOffset) {
+        if (deviceProps.device->extendedFindPCICapability(kIOPCIPCIExpressCapability, &deviceProps.expressCapabilityOffset)) {
+            if (DEBUG) printf("%s: Found express capabilities struct %llx", DRVNAME, deviceProps.expressCapabilityOffset);
+        } else {
+            LOG_ERROR("%s: Failed to find the express capabilities struct!\n", DRVNAME);
+        }
+    }
+    
+    uint16_t value = deviceProps.device->extendedConfigRead16(deviceProps.expressCapabilityOffset + offset);
+    return value;
+}
 //==================================
 
 //==================================
@@ -118,6 +132,8 @@ int IntelWiFiDriver::pollBit(uint32_t offset, uint32_t bits, uint32_t mask, int 
 //          PRPH Related
 //===================================
 uint32_t IntelWiFiDriver::readPRPH(uint32_t offset) {
+    //iwl_read_prph
+    //iwl_trans_pcie_read_prph
     IOInterruptState flags;
     uint32_t value = 0x5a5a5a5a;
     
@@ -132,6 +148,7 @@ uint32_t IntelWiFiDriver::readPRPH(uint32_t offset) {
 
 void IntelWiFiDriver::writePRPH(uint32_t offset, uint32_t value) {
     //iwl_write_prph
+    //iwl_trans_pcie_write_prph
     IOInterruptState flags;
     if (grabNICAccess(flags)) {
         //Makes a call to iwl_write_prph_no_grap which calls a debug trace function
@@ -159,12 +176,39 @@ void IntelWiFiDriver::writeUMAC_PRPH(uint32_t offset, uint32_t value) {
 
 void IntelWiFiDriver::setBitsPRPH(uint32_t offset, uint32_t mask) {
     //iwl_set_bits_prph
-    //TODO: Implement
+    IOInterruptState flags;
+    if (grabNICAccess(flags)) {
+        writePRPHNoGrab(offset,
+                        readPRPHNoGrab(offset) | mask);
+        releaseNICAccess(flags);
+    }
 }
 
 void IntelWiFiDriver::clearBitsPRPH(uint32_t offset, uint32_t mask) {
     //iwl_clear_bits_prph
+    IOInterruptState flags;
+    if (grabNICAccess(flags)) {
+        uint32_t value = readPRPHNoGrab(offset);
+        writePRPHNoGrab(offset, (value & ~mask));
+        releaseNICAccess(flags);
+    }
+}
+
+void IntelWiFiDriver::writePRPHNoGrab(uint32_t offset, uint32_t value) {
+    //iwl_write_prph_no_grab
+
+    //They trace the event first, this might be useful
+    //TODO: Possibly trace
+    writePRPH(offset, value);
+}
+
+uint32_t IntelWiFiDriver::readPRPHNoGrab(uint32_t offset) {
+    //iwl_read_prph_no_grab
     //TODO: Implement
+    
+    //Another trace here
+    //TODO: Possibly trace
+    return readPRPH(offset);
 }
 
 //===================================

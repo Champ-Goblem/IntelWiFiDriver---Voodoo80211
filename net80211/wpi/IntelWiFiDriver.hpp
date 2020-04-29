@@ -16,6 +16,7 @@
 #include "iwlwifi_headers/deviceConfigs.h"
 #include "iwlwifi_headers/internals.h"
 #include "iwlwifi_headers/iwl-prph.h"
+#include "iwlwifi_headers/linux-pci_regs.h"
 //#include "iwlwifi_headers/mvm.h"
 
 #include <os/log.h>
@@ -71,6 +72,7 @@ private:
     void busClearBit(uint32_t offset, uint8_t bitPosition);
     void busSetBits(uint32_t offset, uint32_t bitPositions);
     void busClearBits(uint32_t offset, uint32_t bitPositions);
+    uint16_t pcieCapabilityRead16(uint32_t offset);
     int pollBit(uint32_t offset, uint32_t bits, uint32_t mask, int timeout);
     uint32_t readPRPH(uint32_t offset);
     void writePRPH(uint32_t offset, uint32_t value);
@@ -78,6 +80,8 @@ private:
     void setBitsPRPH(uint32_t offset, uint32_t mask);
     void clearBitsPRPH(uint32_t offset, uint32_t mask);
     void writeUMAC_PRPH(uint32_t offset, uint32_t value);
+    void writePRPHNoGrab(uint32_t offset, uint32_t value);
+    uint32_t readPRPHNoGrab(uint32_t offset);
     int readIOMemToBuffer(uint32_t address, void* buffer, int dwords);
     
 #pragma mark Device communication functions (IntelWiFiDriver_comms.cpp)

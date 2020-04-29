@@ -736,7 +736,8 @@ void IntelWiFiDriver::txQFreeTDF(struct iwl_txq* txq) {
             //Using MVM version for freeing SKBs by default, will need to update
             //if adding DVM functionality
             
-            freeSKB(skb);
+//            freeSKB(skb);
+            mbuf_freem_list(skb);
             txq->entries[commandIndex].skb = NULL;
         }
     }
@@ -880,7 +881,7 @@ void IntelWiFiDriver::mapNonRxCauses() {
 
 int IntelWiFiDriver::queueIncWrap(int index) {
     //iwl_queue_inc_wrap
-    //TODO: Implement
+    return ++index & (deviceProps.deviceConfig->base_params->max_tfd_queue_size - 1);
 }
 
 void IntelWiFiDriver::clearCommandInFlight() {
@@ -906,17 +907,42 @@ void IntelWiFiDriver::clearCommandInFlight() {
 
 void IntelWiFiDriver::apmStopMaster() {
     //iwl_pcie_apm_stop_master
-    //TODO: Implement
+    busSetBit(deviceProps.deviceConfig->csr->addr_sw_reset, deviceProps.deviceConfig->csr->flag_stop_master);
+    
+    int ret = pollBit(deviceProps.deviceConfig->csr->addr_sw_reset, BIT(deviceProps.deviceConfig->csr->flag_master_dis), BIT(deviceProps.deviceConfig->csr->flag_master_dis), 100);
+    if (ret < 0) LOG_ERROR("%s: Master disable timed out\n", DRVNAME);
+    
+    if (DEBUG) printf("%s: Stop master\n", DRVNAME);
 }
 
 void IntelWiFiDriver::apmConfig() {
     //iwl_pcie_apm_config
-    //TODO: Implement
+    /*
+     * HW bug W/A for instability in PCIe bus L0S->L1 transition.
+     * Check if BIOS (or OS) enabled L1-ASPM on this device.
+     * If so (likely), disable L0S, so device moves directly L0->L1;
+     *    costs negligible amount of power savings.
+     * If not (unlikely), enable L0S, so there is at least some
+     *    power savings, even without L1.
+     */
+    uint16_t lctl = pcieCapabilityRead16(PCI_EXP_LNKCTL);
+    if (lctl & PCI_EXP_LNKCTL_ASPM_L1)
+        busSetBits(CSR_GIO_REG, CSR_GIO_REG_VAL_L0S_ENABLED);
+    else
+        busClearBits(CSR_GIO_REG, CSR_GIO_REG_VAL_L0S_ENABLED);
+    
+    deviceProps.powerManagementSupported = !(lctl & PCI_EXP_LNKCTL_ASPM_L0S);
+    
+    uint16_t cap = pcieCapabilityRead16(PCI_EXP_DEVCTL2);
+    deviceProps.enabledLTR = cap & PCI_EXP_DEVCTL2_LTR_EN;
+    
+    if (DEBUG) printf("%s: L1 %sabled - LTR %sabled\n", DRVNAME,
+                      (lctl & PCI_EXP_LNKCTL_ASPM_L1) ? "En" : "Dis",
+                      deviceProps.enabledLTR ? "En" : "Dis");
 }
 
 void IntelWiFiDriver::wakeQueue(iwl_txq *txq) {
     //iwl_wake_queue
-    //TODO: Implement
     if (test_and_clear_bit(txq->id, deviceProps.txq_stopped)) {
         if (DEBUG) printf("%s: Wake hwq %d\n", DRVNAME, txq->id);
         mvmWakeSWQueue(txq->id);

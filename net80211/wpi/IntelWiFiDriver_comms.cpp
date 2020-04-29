@@ -54,6 +54,10 @@ void IntelWiFiDriver::releaseNICAccess(IOInterruptState flags) {
 }
 
 void IntelWiFiDriver::restartHardware() {
+    //This could be janky...
+    //For now this might have to do until we can find a way to restart the device safely
+    LOG_ERROR("%s: Restart hardware called, time to crash and burn ...\n", DRVNAME);
+    stop(OSDynamicCast(IOService, deviceProps.device));
     //ieee80211_restart_hw
     //TODO: Implement restarting hardware
     
@@ -142,4 +146,30 @@ void IntelWiFiDriver::unref(){
 int IntelWiFiDriver::finishNICInit() {
     //iwl_finish_nic_init
     //TODO: Implement
+    
+    if (deviceProps.deviceConfig->bisr_workaround) {
+        IOSleep(2);
+    }
+    
+    //Set init complete bit to move adapter from D0U* -> D0A*
+    busSetBit(WPI_GP_CNTRL, deviceProps.deviceConfig->csr->flag_init_done);
+    
+    if (deviceProps.deviceConfig->device_family == IWL_DEVICE_FAMILY_8000) {
+        IOSleep(1);
+    }
+    
+    /*
+     * Wait for clock stabilization; once stabilized, access to
+     * device-internal resources is supported, e.g. iwl_write_prph()
+     * and accesses to uCode SRAM.
+     */
+    int err = pollBit(WPI_GP_CNTRL, BIT(deviceProps.deviceConfig->csr->flag_mac_clock_ready), BIT(deviceProps.deviceConfig->csr->flag_mac_clock_ready), 25000);
+    if (err < 0) LOG_ERROR("%s: Failed to wake NIC\n", DRVNAME);
+    
+    if (deviceProps.deviceConfig->bisr_workaround) {
+        //Ensure BISR shift has finished
+        IOSleep(1);
+    }
+    
+    return err < 0 ? err : 0;
 }
