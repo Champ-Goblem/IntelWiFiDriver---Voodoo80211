@@ -17,6 +17,9 @@
 #include "iwlwifi_headers/internals.h"
 #include "iwlwifi_headers/iwl-prph.h"
 #include "iwlwifi_headers/linux-pci_regs.h"
+#include "iwlwifi_headers/fw/iwl-img.h"
+#include "iwlwifi_headers/iwl-trans.h"
+#include "iwlwifi_headers/mvm/iwl-sta.h"
 //#include "iwlwifi_headers/mvm.h"
 
 #include <os/log.h>
@@ -102,6 +105,10 @@ private:
     void setRFKillState(bool status);
     void freeSKB(mbuf_t skb);
     void mvmWakeSWQueue(int txqID);
+    int mvmScanUIDByStatus(int status);
+    void mvmQueueStateChange(int hwQueue, bool start);
+    bool mvmHasNewTxAPI();
+    int mvmIsStaticQueue(int queue);
     
 #pragma mark Notification wait helpers (IntelWiFiDriver_notif.cpp)
     void abortNotificationWaits();
@@ -146,6 +153,12 @@ private:
     void ctxtInfoFreePaging();
     void ctxtInfoFreeG3();
     void ctxtInfoFree();
+    
+#pragma mark Firmware relataed stuff (IntelWiFiDriver_firmware.cpp)
+    bool checkFWCapabilities(iwl_ucode_tlv_capa capabilities);
+    
+#pragma mark ieee80211 related functions (IntelWiFiDriver_ieee80211.cpp)
+    virtual int ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt);
     
 #pragma mark Debugging (IntelWiFiDriver_debug.cpp)
     void printRefCounts();

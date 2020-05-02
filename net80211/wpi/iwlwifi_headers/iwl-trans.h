@@ -75,7 +75,8 @@
 //#include "iwl-op-mode.h"
 
 #include "linux-porting.h"
-#include "firmware-defs.h"
+#include "fw/iwl-img.h"
+//#include "firmware-defs.h"
 
 /**
  * DOC: Transport layer - what is it ?
@@ -125,31 +126,31 @@
 #define INDEX_TO_SEQ(i)	((i) & 0xff)
 #define SEQ_RX_FRAME	cpu_to_le16(0x8000)
 
-/*
- * those functions retrieve specific information from
- * the id field in the iwl_host_cmd struct which contains
- * the command id, the group id and the version of the command
- * and vice versa
-*/
-static inline u8 iwl_cmd_opcode(u32 cmdid)
-{
-	return cmdid & 0xFF;
-}
-
-static inline u8 iwl_cmd_groupid(u32 cmdid)
-{
-	return ((cmdid & 0xFF00) >> 8);
-}
-
-static inline u8 iwl_cmd_version(u32 cmdid)
-{
-	return ((cmdid & 0xFF0000) >> 16);
-}
-
-static inline u32 iwl_cmd_id(u8 opcode, u8 groupid, u8 version)
-{
-	return opcode + (groupid << 8) + (version << 16);
-}
+///*
+// * those functions retrieve specific information from
+// * the id field in the iwl_host_cmd struct which contains
+// * the command id, the group id and the version of the command
+// * and vice versa
+//*/
+//static inline u8 iwl_cmd_opcode(u32 cmdid)
+//{
+//    return cmdid & 0xFF;
+//}
+//
+//static inline u8 iwl_cmd_groupid(u32 cmdid)
+//{
+//    return ((cmdid & 0xFF00) >> 8);
+//}
+//
+//static inline u8 iwl_cmd_version(u32 cmdid)
+//{
+//    return ((cmdid & 0xFF0000) >> 16);
+//}
+//
+//static inline u32 iwl_cmd_id(u8 opcode, u8 groupid, u8 version)
+//{
+//    return opcode + (groupid << 8) + (version << 16);
+//}
 
 /* make u16 wide id out of u8 group and opcode */
 #define WIDE_ID(grp, opcode) ((grp << 8) | opcode)
@@ -230,15 +231,15 @@ struct iwl_rx_packet {
 #define FH_RSCSR_FRAME_INVALID		0x55550000
 #define FH_RSCSR_FRAME_ALIGN		0x40
 
-static inline u32 iwl_rx_packet_len(const struct iwl_rx_packet *pkt)
-{
-	return le32_to_cpu(pkt->len_n_flags) & FH_RSCSR_FRAME_SIZE_MSK;
-}
-
-static inline u32 iwl_rx_packet_payload_len(const struct iwl_rx_packet *pkt)
-{
-	return iwl_rx_packet_len(pkt) - sizeof(pkt->hdr);
-}
+//static inline u32 iwl_rx_packet_len(const struct iwl_rx_packet *pkt)
+//{
+//    return le32_to_cpu(pkt->len_n_flags) & FH_RSCSR_FRAME_SIZE_MSK;
+//}
+//
+//static inline u32 iwl_rx_packet_payload_len(const struct iwl_rx_packet *pkt)
+//{
+//    return iwl_rx_packet_len(pkt) - sizeof(pkt->hdr);
+//}
 
 /**
  * enum CMD_MODE - how to send the host commands ?
@@ -390,10 +391,13 @@ struct iwl_rx_cmd_buffer {
  * Maximum number of HW queues the transport layer
  * currently supports
  */
-#define IWL_MAX_HW_QUEUES		32
-#define IWL_MAX_TID_COUNT	8
-#define IWL_FRAME_LIMIT	64
-#define IWL_MAX_RX_HW_QUEUES	16
+#define IWL_MAX_HW_QUEUES        32
+#define IWL_MAX_TVQM_QUEUES        512
+
+#define IWL_MAX_TID_COUNT    8
+#define IWL_MGMT_TID        15
+#define IWL_FRAME_LIMIT    64
+#define IWL_MAX_RX_HW_QUEUES    16
 
 /**
  * enum iwl_wowlan_status - WoWLAN image/device status
@@ -744,317 +748,317 @@ struct iwl_trans {
 #pragma options align=reset
 };
 
-static inline void iwl_trans_configure(struct iwl_trans *trans,
-				       const struct iwl_trans_config *trans_cfg)
-{
-	trans->op_mode = trans_cfg->op_mode;
-
-	trans->ops->configure(trans, trans_cfg);
-}
-
-static inline int _iwl_trans_start_hw(struct iwl_trans *trans, bool low_power)
-{
-	might_sleep();
-
-	return trans->ops->start_hw(trans, low_power);
-}
-
-static inline int iwl_trans_start_hw(struct iwl_trans *trans)
-{
-	return trans->ops->start_hw(trans, true);
-}
-
-static inline void iwl_trans_op_mode_leave(struct iwl_trans *trans)
-{
-	might_sleep();
-
-	if (trans->ops->op_mode_leave)
-		trans->ops->op_mode_leave(trans);
-
-	trans->op_mode = NULL;
-
-	trans->state = IWL_TRANS_NO_FW;
-}
-
-static inline void iwl_trans_fw_alive(struct iwl_trans *trans, u32 scd_addr)
-{
-	might_sleep();
-
-	trans->state = IWL_TRANS_FW_ALIVE;
-
-	trans->ops->fw_alive(trans, scd_addr);
-}
-
-static inline int iwl_trans_start_fw(struct iwl_trans *trans,
-				     const struct fw_img *fw,
-				     bool run_in_rfkill)
-{
-	might_sleep();
-
-	WARN_ON_ONCE(!trans->rx_mpdu_cmd);
-
-	clear_bit(STATUS_FW_ERROR, &trans->status);
-	return trans->ops->start_fw(trans, fw, run_in_rfkill);
-}
-
-static inline int iwl_trans_update_sf(struct iwl_trans *trans,
-				      struct iwl_sf_region *st_fwrd_space)
-{
-	might_sleep();
-
-	if (trans->ops->update_sf)
-		return trans->ops->update_sf(trans, st_fwrd_space);
-
-	return 0;
-}
-
-static inline void _iwl_trans_stop_device(struct iwl_trans *trans,
-					  bool low_power)
-{
-	might_sleep();
-
-	trans->ops->stop_device(trans, low_power);
-
-	trans->state = IWL_TRANS_NO_FW;
-}
-
-static inline void iwl_trans_stop_device(struct iwl_trans *trans)
-{
-	_iwl_trans_stop_device(trans, true);
-}
-
-static inline void iwl_trans_d3_suspend(struct iwl_trans *trans, bool test)
-{
-	might_sleep();
-	if (trans->ops->d3_suspend)
-		trans->ops->d3_suspend(trans, test);
-}
-
-static inline int iwl_trans_d3_resume(struct iwl_trans *trans,
-				      enum iwl_d3_status *status,
-				      bool test)
-{
-	might_sleep();
-	if (!trans->ops->d3_resume)
-		return 0;
-
-	return trans->ops->d3_resume(trans, status, test);
-}
-
-static inline void iwl_trans_ref(struct iwl_trans *trans)
-{
-	if (trans->ops->ref)
-		trans->ops->ref(trans);
-}
-
-static inline void iwl_trans_unref(struct iwl_trans *trans)
-{
-	if (trans->ops->unref)
-		trans->ops->unref(trans);
-}
-
-static inline int iwl_trans_suspend(struct iwl_trans *trans)
-{
-	if (!trans->ops->suspend)
-		return 0;
-
-	return trans->ops->suspend(trans);
-}
-
-static inline void iwl_trans_resume(struct iwl_trans *trans)
-{
-	if (trans->ops->resume)
-		trans->ops->resume(trans);
-}
-
-static inline struct iwl_trans_dump_data *
-iwl_trans_dump_data(struct iwl_trans *trans,
-		    struct iwl_fw_dbg_trigger_tlv *trigger)
-{
-	if (!trans->ops->dump_data)
-		return NULL;
-	return trans->ops->dump_data(trans, trigger);
-}
-
-static inline int iwl_trans_send_cmd(struct iwl_trans *trans,
-				     struct iwl_host_cmd *cmd)
-{
-	int ret;
-
-	if (unlikely(!(cmd->flags & CMD_SEND_IN_RFKILL) &&
-		     test_bit(STATUS_RFKILL, &trans->status)))
-		return -ERFKILL;
-
-	if (unlikely(test_bit(STATUS_FW_ERROR, &trans->status)))
-		return -EIO;
-
-	if (unlikely(trans->state != IWL_TRANS_FW_ALIVE)) {
-		IWL_ERR(trans, "%s bad state = %d\n", __func__, trans->state);
-		return -EIO;
-	}
-
-#ifdef CONFIG_LOCKDEP
-	if (!(cmd->flags & CMD_ASYNC))
-		lock_map_acquire_read(&trans->sync_cmd_lockdep_map);
-#endif
-	ret = trans->ops->send_cmd(trans, cmd);
-
-#ifdef CONFIG_LOCKDEP
-	if (!(cmd->flags & CMD_ASYNC))
-		lock_map_release(&trans->sync_cmd_lockdep_map);
-#endif
-
-	return ret;
-}
-
-static inline struct iwl_device_cmd *
-iwl_trans_alloc_tx_cmd(struct iwl_trans *trans)
-{
-	u8 *dev_cmd_ptr = kmem_cache_alloc(trans->dev_cmd_pool, GFP_ATOMIC);
-
-	if (unlikely(dev_cmd_ptr == NULL))
-		return NULL;
-
-	return (struct iwl_device_cmd *)
-			(dev_cmd_ptr + trans->dev_cmd_headroom);
-}
-
-static inline void iwl_trans_free_tx_cmd(struct iwl_trans *trans,
-					 struct iwl_device_cmd *dev_cmd)
-{
-	u8 *dev_cmd_ptr = (u8 *)dev_cmd - trans->dev_cmd_headroom;
-
-	kmem_cache_free(trans->dev_cmd_pool, dev_cmd_ptr);
-}
-
-static inline int iwl_trans_tx(struct iwl_trans *trans, struct sk_buff *skb,
-			       struct iwl_device_cmd *dev_cmd, int queue)
-{
-	if (unlikely(test_bit(STATUS_FW_ERROR, &trans->status)))
-		return -EIO;
-
-	if (unlikely(trans->state != IWL_TRANS_FW_ALIVE))
-		IWL_ERR(trans, "%s bad state = %d\n", __func__, trans->state);
-
-	return trans->ops->tx(trans, skb, dev_cmd, queue);
-}
-
-static inline void iwl_trans_reclaim(struct iwl_trans *trans, int queue,
-				     int ssn, struct sk_buff_head *skbs)
-{
-	if (unlikely(trans->state != IWL_TRANS_FW_ALIVE))
-		IWL_ERR(trans, "%s bad state = %d\n", __func__, trans->state);
-
-	trans->ops->reclaim(trans, queue, ssn, skbs);
-}
-
-static inline void iwl_trans_txq_disable(struct iwl_trans *trans, int queue,
-					 bool configure_scd)
-{
-	trans->ops->txq_disable(trans, queue, configure_scd);
-}
-
-static inline void
-iwl_trans_txq_enable_cfg(struct iwl_trans *trans, int queue, u16 ssn,
-			 const struct iwl_trans_txq_scd_cfg *cfg,
-			 unsigned int queue_wdg_timeout)
-{
-	might_sleep();
-
-	if (unlikely((trans->state != IWL_TRANS_FW_ALIVE)))
-		IWL_ERR(trans, "%s bad state = %d\n", __func__, trans->state);
-
-	trans->ops->txq_enable(trans, queue, ssn, cfg, queue_wdg_timeout);
-}
-
-static inline void iwl_trans_txq_enable(struct iwl_trans *trans, int queue,
-					int fifo, int sta_id, int tid,
-					int frame_limit, u16 ssn,
-					unsigned int queue_wdg_timeout)
-{
-	struct iwl_trans_txq_scd_cfg cfg = {
-		.fifo = fifo,
-		.sta_id = sta_id,
-		.tid = tid,
-		.frame_limit = frame_limit,
-		.aggregate = sta_id >= 0,
-	};
-
-	iwl_trans_txq_enable_cfg(trans, queue, ssn, &cfg, queue_wdg_timeout);
-}
-
-static inline
-void iwl_trans_ac_txq_enable(struct iwl_trans *trans, int queue, int fifo,
-			     unsigned int queue_wdg_timeout)
-{
-	struct iwl_trans_txq_scd_cfg cfg = {
-		.fifo = fifo,
-		.sta_id = -1,
-		.tid = IWL_MAX_TID_COUNT,
-		.frame_limit = IWL_FRAME_LIMIT,
-		.aggregate = false,
-	};
-
-	iwl_trans_txq_enable_cfg(trans, queue, 0, &cfg, queue_wdg_timeout);
-}
-
-static inline void iwl_trans_freeze_txq_timer(struct iwl_trans *trans,
-					      unsigned long txqs,
-					      bool freeze)
-{
-	if (unlikely(trans->state != IWL_TRANS_FW_ALIVE))
-		IWL_ERR(trans, "%s bad state = %d\n", __func__, trans->state);
-
-	if (trans->ops->freeze_txq_timer)
-		trans->ops->freeze_txq_timer(trans, txqs, freeze);
-}
-
-static inline int iwl_trans_wait_tx_queue_empty(struct iwl_trans *trans,
-						u32 txqs)
-{
-	if (unlikely(trans->state != IWL_TRANS_FW_ALIVE))
-		IWL_ERR(trans, "%s bad state = %d\n", __func__, trans->state);
-
-	return trans->ops->wait_tx_queue_empty(trans, txqs);
-}
-
-static inline int iwl_trans_dbgfs_register(struct iwl_trans *trans,
-					   struct dentry *dir)
-{
-	return trans->ops->dbgfs_register(trans, dir);
-}
-
-static inline void iwl_trans_write8(struct iwl_trans *trans, u32 ofs, u8 val)
-{
-	trans->ops->write8(trans, ofs, val);
-}
-
-static inline void iwl_trans_write32(struct iwl_trans *trans, u32 ofs, u32 val)
-{
-	trans->ops->write32(trans, ofs, val);
-}
-
-static inline u32 iwl_trans_read32(struct iwl_trans *trans, u32 ofs)
-{
-	return trans->ops->read32(trans, ofs);
-}
-
-static inline u32 iwl_trans_read_prph(struct iwl_trans *trans, u32 ofs)
-{
-	return trans->ops->read_prph(trans, ofs);
-}
-
-static inline void iwl_trans_write_prph(struct iwl_trans *trans, u32 ofs,
-					u32 val)
-{
-	return trans->ops->write_prph(trans, ofs, val);
-}
-
-static inline int iwl_trans_read_mem(struct iwl_trans *trans, u32 addr,
-				     void *buf, int dwords)
-{
-	return trans->ops->read_mem(trans, addr, buf, dwords);
-}
+//static inline void iwl_trans_configure(struct iwl_trans *trans,
+//                       const struct iwl_trans_config *trans_cfg)
+//{
+//    trans->op_mode = trans_cfg->op_mode;
+//
+//    trans->ops->configure(trans, trans_cfg);
+//}
+//
+//static inline int _iwl_trans_start_hw(struct iwl_trans *trans, bool low_power)
+//{
+//    might_sleep();
+//
+//    return trans->ops->start_hw(trans, low_power);
+//}
+//
+//static inline int iwl_trans_start_hw(struct iwl_trans *trans)
+//{
+//    return trans->ops->start_hw(trans, true);
+//}
+//
+//static inline void iwl_trans_op_mode_leave(struct iwl_trans *trans)
+//{
+//    might_sleep();
+//
+//    if (trans->ops->op_mode_leave)
+//        trans->ops->op_mode_leave(trans);
+//
+//    trans->op_mode = NULL;
+//
+//    trans->state = IWL_TRANS_NO_FW;
+//}
+//
+//static inline void iwl_trans_fw_alive(struct iwl_trans *trans, u32 scd_addr)
+//{
+//    might_sleep();
+//
+//    trans->state = IWL_TRANS_FW_ALIVE;
+//
+//    trans->ops->fw_alive(trans, scd_addr);
+//}
+//
+//static inline int iwl_trans_start_fw(struct iwl_trans *trans,
+//                     const struct fw_img *fw,
+//                     bool run_in_rfkill)
+//{
+//    might_sleep();
+//
+//    WARN_ON_ONCE(!trans->rx_mpdu_cmd);
+//
+//    clear_bit(STATUS_FW_ERROR, &trans->status);
+//    return trans->ops->start_fw(trans, fw, run_in_rfkill);
+//}
+//
+//static inline int iwl_trans_update_sf(struct iwl_trans *trans,
+//                      struct iwl_sf_region *st_fwrd_space)
+//{
+//    might_sleep();
+//
+//    if (trans->ops->update_sf)
+//        return trans->ops->update_sf(trans, st_fwrd_space);
+//
+//    return 0;
+//}
+//
+//static inline void _iwl_trans_stop_device(struct iwl_trans *trans,
+//                      bool low_power)
+//{
+//    might_sleep();
+//
+//    trans->ops->stop_device(trans, low_power);
+//
+//    trans->state = IWL_TRANS_NO_FW;
+//}
+//
+//static inline void iwl_trans_stop_device(struct iwl_trans *trans)
+//{
+//    _iwl_trans_stop_device(trans, true);
+//}
+//
+//static inline void iwl_trans_d3_suspend(struct iwl_trans *trans, bool test)
+//{
+//    might_sleep();
+//    if (trans->ops->d3_suspend)
+//        trans->ops->d3_suspend(trans, test);
+//}
+//
+//static inline int iwl_trans_d3_resume(struct iwl_trans *trans,
+//                      enum iwl_d3_status *status,
+//                      bool test)
+//{
+//    might_sleep();
+//    if (!trans->ops->d3_resume)
+//        return 0;
+//
+//    return trans->ops->d3_resume(trans, status, test);
+//}
+//
+//static inline void iwl_trans_ref(struct iwl_trans *trans)
+//{
+//    if (trans->ops->ref)
+//        trans->ops->ref(trans);
+//}
+//
+//static inline void iwl_trans_unref(struct iwl_trans *trans)
+//{
+//    if (trans->ops->unref)
+//        trans->ops->unref(trans);
+//}
+//
+//static inline int iwl_trans_suspend(struct iwl_trans *trans)
+//{
+//    if (!trans->ops->suspend)
+//        return 0;
+//
+//    return trans->ops->suspend(trans);
+//}
+//
+//static inline void iwl_trans_resume(struct iwl_trans *trans)
+//{
+//    if (trans->ops->resume)
+//        trans->ops->resume(trans);
+//}
+//
+//static inline struct iwl_trans_dump_data *
+//iwl_trans_dump_data(struct iwl_trans *trans,
+//            struct iwl_fw_dbg_trigger_tlv *trigger)
+//{
+//    if (!trans->ops->dump_data)
+//        return NULL;
+//    return trans->ops->dump_data(trans, trigger);
+//}
+//
+//static inline int iwl_trans_send_cmd(struct iwl_trans *trans,
+//                     struct iwl_host_cmd *cmd)
+//{
+//    int ret;
+//
+//    if (unlikely(!(cmd->flags & CMD_SEND_IN_RFKILL) &&
+//             test_bit(STATUS_RFKILL, &trans->status)))
+//        return -ERFKILL;
+//
+//    if (unlikely(test_bit(STATUS_FW_ERROR, &trans->status)))
+//        return -EIO;
+//
+//    if (unlikely(trans->state != IWL_TRANS_FW_ALIVE)) {
+//        IWL_ERR(trans, "%s bad state = %d\n", __func__, trans->state);
+//        return -EIO;
+//    }
+//
+//#ifdef CONFIG_LOCKDEP
+//    if (!(cmd->flags & CMD_ASYNC))
+//        lock_map_acquire_read(&trans->sync_cmd_lockdep_map);
+//#endif
+//    ret = trans->ops->send_cmd(trans, cmd);
+//
+//#ifdef CONFIG_LOCKDEP
+//    if (!(cmd->flags & CMD_ASYNC))
+//        lock_map_release(&trans->sync_cmd_lockdep_map);
+//#endif
+//
+//    return ret;
+//}
+//
+//static inline struct iwl_device_cmd *
+//iwl_trans_alloc_tx_cmd(struct iwl_trans *trans)
+//{
+//    u8 *dev_cmd_ptr = kmem_cache_alloc(trans->dev_cmd_pool, GFP_ATOMIC);
+//
+//    if (unlikely(dev_cmd_ptr == NULL))
+//        return NULL;
+//
+//    return (struct iwl_device_cmd *)
+//            (dev_cmd_ptr + trans->dev_cmd_headroom);
+//}
+//
+//static inline void iwl_trans_free_tx_cmd(struct iwl_trans *trans,
+//                     struct iwl_device_cmd *dev_cmd)
+//{
+//    u8 *dev_cmd_ptr = (u8 *)dev_cmd - trans->dev_cmd_headroom;
+//
+//    kmem_cache_free(trans->dev_cmd_pool, dev_cmd_ptr);
+//}
+//
+//static inline int iwl_trans_tx(struct iwl_trans *trans, struct sk_buff *skb,
+//                   struct iwl_device_cmd *dev_cmd, int queue)
+//{
+//    if (unlikely(test_bit(STATUS_FW_ERROR, &trans->status)))
+//        return -EIO;
+//
+//    if (unlikely(trans->state != IWL_TRANS_FW_ALIVE))
+//        IWL_ERR(trans, "%s bad state = %d\n", __func__, trans->state);
+//
+//    return trans->ops->tx(trans, skb, dev_cmd, queue);
+//}
+//
+//static inline void iwl_trans_reclaim(struct iwl_trans *trans, int queue,
+//                     int ssn, struct sk_buff_head *skbs)
+//{
+//    if (unlikely(trans->state != IWL_TRANS_FW_ALIVE))
+//        IWL_ERR(trans, "%s bad state = %d\n", __func__, trans->state);
+//
+//    trans->ops->reclaim(trans, queue, ssn, skbs);
+//}
+//
+//static inline void iwl_trans_txq_disable(struct iwl_trans *trans, int queue,
+//                     bool configure_scd)
+//{
+//    trans->ops->txq_disable(trans, queue, configure_scd);
+//}
+//
+//static inline void
+//iwl_trans_txq_enable_cfg(struct iwl_trans *trans, int queue, u16 ssn,
+//             const struct iwl_trans_txq_scd_cfg *cfg,
+//             unsigned int queue_wdg_timeout)
+//{
+//    might_sleep();
+//
+//    if (unlikely((trans->state != IWL_TRANS_FW_ALIVE)))
+//        IWL_ERR(trans, "%s bad state = %d\n", __func__, trans->state);
+//
+//    trans->ops->txq_enable(trans, queue, ssn, cfg, queue_wdg_timeout);
+//}
+//
+//static inline void iwl_trans_txq_enable(struct iwl_trans *trans, int queue,
+//                    int fifo, int sta_id, int tid,
+//                    int frame_limit, u16 ssn,
+//                    unsigned int queue_wdg_timeout)
+//{
+//    struct iwl_trans_txq_scd_cfg cfg = {
+//        .fifo = fifo,
+//        .sta_id = sta_id,
+//        .tid = tid,
+//        .frame_limit = frame_limit,
+//        .aggregate = sta_id >= 0,
+//    };
+//
+//    iwl_trans_txq_enable_cfg(trans, queue, ssn, &cfg, queue_wdg_timeout);
+//}
+//
+//static inline
+//void iwl_trans_ac_txq_enable(struct iwl_trans *trans, int queue, int fifo,
+//                 unsigned int queue_wdg_timeout)
+//{
+//    struct iwl_trans_txq_scd_cfg cfg = {
+//        .fifo = fifo,
+//        .sta_id = -1,
+//        .tid = IWL_MAX_TID_COUNT,
+//        .frame_limit = IWL_FRAME_LIMIT,
+//        .aggregate = false,
+//    };
+//
+//    iwl_trans_txq_enable_cfg(trans, queue, 0, &cfg, queue_wdg_timeout);
+//}
+//
+//static inline void iwl_trans_freeze_txq_timer(struct iwl_trans *trans,
+//                          unsigned long txqs,
+//                          bool freeze)
+//{
+//    if (unlikely(trans->state != IWL_TRANS_FW_ALIVE))
+//        IWL_ERR(trans, "%s bad state = %d\n", __func__, trans->state);
+//
+//    if (trans->ops->freeze_txq_timer)
+//        trans->ops->freeze_txq_timer(trans, txqs, freeze);
+//}
+//
+//static inline int iwl_trans_wait_tx_queue_empty(struct iwl_trans *trans,
+//                        u32 txqs)
+//{
+//    if (unlikely(trans->state != IWL_TRANS_FW_ALIVE))
+//        IWL_ERR(trans, "%s bad state = %d\n", __func__, trans->state);
+//
+//    return trans->ops->wait_tx_queue_empty(trans, txqs);
+//}
+//
+//static inline int iwl_trans_dbgfs_register(struct iwl_trans *trans,
+//                       struct dentry *dir)
+//{
+//    return trans->ops->dbgfs_register(trans, dir);
+//}
+//
+//static inline void iwl_trans_write8(struct iwl_trans *trans, u32 ofs, u8 val)
+//{
+//    trans->ops->write8(trans, ofs, val);
+//}
+//
+//static inline void iwl_trans_write32(struct iwl_trans *trans, u32 ofs, u32 val)
+//{
+//    trans->ops->write32(trans, ofs, val);
+//}
+//
+//static inline u32 iwl_trans_read32(struct iwl_trans *trans, u32 ofs)
+//{
+//    return trans->ops->read32(trans, ofs);
+//}
+//
+//static inline u32 iwl_trans_read_prph(struct iwl_trans *trans, u32 ofs)
+//{
+//    return trans->ops->read_prph(trans, ofs);
+//}
+//
+//static inline void iwl_trans_write_prph(struct iwl_trans *trans, u32 ofs,
+//                    u32 val)
+//{
+//    return trans->ops->write_prph(trans, ofs, val);
+//}
+//
+//static inline int iwl_trans_read_mem(struct iwl_trans *trans, u32 addr,
+//                     void *buf, int dwords)
+//{
+//    return trans->ops->read_mem(trans, addr, buf, dwords);
+//}
 
 #define iwl_trans_read_mem_bytes(trans, addr, buf, bufsize)		      \
 	do {								      \
@@ -1063,60 +1067,60 @@ static inline int iwl_trans_read_mem(struct iwl_trans *trans, u32 addr,
 		iwl_trans_read_mem(trans, addr, buf, (bufsize) / sizeof(u32));\
 	} while (0)
 
-static inline u32 iwl_trans_read_mem32(struct iwl_trans *trans, u32 addr)
-{
-	u32 value;
-
-	if (WARN_ON(iwl_trans_read_mem(trans, addr, &value, 1)))
-		return 0xa5a5a5a5;
-
-	return value;
-}
-
-static inline int iwl_trans_write_mem(struct iwl_trans *trans, u32 addr,
-				      const void *buf, int dwords)
-{
-	return trans->ops->write_mem(trans, addr, buf, dwords);
-}
-
-static inline u32 iwl_trans_write_mem32(struct iwl_trans *trans, u32 addr,
-					u32 val)
-{
-	return iwl_trans_write_mem(trans, addr, &val, 1);
-}
-
-static inline void iwl_trans_set_pmi(struct iwl_trans *trans, bool state)
-{
-	if (trans->ops->set_pmi)
-		trans->ops->set_pmi(trans, state);
-}
-
-static inline void
-iwl_trans_set_bits_mask(struct iwl_trans *trans, u32 reg, u32 mask, u32 value)
-{
-	trans->ops->set_bits_mask(trans, reg, mask, value);
-}
+//static inline u32 iwl_trans_read_mem32(struct iwl_trans *trans, u32 addr)
+//{
+//    u32 value;
+//
+//    if (WARN_ON(iwl_trans_read_mem(trans, addr, &value, 1)))
+//        return 0xa5a5a5a5;
+//
+//    return value;
+//}
+//
+//static inline int iwl_trans_write_mem(struct iwl_trans *trans, u32 addr,
+//                      const void *buf, int dwords)
+//{
+//    return trans->ops->write_mem(trans, addr, buf, dwords);
+//}
+//
+//static inline u32 iwl_trans_write_mem32(struct iwl_trans *trans, u32 addr,
+//                    u32 val)
+//{
+//    return iwl_trans_write_mem(trans, addr, &val, 1);
+//}
+//
+//static inline void iwl_trans_set_pmi(struct iwl_trans *trans, bool state)
+//{
+//    if (trans->ops->set_pmi)
+//        trans->ops->set_pmi(trans, state);
+//}
+//
+//static inline void
+//iwl_trans_set_bits_mask(struct iwl_trans *trans, u32 reg, u32 mask, u32 value)
+//{
+//    trans->ops->set_bits_mask(trans, reg, mask, value);
+//}
 
 #define iwl_trans_grab_nic_access(trans, silent, flags)	\
 	__cond_lock(nic_access,				\
 		    likely((trans)->ops->grab_nic_access(trans, silent, flags)))
 
-static inline void /*__releases(nic_access)*/
-iwl_trans_release_nic_access(struct iwl_trans *trans, unsigned long *flags)
-{
-	trans->ops->release_nic_access(trans, flags);
-	//__release(nic_access);
-}
-
-static inline void iwl_trans_fw_error(struct iwl_trans *trans)
-{
-	if (WARN_ON_ONCE(!trans->op_mode))
-		return;
-
-	/* prevent double restarts due to the same erroneous FW */
-	if (!test_and_set_bit(STATUS_FW_ERROR, &trans->status))
-		iwl_op_mode_nic_error(trans->op_mode);
-}
+//static inline void /*__releases(nic_access)*/
+//iwl_trans_release_nic_access(struct iwl_trans *trans, unsigned long *flags)
+//{
+//    trans->ops->release_nic_access(trans, flags);
+//    //__release(nic_access);
+//}
+//
+//static inline void iwl_trans_fw_error(struct iwl_trans *trans)
+//{
+//    if (WARN_ON_ONCE(!trans->op_mode))
+//        return;
+//
+//    /* prevent double restarts due to the same erroneous FW */
+//    if (!test_and_set_bit(STATUS_FW_ERROR, &trans->status))
+//        iwl_op_mode_nic_error(trans->op_mode);
+//}
 
 /*****************************************************
  * transport helper functions

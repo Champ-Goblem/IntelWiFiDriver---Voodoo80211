@@ -445,6 +445,23 @@ static void *kmemdup(const void *src, size_t len, int gfp) {
     return p;
 }
 
+/* Device supports clause 22 register access to PHY or peripherals
+ * using the interface defined in <linux/mii.h>.  This should not be
+ * set if there are known to be no such peripherals present or if
+ * the driver only emulates clause 22 registers for compatibility.
+ */
+#define ETH_MDIO_SUPPORTS_C22    1
+
+/* Device supports clause 45 register access to PHY or peripherals
+ * using the interface defined in <linux/mii.h> and <linux/mdio.h>.
+ * This should not be set if there are known to be no such peripherals
+ * present.
+ */
+#define ETH_MDIO_SUPPORTS_C45    2
+
+#define ETHTOOL_FWVERS_LEN    32
+#define ETHTOOL_BUSINFO_LEN    32
+#define ETHTOOL_EROMVERS_LEN    32
 
 #define VLAN_ETH_FRAME_LEN	1518	/* Max. octets in frame sans FCS */
 

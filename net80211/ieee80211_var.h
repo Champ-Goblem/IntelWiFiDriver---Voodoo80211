@@ -43,11 +43,16 @@
 #endif
 
 #include <sys/queue.h>
-#include <net80211/ieee80211.h>
-#include <net80211/ieee80211_crypto.h>
-#include <net80211/ieee80211_ioctl.h>		/* for ieee80211_stats */
-#include <net80211/ieee80211_node.h>
-#include <net80211/ieee80211_proto.h>
+//#include <net80211/ieee80211.h>
+//#include <net80211/ieee80211_crypto.h>
+//#include <net80211/ieee80211_ioctl.h>        /* for ieee80211_stats */
+//#include <net80211/ieee80211_node.h>
+//#include <net80211/ieee80211_proto.h>
+#include "ieee80211.h"
+#include "ieee80211_crypto.h"
+#include "ieee80211_ioctl.h"
+#include "ieee80211_node.h"
+#include "ieee80211_proto.h"
 #include <IOKit/network/IOPacketQueue.h>
 #include <IOKit/network/IONetworkMedium.h>
 

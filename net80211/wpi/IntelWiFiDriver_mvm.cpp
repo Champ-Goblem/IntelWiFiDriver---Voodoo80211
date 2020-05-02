@@ -7,6 +7,7 @@
 
 #include "IntelWiFiDriver.hpp"
 #include "IntelWiFiDriver_mvm.hpp"
+#include "../ieee80211_proto.h"
 //===================================
 //      MVM only operations
 //===================================
@@ -130,9 +131,12 @@ void IntelWiFiDriver::setRFKillState(bool status) {
     bool currentStatus = isRadioKilled(deviceProps.mvmConfig.status);
     
     if (currentStatus) {
-        IOLockLock(deviceProps.mvmConfig.rxSyncWaitQueue);
-        IOLockWakeup(deviceProps.mvmConfig.rxSyncWaitQueue, NULL, true);
-        IOLockUnlock(deviceProps.mvmConfig.rxSyncWaitQueue);
+        //TODO: Check this when implementing rxSyncWaitQ
+//        IOLockLock(deviceProps.mvmConfig.rxSyncWaitQueue);
+//        IOLockWakeup(deviceProps.mvmConfig.rxSyncWaitQueue, NULL, true);
+//        IOLockUnlock(deviceProps.mvmConfig.rxSyncWaitQueue);
+        deviceProps.mvmConfig.rxSyncWaitQueue->commandWakeup((void*)(deviceProps.mvm.queueSyncCounter == 0 ||
+                                                             isRadioKilled(deviceProps.mvm.status)));
     }
     //iwlwifi here makes a call to wiphy_rfkill_set_hw_state
     //which internally makes a call to rfkill_set_hw_state
@@ -140,11 +144,51 @@ void IntelWiFiDriver::setRFKillState(bool status) {
     //We need to find some replacement for these in the apple kernel
     //TODO: Find a replacement
     
+//    disable(deviceProps.networkInterface);
+//    getInterface()->setLinkState(kIO80211NetworkLinkDown, 0);
+    ieee80211_set_link_state(deviceProps.bsdIEEEStruct, kIO80211NetworkLinkDown);
+    
 }
 
 void IntelWiFiDriver::reportScanAborted() {
     //iwl_mvm_report_scan_aborted
-    //TODO: Implement reporting scan abborted
+    //TODO: Check this when implementing scanning
+    
+    if (checkFWCapabilities(IWL_UCODE_TLV_CAPA_UMAC_SCAN)){
+        int uid = mvmScanUIDByStatus(IWL_MVM_SCAN_REGULAR);
+        if (uid >= 0) {
+            //Reset the scan
+            deviceProps.bsdIEEEStruct->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
+            ieee80211_newstate(deviceProps.bsdIEEEStruct, IEEE80211_S_INIT, -1);
+        }
+        
+        uid = mvmScanUIDByStatus(IWL_MVM_SCAN_SCHED);
+        if (uid >= 0 && !deviceProps.mvm.firmwareRestart) {
+            //Reset the scan
+            deviceProps.bsdIEEEStruct->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
+            ieee80211_newstate(deviceProps.bsdIEEEStruct, IEEE80211_S_INIT, -1);
+        }
+        
+        for (int i = 0; i < deviceProps.mvm.maxScans; i++) {
+            if (deviceProps.mvm.scanUIDStatus[i]) {
+                LOG_ERROR("%s: UMAC scan UID %d status not cleared\n", DRVNAME, i);
+                deviceProps.mvm.scanUIDStatus[i] = 0;
+            }
+        }
+    } else {
+        if (deviceProps.mvm.scanStatus & IWL_MVM_SCAN_REGULAR) {
+            //Reset the scan
+            deviceProps.bsdIEEEStruct->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
+            ieee80211_newstate(deviceProps.bsdIEEEStruct, IEEE80211_S_INIT, -1);
+        }
+        
+        if ((deviceProps.mvm.scanStatus & IWL_MVM_SCAN_SCHED) && !deviceProps.mvm.firmwareRestart) {
+            //Reset the scan
+            deviceProps.bsdIEEEStruct->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
+            ieee80211_newstate(deviceProps.bsdIEEEStruct, IEEE80211_S_INIT, -1);
+            deviceProps.mvm.schedScanPassAll = SCHED_SCAN_PASS_ALL_DISABLED;
+        }
+    }
 }
 
 void IntelWiFiDriver::freeSKB(mbuf_t skb) {
@@ -157,5 +201,55 @@ void IntelWiFiDriver::freeSKB(mbuf_t skb) {
 void IntelWiFiDriver::mvmWakeSWQueue(int txqID) {
     //iwl_mvm_wake_sw_queue ->
     //iwl_mvm_queue_state_change
+    if (DEBUG) printf("%s: Waking sw queue %d\n", DRVNAME, txqID);
+    mvmQueueStateChange(txqID, true);
+}
+
+int IntelWiFiDriver::mvmScanUIDByStatus(int status) {
+    //iwl_mvm_scan_uid_by_status
+    for (int i = 0; i < deviceProps.mvm.maxScans; i++) {
+        if (deviceProps.mvm.scanUIDStatus[i] == status) {
+            return i;
+        }
+    }
+    return -ENOENT;
+}
+
+void IntelWiFiDriver::mvmQueueStateChange(int hwQueue, bool start) {
+    //iwl_mvm_queue_state_change
+    //TODO: Implement
+    //TODO: Fix station mode, currently only using our driver based data structures
+    //for station mode, at some point in the future we need to fix this
+    
+    uint8_t stationID = mvmHasNewTxAPI() ? deviceProps.mvm.tvqmInfo[hwQueue].sta_id : deviceProps.mvm.queueInfo[hwQueue].ra_sta_id;
+    if (stationID >= ARRAY_SIZE(deviceProps.mvm.stationData)) {
+        return;
+    }
+    
+    struct iwl_mvm_sta* sta = deviceProps.mvm.stationData[stationID];
+    if (sta == NULL) {
+        return;
+    }
+    
+    //Ive got no fucking clue how we are going to change this over
+    //TODO: Get station back
+    if (mvmIsStaticQueue(hwQueue)) {
+        if (!start) {
+            LOG_ERROR("%s: We need to get station mode features back into bsd, I think they have been removed, should be starting device here\n", DRVNAME);
+        } else {
+            LOG_ERROR("%s: We need to get station mode features back into bsd, I think they have been removed\n", DRVNAME);
+        }
+        return;
+    }
+    
+}
+
+bool IntelWiFiDriver::mvmHasNewTxAPI() {
+    //iwl_mvm_has_new_tx_api
+    return deviceProps.deviceConfig->use_tfh;
+}
+
+int IntelWiFiDriver::mvmIsStaticQueue(int queue) {
+    //iwl_mvm_is_static_queue
     //TODO: Implement
 }

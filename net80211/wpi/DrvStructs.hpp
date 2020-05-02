@@ -45,7 +45,7 @@ struct MVMSpecificConfig {
     bool harwareRegistered;
     bool RFKillSafeInitDone;
     
-    IOLock* rxSyncWaitQueue;
+    IOCommandGate* rxSyncWaitQueue;
 };
 
 //Contains all attrbutes of the device used by the driver
@@ -57,13 +57,13 @@ struct PCIDevice {
     IOMemoryMap*                deviceMemoryMap;
 //    volatile void*              deviceMemoryMapVAddr;
     PCIDeviceConfig*            deviceConfig;
-    struct MVMSpecificConfig    mvmConfig; //Will need replacing if we implement DVM cards
     bool                        debugRFKill;
     bool                        opmodeDown;
     bool                        isDown;
     IOByteCount                 expressCapabilityOffset; //The offest of the PCIe express capabilities struct
     bool                        powerManagementSupported; //Specifies if L0S is supported for the card [pm_supported]
     bool                        enabledLTR; //ltr_enabled
+    IO80211Interface*           networkInterface;
     
     //Interrupt related variables
     IOEventSource*              interruptController;
@@ -106,6 +106,13 @@ struct PCIDevice {
     IOLock*                     waitCommandQueue;
     
     IOSimpleLock*               mutex; //Can we rename this to something more descriptive?
+    
+    //MVM related - replace with dvm when dvm implemented
+    struct MVMSpecificConfig    mvmConfig; //Will need replacing if we implement DVM cards
+    struct MVMConfig            mvm;
+    
+    struct ieee80211com*        bsdIEEEStruct;
+    
 };
 
 struct hardwareDebugStatisticsCounters {
